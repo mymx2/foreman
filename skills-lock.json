@@ -91,6 +91,12 @@
       "skillPath": "skills/interview-me/SKILL.md",
       "computedHash": "85726440a832ced82cc55c5b550daba3f693db1013d771dc7b8e41c6b565ba8e"
     },
+    "observability-and-instrumentation": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/observability-and-instrumentation/SKILL.md",
+      "computedHash": "d57a13b7c4c9528f747c06820c2872369b1f405962f9d68c1dd9905714103261"
+    },
     "performance-optimization": {
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
@@ -137,7 +143,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/using-agent-skills/SKILL.md",
-      "computedHash": "c8318c102a7ec6b2c0b48315a5eede855b348e627e8d4821978aaf7103e90186"
+      "computedHash": "87489d15f8f826ff37c3096883c9b9106f340227918dc4f033d80fa62c349e8c"
     }
   }
 }

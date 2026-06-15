@@ -6,6 +6,15 @@ Skills encode the workflows, quality gates, and best practices that senior engin
 
 ![Addy's Agent Skills](https://addyosmani.com/assets/images/addys-agent-skills.jpg)
 
+```
+  DEFINE          PLAN           BUILD          VERIFY         REVIEW          SHIP
+ ┌──────┐      ┌──────┐      ┌──────┐      ┌──────┐      ┌──────┐      ┌──────┐
+ │ Idea │ ───▶ │ Spec │ ───▶ │ Code │ ───▶ │ Test │ ───▶ │  QA  │ ───▶ │  Go  │
+ │Refine│      │  PRD │      │ Impl │      │Debug │      │ Gate │      │ Live │
+ └──────┘      └──────┘      └──────┘      └──────┘      └──────┘      └──────┘
+  /spec          /plan          /build        /test         /review       /ship
+```
+
 ---
 
 ## Commands
@@ -22,13 +31,15 @@ Skills encode the workflows, quality gates, and best practices that senior engin
 | Simplify the code    | `/code-simplify` | Clarity over cleverness |
 | Ship to production   | `/ship`          | Faster is safer         |
 
+Want fewer manual steps once the spec exists? **`/build auto`** generates the plan and implements every task in a single approved pass — you approve the plan once, then it runs autonomously. It removes the human stepping _between_ tasks, not the verification: every task is still test-driven and committed individually, and it pauses on failures or risky steps.
+
 Skills also activate automatically based on what you're doing — designing an API triggers `api-and-interface-design`, building UI triggers `frontend-ui-engineering`, and so on.
 
 ---
 
-## All 23 Skills
+## All 24 Skills
 
-The commands above are entry points. The pack includes 23 skills total — 22 lifecycle skills plus the `using-agent-skills` meta-skill. Each skill is a structured workflow with steps, verification gates, and anti-rationalization tables. You can also reference any skill directly.
+The commands above are entry points. The pack includes 24 skills total — 23 lifecycle skills plus the `using-agent-skills` meta-skill. Each skill is a structured workflow with steps, verification gates, and anti-rationalization tables. You can also reference any skill directly.
 
 ### Meta - Discover which skill applies
 
@@ -80,13 +91,14 @@ The commands above are entry points. The pack includes 23 skills total — 22 li
 
 ### Ship - Deploy with confidence
 
-| Skill                                                                              | What It Does                                                                                           | Use When                                                            |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| [git-workflow-and-versioning](.agents/skills/git-workflow-and-versioning/SKILL.md) | Trunk-based development, atomic commits, change sizing (~100 lines), the commit-as-save-point pattern  | Making any code change (always)                                     |
-| [ci-cd-and-automation](.agents/skills/ci-cd-and-automation/SKILL.md)               | Shift Left, Faster is Safer, feature flags, quality gate pipelines, failure feedback loops             | Setting up or modifying build and deploy pipelines                  |
-| [deprecation-and-migration](.agents/skills/deprecation-and-migration/SKILL.md)     | Code-as-liability mindset, compulsory vs advisory deprecation, migration patterns, zombie code removal | Removing old systems, migrating users, or sunsetting features       |
-| [documentation-and-adrs](.agents/skills/documentation-and-adrs/SKILL.md)           | Architecture Decision Records, API docs, inline documentation standards - document the _why_           | Making architectural decisions, changing APIs, or shipping features |
-| [shipping-and-launch](.agents/skills/shipping-and-launch/SKILL.md)                 | Pre-launch checklists, feature flag lifecycle, staged rollouts, rollback procedures, monitoring setup  | Preparing to deploy to production                                   |
+| Skill                                                                                          | What It Does                                                                                             | Use When                                                            |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [git-workflow-and-versioning](.agents/skills/git-workflow-and-versioning/SKILL.md)             | Trunk-based development, atomic commits, change sizing (~100 lines), the commit-as-save-point pattern    | Making any code change (always)                                     |
+| [ci-cd-and-automation](.agents/skills/ci-cd-and-automation/SKILL.md)                           | Shift Left, Faster is Safer, feature flags, quality gate pipelines, failure feedback loops               | Setting up or modifying build and deploy pipelines                  |
+| [deprecation-and-migration](.agents/skills/deprecation-and-migration/SKILL.md)                 | Code-as-liability mindset, compulsory vs advisory deprecation, migration patterns, zombie code removal   | Removing old systems, migrating users, or sunsetting features       |
+| [documentation-and-adrs](.agents/skills/documentation-and-adrs/SKILL.md)                       | Architecture Decision Records, API docs, inline documentation standards - document the _why_             | Making architectural decisions, changing APIs, or shipping features |
+| [observability-and-instrumentation](.agents/skills/observability-and-instrumentation/SKILL.md) | Structured logging, RED metrics, OpenTelemetry tracing, symptom-based alerting - instrument as you build | Adding telemetry, or shipping anything that runs in production      |
+| [shipping-and-launch](.agents/skills/shipping-and-launch/SKILL.md)                             | Pre-launch checklists, feature flag lifecycle, staged rollouts, rollback procedures, monitoring setup    | Preparing to deploy to production                                   |
 
 ---
 
@@ -94,11 +106,12 @@ The commands above are entry points. The pack includes 23 skills total — 22 li
 
 Pre-configured specialist personas for targeted reviews:
 
-| Agent                                          | Role                  | Perspective                                                                |
-| ---------------------------------------------- | --------------------- | -------------------------------------------------------------------------- |
-| [code-reviewer](agents/code-reviewer.md)       | Senior Staff Engineer | Five-axis code review with "would a staff engineer approve this?" standard |
-| [test-engineer](agents/test-engineer.md)       | QA Specialist         | Test strategy, coverage analysis, and the Prove-It pattern                 |
-| [security-auditor](agents/security-auditor.md) | Security Engineer     | Vulnerability detection, threat modeling, OWASP assessment                 |
+| Agent                                                        | Role                     | Perspective                                                                                  |
+| ------------------------------------------------------------ | ------------------------ | -------------------------------------------------------------------------------------------- |
+| [code-reviewer](agents/code-reviewer.md)                     | Senior Staff Engineer    | Five-axis code review with "would a staff engineer approve this?" standard                   |
+| [test-engineer](agents/test-engineer.md)                     | QA Specialist            | Test strategy, coverage analysis, and the Prove-It pattern                                   |
+| [security-auditor](agents/security-auditor.md)               | Security Engineer        | Vulnerability detection, threat modeling, OWASP assessment                                   |
+| [web-performance-auditor](agents/web-performance-auditor.md) | Web Performance Engineer | Core Web Vitals audit with Quick/Deep modes and a metric-honesty rule; run it via `/webperf` |
 
 ---
 

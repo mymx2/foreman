@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const AGENT_DIR = ".qoder";
@@ -17,9 +17,16 @@ const SYNC_MAP = [
     from: join(WORKTREE_DIR, "agents"),
     to: join(ROOT, AGENT_DIR, "agents"),
   },
+  {
+    from: join(WORKTREE_DIR, "references"),
+    to: join(ROOT, "references"),
+  },
 ];
 
-const IGNORE_FILES = new Set(["README.md"]);
+// TODO: https://github.com/addyosmani/agent-skills/pull/260
+const RENAME_MAP = new Map<string, string>([
+  [join(WORKTREE_DIR, "agents", "README.md"), join(ROOT, "docs", "agents.md")],
+]);
 
 // ── 1. Clone repo into .worktrees/agent-skills ──────────────────────
 function cloneRepo(): void {
@@ -37,7 +44,7 @@ function cloneRepo(): void {
   execSync(`git clone ${REPO_URL} "${WORKTREE_DIR}"`, { stdio: "inherit" });
 }
 
-// ── 2. Sync directories (ignore README.md) ──────────────────────────
+// ── 2. Sync directories ─────────────────────────────────────────────
 function syncDir(from: string, to: string): void {
   if (!existsSync(from)) {
     console.warn(`[init] Source "${from}" does not exist, skipping.`);
@@ -50,22 +57,29 @@ function syncDir(from: string, to: string): void {
 
   // Copy files from source to destination
   for (const entry of readdirSync(from)) {
-    if (IGNORE_FILES.has(entry)) {
-      console.log(`[init] Ignoring: ${entry}`);
-      continue;
-    }
-
     const srcFile = join(from, entry);
-    const destFile = join(to, entry);
+    const renamedDest = RENAME_MAP.get(srcFile);
+    const destFile = renamedDest ?? join(to, entry);
     const stat = statSync(srcFile);
+
+    if (renamedDest) {
+      const destDir = join(destFile, "..");
+      if (!existsSync(destDir)) {
+        mkdirSync(destDir, { recursive: true });
+      }
+    }
 
     if (stat.isDirectory()) {
       cpSync(srcFile, destFile, { recursive: true });
     } else {
-      // Only copy if source is newer or destination doesn't exist
-      if (!existsSync(destFile) || statSync(srcFile).mtimeMs > statSync(destFile).mtimeMs) {
+      const shouldCopy = renamedDest
+        ? !existsSync(destFile) || !readFileSync(srcFile).equals(readFileSync(destFile))
+        : !existsSync(destFile) || statSync(srcFile).mtimeMs > statSync(destFile).mtimeMs;
+      if (shouldCopy) {
         cpSync(srcFile, destFile);
-        console.log(`[init] Synced: ${entry}`);
+        console.log(
+          renamedDest ? `[init] Renamed: ${entry} → ${destFile}` : `[init] Synced: ${entry}`,
+        );
       }
     }
   }
@@ -86,6 +100,16 @@ function main(): void {
   }
 
   console.log("[init] Done.");
+
+  // Run formatter if available
+  try {
+    const checkCmd = process.platform === "win32" ? "where vp 2>nul" : "which vp 2>/dev/null";
+    execSync(checkCmd, { stdio: "ignore" });
+    console.log("\n[init] Running vp run fmt...");
+    execSync("vp run fmt", { stdio: "inherit" });
+  } catch {
+    console.log("\n[init] vp not found, skipping format.");
+  }
 }
 
 main();
