@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const AGENT_DIR = ".qoder";
@@ -8,7 +8,7 @@ const ROOT = resolve(import.meta.dirname, ".");
 const WORKTREE_DIR = join(ROOT, ".worktrees", "agent-skills");
 const REPO_URL = "https://github.com/addyosmani/agent-skills";
 
-const SYNC_MAP = [
+const SYNC_MAP: { from: string; to: string; filter?: string[] }[] = [
   {
     from: join(WORKTREE_DIR, ".claude", "commands"),
     to: join(ROOT, AGENT_DIR, "commands"),
@@ -21,31 +21,27 @@ const SYNC_MAP = [
     from: join(WORKTREE_DIR, "references"),
     to: join(ROOT, "references"),
   },
+  {
+    from: join(WORKTREE_DIR, "docs"),
+    to: join(ROOT, "docs"),
+    filter: ["agents.md"],
+  },
 ];
 
-// TODO: https://github.com/addyosmani/agent-skills/pull/260
-const RENAME_MAP = new Map<string, string>([
-  [join(WORKTREE_DIR, "agents", "README.md"), join(ROOT, "docs", "agents.md")],
-]);
-
-// ── 1. Clone repo into .worktrees/agent-skills ──────────────────────
-function cloneRepo(): void {
-  if (existsSync(WORKTREE_DIR)) {
-    console.log(`[init] "${WORKTREE_DIR}" already exists, skipping clone.`);
-    return;
+// ── 1. Clone or pull repo ───────────────────────────────────────────
+function ensureRepo(): void {
+  if (existsSync(join(WORKTREE_DIR, ".git"))) {
+    console.log(`[init] Pulling latest: ${REPO_URL}`);
+    execSync("git pull --ff-only", { cwd: WORKTREE_DIR, stdio: "inherit" });
+  } else {
+    console.log(`[init] Cloning ${REPO_URL} → ${WORKTREE_DIR}`);
+    mkdirSync(join(WORKTREE_DIR, ".."), { recursive: true });
+    execSync(`git clone --depth 1 ${REPO_URL} "${WORKTREE_DIR}"`, { stdio: "inherit" });
   }
-
-  const parentDir = join(WORKTREE_DIR, "..");
-  if (!existsSync(parentDir)) {
-    mkdirSync(parentDir, { recursive: true });
-  }
-
-  console.log(`[init] Cloning ${REPO_URL} → ${WORKTREE_DIR}`);
-  execSync(`git clone ${REPO_URL} "${WORKTREE_DIR}"`, { stdio: "inherit" });
 }
 
 // ── 2. Sync directories ─────────────────────────────────────────────
-function syncDir(from: string, to: string): void {
+function syncDir(from: string, to: string, filter?: string[]): void {
   if (!existsSync(from)) {
     console.warn(`[init] Source "${from}" does not exist, skipping.`);
     return;
@@ -56,30 +52,20 @@ function syncDir(from: string, to: string): void {
   }
 
   // Copy files from source to destination
-  for (const entry of readdirSync(from)) {
+  const entries = filter ? readdirSync(from).filter((e) => filter.includes(e)) : readdirSync(from);
+  for (const entry of entries) {
     const srcFile = join(from, entry);
-    const renamedDest = RENAME_MAP.get(srcFile);
-    const destFile = renamedDest ?? join(to, entry);
+    const destFile = join(to, entry);
     const stat = statSync(srcFile);
-
-    if (renamedDest) {
-      const destDir = join(destFile, "..");
-      if (!existsSync(destDir)) {
-        mkdirSync(destDir, { recursive: true });
-      }
-    }
 
     if (stat.isDirectory()) {
       cpSync(srcFile, destFile, { recursive: true });
     } else {
-      const shouldCopy = renamedDest
-        ? !existsSync(destFile) || !readFileSync(srcFile).equals(readFileSync(destFile))
-        : !existsSync(destFile) || statSync(srcFile).mtimeMs > statSync(destFile).mtimeMs;
+      const shouldCopy =
+        !existsSync(destFile) || statSync(srcFile).mtimeMs > statSync(destFile).mtimeMs;
       if (shouldCopy) {
         cpSync(srcFile, destFile);
-        console.log(
-          renamedDest ? `[init] Renamed: ${entry} → ${destFile}` : `[init] Synced: ${entry}`,
-        );
+        console.log(`[init] Synced: ${entry}`);
       }
     }
   }
@@ -89,13 +75,13 @@ function syncDir(from: string, to: string): void {
 function main(): void {
   console.log("[init] Starting initialization...\n");
 
-  cloneRepo();
+  ensureRepo();
 
   console.log();
 
-  for (const { from, to } of SYNC_MAP) {
+  for (const { from, to, filter } of SYNC_MAP) {
     console.log(`[init] Syncing: ${from} → ${to}`);
-    syncDir(from, to);
+    syncDir(from, to, filter);
     console.log();
   }
 

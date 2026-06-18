@@ -2,12 +2,12 @@
 
 Specialist personas that play a single role with a single perspective. Each persona is a Markdown file consumed as a system prompt by your harness (Claude Code, Cursor, Copilot, etc.).
 
-| Persona                                               | Role                     | Best for                                                  |
-| ----------------------------------------------------- | ------------------------ | --------------------------------------------------------- |
-| [code-reviewer](code-reviewer.md)                     | Senior Staff Engineer    | Five-axis review before merge                             |
-| [security-auditor](security-auditor.md)               | Security Engineer        | Vulnerability detection, OWASP-style audit                |
-| [test-engineer](test-engineer.md)                     | QA Engineer              | Test strategy, coverage analysis, Prove-It pattern        |
-| [web-performance-auditor](web-performance-auditor.md) | Web Performance Engineer | Core Web Vitals audit, loading/rendering/network analysis |
+| Persona                                                         | Role                     | Best for                                                  |
+| --------------------------------------------------------------- | ------------------------ | --------------------------------------------------------- |
+| [code-reviewer](../agents/code-reviewer.md)                     | Senior Staff Engineer    | Five-axis review before merge                             |
+| [security-auditor](../agents/security-auditor.md)               | Security Engineer        | Vulnerability detection, OWASP-style audit                |
+| [test-engineer](../agents/test-engineer.md)                     | QA Engineer              | Test strategy, coverage analysis, Prove-It pattern        |
+| [web-performance-auditor](../agents/web-performance-auditor.md) | Web Performance Engineer | Core Web Vitals audit, loading/rendering/network analysis |
 
 ## How personas relate to skills and commands
 

@@ -1,0 +1,168 @@
+{
+  "version": 3,
+  "skills": {
+    "find-skills": {
+      "source": "mymx2/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mymx2/skills.git",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "skillFolderHash": "aca3b3e623a62581380357c2747487af672d2a0c",
+      "installedAt": "2026-05-12T04:02:08.823Z",
+      "updatedAt": "2026-06-17T02:50:28.849Z"
+    },
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/anthropics/skills.git",
+      "skillPath": "skills/skill-creator/SKILL.md",
+      "skillFolderHash": "3cf9a8db32597ba3e24b584a3d696f4e11c7d7b6",
+      "pluginName": "example-skills",
+      "installedAt": "2026-05-18T10:59:10.942Z",
+      "updatedAt": "2026-05-18T10:59:10.942Z"
+    },
+    "claude-md-improver": {
+      "source": "anthropics/claude-plugins-official",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/anthropics/claude-plugins-official.git",
+      "skillPath": "plugins/claude-md-management/skills/claude-md-improver/SKILL.md",
+      "skillFolderHash": "7188018e6710998fbc3227fdacd1b2b6e0508c38",
+      "installedAt": "2026-05-18T11:00:24.986Z",
+      "updatedAt": "2026-05-18T11:00:24.986Z"
+    },
+    "check": {
+      "source": "tw93/Waza",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/tw93/Waza.git",
+      "skillPath": "skills/check/SKILL.md",
+      "skillFolderHash": "ce068811dce52b691783680f16dd03eec2641947",
+      "pluginName": "waza-check",
+      "installedAt": "2026-06-15T02:56:31.511Z",
+      "updatedAt": "2026-06-16T10:08:29.695Z"
+    },
+    "design": {
+      "source": "tw93/Waza",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/tw93/Waza.git",
+      "skillPath": "skills/design/SKILL.md",
+      "skillFolderHash": "b73b361e81564aee1edfb64790a1d9ae768434f9",
+      "pluginName": "waza-design",
+      "installedAt": "2026-06-15T02:56:31.523Z",
+      "updatedAt": "2026-06-16T10:08:29.702Z"
+    },
+    "health": {
+      "source": "tw93/Waza",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/tw93/Waza.git",
+      "skillPath": "skills/health/SKILL.md",
+      "skillFolderHash": "133f025e5ac9c6b01f40b3e7e5823c5eb7d9584f",
+      "pluginName": "waza-health",
+      "installedAt": "2026-06-15T02:56:31.532Z",
+      "updatedAt": "2026-06-16T10:08:29.708Z"
+    },
+    "hunt": {
+      "source": "tw93/Waza",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/tw93/Waza.git",
+      "skillPath": "skills/hunt/SKILL.md",
+      "skillFolderHash": "2f514761c6c486164470182933ec5082dd3bfb96",
+      "pluginName": "waza-hunt",
+      "installedAt": "2026-06-15T02:56:31.539Z",
+      "updatedAt": "2026-06-16T10:08:29.714Z"
+    },
+    "learn": {
+      "source": "tw93/Waza",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/tw93/Waza.git",
+      "skillPath": "skills/learn/SKILL.md",
+      "skillFolderHash": "422089e96424071c5b12dd7515711c8130cf6076",
+      "pluginName": "waza-learn",
+      "installedAt": "2026-06-15T02:56:31.544Z",
+      "updatedAt": "2026-06-16T10:08:29.722Z"
+    },
+    "read": {
+      "source": "tw93/Waza",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/tw93/Waza.git",
+      "skillPath": "skills/read/SKILL.md",
+      "skillFolderHash": "1cccbf79f128b1481c93e8dd02e2b687f5b350f9",
+      "pluginName": "waza-read",
+      "installedAt": "2026-06-15T02:56:31.551Z",
+      "updatedAt": "2026-06-16T10:08:29.733Z"
+    },
+    "think": {
+      "source": "tw93/Waza",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/tw93/Waza.git",
+      "skillPath": "skills/think/SKILL.md",
+      "skillFolderHash": "057ad977ff7462fa955ca1e8e5c8663e1de3e6ef",
+      "pluginName": "waza-think",
+      "installedAt": "2026-06-15T02:56:31.558Z",
+      "updatedAt": "2026-06-16T10:08:29.738Z"
+    },
+    "write": {
+      "source": "tw93/Waza",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/tw93/Waza.git",
+      "skillPath": "skills/write/SKILL.md",
+      "skillFolderHash": "6472f43930c4cc3c0e6cefca6b230b7927bc5f30",
+      "pluginName": "waza-write",
+      "installedAt": "2026-06-15T02:56:31.569Z",
+      "updatedAt": "2026-06-16T10:08:29.744Z"
+    },
+    "screenshot": {
+      "source": "openai/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/openai/skills.git",
+      "skillPath": "skills/.curated/screenshot/SKILL.md",
+      "skillFolderHash": "52b8e26e5313cfeba3da7cb9057bdb94c1cf7ed1",
+      "installedAt": "2026-06-15T04:03:27.723Z",
+      "updatedAt": "2026-06-16T10:06:10.625Z"
+    },
+    "skills-cli": {
+      "source": "mymx2/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mymx2/skills.git",
+      "skillPath": "skills/skills-cli/SKILL.md",
+      "skillFolderHash": "e25caa3aa2e482605844c9945ccbc24c852c2da7",
+      "installedAt": "2026-06-17T02:50:28.865Z",
+      "updatedAt": "2026-06-17T02:50:28.865Z"
+    },
+    "writing-guidelines": {
+      "source": "mymx2/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mymx2/skills.git",
+      "skillPath": "skills/writing-guidelines/SKILL.md",
+      "skillFolderHash": "cbdc71e0513f5315df565a641cd36f8326c4d23e",
+      "installedAt": "2026-06-17T02:50:28.869Z",
+      "updatedAt": "2026-06-17T02:50:28.869Z"
+    },
+    "writing-review": {
+      "source": "mymx2/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mymx2/skills.git",
+      "skillPath": "skills/writing-review/SKILL.md",
+      "skillFolderHash": "5eb8ea0a631b2990fcfcdc026dc0c215e0cdbb75",
+      "installedAt": "2026-06-17T02:50:28.872Z",
+      "updatedAt": "2026-06-17T02:50:28.872Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "antigravity",
+    "antigravity-cli",
+    "cline",
+    "codex",
+    "cursor",
+    "deepagents",
+    "gemini-cli",
+    "github-copilot",
+    "kimi-code-cli",
+    "opencode",
+    "warp",
+    "zed",
+    "qoder"
+  ]
+}

@@ -7,6 +7,7 @@ const ignorePatterns = [
   ".agents",
   ".qoder",
   "references",
+  "projects",
 ];
 
 export default defineConfig({

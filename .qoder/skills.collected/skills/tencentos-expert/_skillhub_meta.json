@@ -1,0 +1,9 @@
+{
+  "name": "TencentOS运维助手",
+  "slug": "tencentos-expert",
+  "version": "2.0.0",
+  "installedAt": 1778340968538,
+  "source": "marketplace",
+  "iconSource": "tencentos-expert",
+  "preinstalledTemplate": true
+}

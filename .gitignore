@@ -3,6 +3,7 @@
 
 ### Ignore ###
 **/__*
+projects/
 
 ### Jte ###
 jte-classes
