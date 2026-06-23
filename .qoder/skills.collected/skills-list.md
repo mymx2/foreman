@@ -20,7 +20,7 @@ vpx skills add mymx2/skills \
   --skill writing-review \
   -g
 
-# openai/skills
+# openai/skills -- deprecated
 vpx skills add openai/skills --skill screenshot -g
 
 # anthropics/skills
@@ -97,11 +97,12 @@ vpx skills add addyosmani/agent-skills \
   --skill using-agent-skills \
   --agent codex -p -y
 
-# openai/skills — GitHub 协作
-vpx skills add openai/skills \
+# openai/plugins — GitHub 协作
+vpx skills add https://github.com/openai/plugins/tree/main/plugins/github/skills \
   --skill gh-address-comments \
   --skill gh-fix-ci \
   --skill yeet \
+  --skill github \
   --agent codex -p -y
 
 # mymx2/skills
@@ -136,9 +137,10 @@ vpx skills add mymx2/skills --skill design-cli --agent codex -p -y
 | `spec-driven-development` | addyosmani/agent-skills | 规格驱动开发 |
 | `test-driven-development` | addyosmani/agent-skills | 测试驱动开发 |
 | `using-agent-skills` | addyosmani/agent-skills | Agent 技能发现与使用 |
-| `gh-address-comments` | openai/skills | PR 评审评论处理 |
-| `gh-fix-ci` | openai/skills | GitHub Actions CI 修复 |
-| `yeet` | openai/skills | 一键 stage + commit + push + PR |
+| `gh-address-comments` | openai/plugins | PR 评审评论处理 |
+| `gh-fix-ci` | openai/plugins | GitHub Actions CI 修复 |
+| `github` | openai/plugins | GitHub 仓库/PR/Issue 导航与摘要 |
+| `yeet` | openai/plugins | 一键 stage + commit + push + PR |
 | `design-cli` | mymx2/skills | DESIGN.md 规范与 CLI 工具（token 定义、lint、diff、export） |
 
 ---

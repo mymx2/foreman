@@ -1,132 +1,70 @@
 ---
 name: "yeet"
-description: "Use only when the user explicitly asks to stage, commit, push, and open a GitHub pull request in one flow using the GitHub CLI (`gh`)."
+description: "Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient."
 ---
+
+# GitHub Publish Changes
+
+## Overview
+
+Use this skill only when the user explicitly wants the full publish flow from the local checkout: branch setup if needed, staging, commit, push, and opening a pull request.
+
+This workflow is hybrid:
+
+- Use local `git` for branch creation, staging, commit, and push.
+- Prefer the GitHub app from this plugin for pull request creation after the branch is on the remote.
+- Use `gh` as a fallback for current-branch PR discovery, auth checks, or PR creation when the connector path cannot infer the repository or head branch cleanly.
 
 ## Prerequisites
 
 - Require GitHub CLI `gh`. Check `gh --version`. If missing, ask the user to install `gh` and stop.
 - Require authenticated `gh` session. Run `gh auth status`. If not authenticated, ask the user to run `gh auth login` (and re-run `gh auth status`) before continuing.
+- Require a local git repository with a clean understanding of which changes belong in the PR.
 
 ## Naming conventions
 
-- Branch: `{description}` when starting from main/master/default.
+- Branch: `codex/{description}` when starting from main/master/default.
 - Commit: `{description}` (terse).
-- PR title: `{description}` summarizing the full diff.
-
-## PR template discovery
-
-Before creating the PR, resolve the repository root and look for the active GitHub PR template from there:
-
-```shell
-repo_root="$(git rev-parse --show-toplevel)"
-```
-
-Template candidates, in order:
-
-- `.github/pull_request_template.md`
-- `.github/PULL_REQUEST_TEMPLATE.md`
-- One `*.md` file under `.github/pull_request_template/`
-- One `*.md` file under `.github/PULL_REQUEST_TEMPLATE/`
-
-Use paths as emitted from the repository root, such as `.github/pull_request_template.md`, not `./.github/pull_request_template.md`.
-
-If exactly one template is found, read it before composing the final PR body and pass it to `gh pr create` with `--template "$template"`.
-
-If multiple template files are found, stop before PR creation and ask which template to use. If no template exists, use the fallback body shape in this skill.
+- PR title: `[codex] {description}` summarizing the full diff.
 
 ## Workflow
 
-- If on main/master/default, create a branch: `git checkout -b "{description}"`
-- Otherwise stay on the current branch.
-- Confirm status, then stage everything: `git status -sb` then `git add -A`.
-- Commit tersely with the description: `git commit -m "{description}"`
-- Run checks if not already. If checks fail due to missing deps/tools, install dependencies and rerun once.
-- Push with tracking: `git push -u origin $(git branch --show-current)`
-- If git push fails due to workflow auth errors, pull from master and retry the push.
-- Discover and read the repository PR template, if any.
-- Check whether the current branch already has a PR: `gh pr view "$(git branch --show-current)" --json number,isDraft,url`
-- If a PR already exists, update that PR in place. Do not create another PR, and do not change whether the existing PR is draft or ready for review.
-- If no PR exists, open a new draft PR:
-  - With one template: `GH_PROMPT_DISABLED=1 GIT_TERMINAL_PROMPT=0 gh pr create --draft --fill --template "$template" --head "$(git branch --show-current)"`
-  - Without a template: `GH_PROMPT_DISABLED=1 GIT_TERMINAL_PROMPT=0 gh pr create --draft --fill --head "$(git branch --show-current)"`
-- Edit the PR title and body so they reflect the actual net change in the diff.
-- Write the PR description to a temp file with real newlines and pass it via `--body-file` or `gh pr edit --body-file` to avoid `\n`-escaped markdown.
+1. Confirm intended scope.
+   - Run `git status -sb` and inspect the diff before staging.
+   - If the working tree contains unrelated changes, do not default to `git add -A`. Ask the user which files belong in the PR.
+2. Determine the branch strategy.
+   - If on `main`, `master`, or another default branch, create `codex/{description}`.
+   - Otherwise stay on the current branch.
+3. Stage only the intended changes.
+   - Prefer explicit file paths when the worktree is mixed.
+   - Use `git add -A` only when the user has confirmed the whole worktree belongs in scope.
+4. Commit tersely with the confirmed description.
+5. Run the most relevant checks available if they have not already been run.
+   - If checks fail due to missing dependencies or tools, install what is needed and rerun once.
+6. Push with tracking: `git push -u origin $(git branch --show-current)`.
+7. Open a draft PR.
+   - Prefer the GitHub app from this plugin for PR creation after the push succeeds.
+   - Derive `repository_full_name` from the remote, for example by normalizing `git remote get-url origin` or by using `gh repo view --json nameWithOwner`.
+   - Derive `head_branch` from `git branch --show-current`.
+   - Derive `base_branch` from the user request when specified; otherwise use the remote default branch, for example via `gh repo view --json defaultBranchRef`.
+   - If the branch is being pushed from a fork or the PR target differs from the remote that was just pushed, prefer `gh pr create` fallback because the connector PR creation flow expects one repository target and may not encode cross-repo head semantics cleanly.
+   - If connector-based PR creation cannot infer the repository or branch cleanly, fall back to `gh pr create --draft --fill --head $(git branch --show-current)`.
+   - Write the PR body to a temp file with real newlines when using CLI fallback so the markdown renders cleanly.
+8. Summarize the result with branch name, commit, PR target, validation, and anything the user still needs to confirm.
 
-## Determining the PR
+## Write Safety
 
-When updating a PR created earlier in the flow, infer the PR from the current branch when possible:
+- Never stage unrelated user changes silently.
+- Never push without confirming scope when the worktree is mixed.
+- Default to a draft PR unless the user explicitly asks for a ready-for-review PR.
+- If the repository does not appear to be connected to an accessible GitHub remote, stop and explain the blocker before making assumptions.
 
-```shell
-git branch --show-current
-gh pr view "$(git branch --show-current)" --json number --jq '.number'
-```
+## PR Body Expectations
 
-If this finds an existing PR, preserve its current review state. Never convert an existing ready-for-review PR back to draft as part of `yeet`; only new PRs created by this flow should start as draft.
+The PR description should use real Markdown prose and cover:
 
-## PR Title
-
-Format: `<type>(<scope>): <subject>`
-
-`<scope>` is optional. A scope consist of a noun describing a section of the codebase (component, service or subsytem).
-
-### Example
-
-```
-feat: add hat wobble
-^--^  ^------------^
-|     |
-|     +-> Summary in present tense.
-|
-+-------> Type: chore, docs, feat, fix, refactor, style, or test.
-```
-
-More Examples:
-
-- `feat`: (new feature for the user, not a new feature for build script)
-- `fix`: (bug fix for the user, not a fix to a build script)
-- `docs`: (changes to the documentation)
-- `style`: (formatting, missing semi colons, etc; no production code change)
-- `refactor`: (refactoring production code, eg. renaming a variable)
-- `test`: (adding missing tests, refactoring tests; no production code change)
-- `chore`: (updating grunt tasks etc; no production code change)
-
-
-## PR Body Contents
-
-When invoked, use `gh` to edit the pull request body and title to reflect the contents of the specified PR. Make sure to check the existing pull request body to see if there is key information that should be preserved. For example, NEVER remove an image in the existing pull request body, as the author may have no way to recover it if you remove it.
-
-When a repository PR template exists, adapt the final PR body to that template. Preserve meaningful headings, required checklists, and repo-specific prompts, but replace placeholder text with net-diff-specific content or `N/A` where the template asks for it. Do not discard template sections just because the fallback shape below is shorter.
-
-It is critically important to explain _why_ the change is being made. If the current conversation in which this skill is invoked has discussed the motivation, be sure to capture this in the pull request body.
-
-The body should also explain _what_ changed, but this should appear after the _why_.
-
-Limit discussion to the _net change_ of the commit. It is generally frowned upon to discuss changes that were attempted but later undone in the course of the development of the pull request. When rewriting the pull request body, you may need to eliminate details such as these when they are no longer appropriate / of interest to future readers.
-
-Avoid references to absolute paths on my local disk. When talking about a path that is within the repository, simply use the repo-relative path.
-
-Default to omitting `Verification`. Add it only when you have behavioral evidence worth preserving for reviewers: a reproduced bug, a before/after check, a targeted test that exercises the changed behavior, or a manual scenario with input and observed outcome. Do not use it for generic commands or automation results such as package tests, type checks, linters, formatters, pre-commit/pre-push hooks, or CI status.
-
-If the repository template requires a validation or verification section, keep that section and avoid generic filler: include meaningful commands/results, a targeted manual scenario, or `Not run` with a reason.
-
-Use professional Markdown:
-
-- Put code, paths, commands, flags, and identifiers in backticks.
-- Use fenced code blocks for shell transcripts or multi-line examples.
-- Use GitHub permalinks when citing existing code relevant to the change.
-- Reference relevant issues or related PRs, but do not reference the PR in its own body.
-
-### Suggested PR Body Shape
-
-Use this as a fallback when the repository does not have a PR template:
-
-```markdown
-## Why
-
-Describe the user-facing or maintainer-facing problem, including cause and effect where useful.
-
-## What Changed
-
-Describe the net implementation change in concise prose.
-```
+- what changed
+- why it changed
+- the user or developer impact
+- the root cause when the PR is a fix
+- the checks used to validate it
