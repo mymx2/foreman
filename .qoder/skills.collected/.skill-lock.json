@@ -34,80 +34,70 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/tw93/Waza.git",
       "skillPath": "skills/check/SKILL.md",
-      "skillFolderHash": "ce068811dce52b691783680f16dd03eec2641947",
+      "skillFolderHash": "51857560ba036df7b9d09f3e1d51dc2eed624e9c",
       "pluginName": "waza-check",
       "installedAt": "2026-06-15T02:56:31.511Z",
-      "updatedAt": "2026-06-16T10:08:29.695Z"
-    },
-    "design": {
-      "source": "tw93/Waza",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/tw93/Waza.git",
-      "skillPath": "skills/design/SKILL.md",
-      "skillFolderHash": "b73b361e81564aee1edfb64790a1d9ae768434f9",
-      "pluginName": "waza-design",
-      "installedAt": "2026-06-15T02:56:31.523Z",
-      "updatedAt": "2026-06-16T10:08:29.702Z"
+      "updatedAt": "2026-06-30T06:14:54.389Z"
     },
     "health": {
       "source": "tw93/Waza",
       "sourceType": "github",
       "sourceUrl": "https://github.com/tw93/Waza.git",
       "skillPath": "skills/health/SKILL.md",
-      "skillFolderHash": "133f025e5ac9c6b01f40b3e7e5823c5eb7d9584f",
+      "skillFolderHash": "32e7b9a6fea053bed110c286a1676997602185f6",
       "pluginName": "waza-health",
       "installedAt": "2026-06-15T02:56:31.532Z",
-      "updatedAt": "2026-06-16T10:08:29.708Z"
+      "updatedAt": "2026-06-30T06:14:54.398Z"
     },
     "hunt": {
       "source": "tw93/Waza",
       "sourceType": "github",
       "sourceUrl": "https://github.com/tw93/Waza.git",
       "skillPath": "skills/hunt/SKILL.md",
-      "skillFolderHash": "2f514761c6c486164470182933ec5082dd3bfb96",
+      "skillFolderHash": "a507f4e947917e59e5a1e43d3f2e4448f6e37b31",
       "pluginName": "waza-hunt",
       "installedAt": "2026-06-15T02:56:31.539Z",
-      "updatedAt": "2026-06-16T10:08:29.714Z"
+      "updatedAt": "2026-06-30T06:14:54.403Z"
     },
     "learn": {
       "source": "tw93/Waza",
       "sourceType": "github",
       "sourceUrl": "https://github.com/tw93/Waza.git",
       "skillPath": "skills/learn/SKILL.md",
-      "skillFolderHash": "422089e96424071c5b12dd7515711c8130cf6076",
+      "skillFolderHash": "8fe992803eb8bcf4efe1a2445dc0f187ce4c64f1",
       "pluginName": "waza-learn",
       "installedAt": "2026-06-15T02:56:31.544Z",
-      "updatedAt": "2026-06-16T10:08:29.722Z"
+      "updatedAt": "2026-06-30T06:14:54.408Z"
     },
     "read": {
       "source": "tw93/Waza",
       "sourceType": "github",
       "sourceUrl": "https://github.com/tw93/Waza.git",
       "skillPath": "skills/read/SKILL.md",
-      "skillFolderHash": "1cccbf79f128b1481c93e8dd02e2b687f5b350f9",
+      "skillFolderHash": "7701b6e366dffe11fc5c8d29cb440883d6ede8e9",
       "pluginName": "waza-read",
       "installedAt": "2026-06-15T02:56:31.551Z",
-      "updatedAt": "2026-06-16T10:08:29.733Z"
+      "updatedAt": "2026-06-30T06:14:54.414Z"
     },
     "think": {
       "source": "tw93/Waza",
       "sourceType": "github",
       "sourceUrl": "https://github.com/tw93/Waza.git",
       "skillPath": "skills/think/SKILL.md",
-      "skillFolderHash": "057ad977ff7462fa955ca1e8e5c8663e1de3e6ef",
+      "skillFolderHash": "38f7ab2be649e35336da6e8bea1ad34d9b5b51b4",
       "pluginName": "waza-think",
       "installedAt": "2026-06-15T02:56:31.558Z",
-      "updatedAt": "2026-06-16T10:08:29.738Z"
+      "updatedAt": "2026-06-30T06:14:54.420Z"
     },
     "write": {
       "source": "tw93/Waza",
       "sourceType": "github",
       "sourceUrl": "https://github.com/tw93/Waza.git",
       "skillPath": "skills/write/SKILL.md",
-      "skillFolderHash": "6472f43930c4cc3c0e6cefca6b230b7927bc5f30",
+      "skillFolderHash": "e27f37e1358012c828c60f071760ea826bc196d3",
       "pluginName": "waza-write",
       "installedAt": "2026-06-15T02:56:31.569Z",
-      "updatedAt": "2026-06-16T10:08:29.744Z"
+      "updatedAt": "2026-06-30T06:14:54.431Z"
     },
     "screenshot": {
       "source": "openai/skills",
@@ -144,6 +134,16 @@
       "skillFolderHash": "5eb8ea0a631b2990fcfcdc026dc0c215e0cdbb75",
       "installedAt": "2026-06-17T02:50:28.872Z",
       "updatedAt": "2026-06-17T02:50:28.872Z"
+    },
+    "ui": {
+      "source": "tw93/Waza",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/tw93/Waza.git",
+      "skillPath": "skills/ui/SKILL.md",
+      "skillFolderHash": "688fe16298f9f55123d686cc2607059685d481d9",
+      "pluginName": "waza-ui",
+      "installedAt": "2026-06-30T06:14:54.426Z",
+      "updatedAt": "2026-06-30T06:14:54.426Z"
     }
   },
   "dismissed": {

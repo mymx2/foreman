@@ -31,14 +31,14 @@ vpx skills add anthropics/claude-plugins-official --skill claude-md-improver -g
 
 # tw93/Waza
 vpx skills add tw93/Waza \
+  --skill think \
+  --skill ui \
   --skill check \
-  --skill design \
-  --skill health \
   --skill hunt \
   --skill learn \
   --skill read \
-  --skill think \
   --skill write \
+  --skill health \
   -g
 ```
 
@@ -53,14 +53,14 @@ vpx skills add tw93/Waza \
 | `screenshot` | openai/skills | 桌面截图工具 |
 | `skill-creator` | anthropics/skills | Agent Skill 创建与优化 |
 | `claude-md-improver` | anthropics/claude-plugins-official | CLAUDE.md 审计与优化 |
+| `think` | tw93/Waza | 方案设计与决策 |
+| `ui` | tw93/Waza | 生产级 UI 设计 |
 | `check` | tw93/Waza | 代码审查与发布检查 |
-| `design` | tw93/Waza | 生产级 UI 设计 |
-| `health` | tw93/Waza | 工程健康度审计 |
 | `hunt` | tw93/Waza | 根因诊断与修复 |
 | `learn` | tw93/Waza | 深度研究与成稿 |
 | `read` | tw93/Waza | URL/PDF 阅读与摘要 |
-| `think` | tw93/Waza | 方案设计与决策 |
 | `write` | tw93/Waza | 中英文润色与去 AI 味 |
+| `health` | tw93/Waza | 工程健康度审计 |
 
 ---
 

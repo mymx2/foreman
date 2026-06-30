@@ -49,6 +49,12 @@
       "skillPath": "skills/deprecation-and-migration/SKILL.md",
       "computedHash": "3671326de345b4a60a19c6d665bd0c3c6761792df0b553cf54200901d8f756b2"
     },
+    "design-cli": {
+      "source": "mymx2/skills",
+      "sourceType": "github",
+      "skillPath": "skills/design-cli/SKILL.md",
+      "computedHash": "40ba449e8554ecc74302bd12b8c479f23f9a51175c04d2ad4ce6c39955841313"
+    },
     "documentation-and-adrs": {
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
@@ -98,13 +104,13 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/idea-refine/SKILL.md",
-      "computedHash": "525f928bccf704e28f5be90f55d0bba94517e566034a45b92b71e2ae11a7ad0b"
+      "computedHash": "a0d312496bd9267af9e76499c3d493df41ecd933f118511773c2789a77c5e681"
     },
     "incremental-implementation": {
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/incremental-implementation/SKILL.md",
-      "computedHash": "27a55fa6a8ca32d2f16198ad0585511ba41c489a527c9a4b51c96ad7f1a3ffce"
+      "computedHash": "48c4b3d1b17ddc6dfed75cb455d6bcc9036018b7d916c0f1836628ae79ae7daa"
     },
     "interview-me": {
       "source": "addyosmani/agent-skills",
@@ -128,7 +134,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/planning-and-task-breakdown/SKILL.md",
-      "computedHash": "c0d5b44e73aca912582038b8a663cdb9efb043e4c2b024a89d47808e23b134c9"
+      "computedHash": "7625801d03c01b920da0854b9744f0ac9921167e3d91522d2faede89094cd42c"
     },
     "security-and-hardening": {
       "source": "addyosmani/agent-skills",
@@ -140,7 +146,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/shipping-and-launch/SKILL.md",
-      "computedHash": "59adff2e4da83a3e01f9944f2cfb1bb50b8b98f1c39ec376032b13c6ae2096fa"
+      "computedHash": "f4a86ad75ffb5f43b172c89fd10322aba9fa3bb9ecfa89ff66cb1030ac1ec67d"
     },
     "source-driven-development": {
       "source": "addyosmani/agent-skills",
@@ -152,7 +158,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/spec-driven-development/SKILL.md",
-      "computedHash": "a646faab486907990abf2b5faa329e168e11b83c8a64f68ca2a8568ec3984276"
+      "computedHash": "09e8d56513241754714d9e71a5cd4c4b45c094a7790819ccc1396a8e139f2ba0"
     },
     "test-driven-development": {
       "source": "addyosmani/agent-skills",
@@ -164,7 +170,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/using-agent-skills/SKILL.md",
-      "computedHash": "87489d15f8f826ff37c3096883c9b9106f340227918dc4f033d80fa62c349e8c"
+      "computedHash": "138a6713d68f0d752928ecb6b5594404448d15d83a6510fc873b1703e0af2683"
     },
     "yeet": {
       "source": "openai/plugins",

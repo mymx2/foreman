@@ -10,6 +10,18 @@ Research first, build second. Test before shipping. Deliver a finished product i
 
 ---
 
+# Project Guide
+
+| File      | Who reads it  | What it defines                      |
+| --------- | ------------- | ------------------------------------ |
+| README.md | Humans        | What the project is                  |
+| AGENTS.md | Coding agents | How to build the project             |
+| DESIGN.md | Design agents | How the project should look and feel |
+
+`DESIGN.md` is not placed at the monorepo root. If it exists, it lives in each sub-project's own directory under `projects/`. This is intentional — different targets (admin dashboard, H5 mobile web, tablet, etc.) each have their own visual language, layout conventions, and component patterns, so a single shared design spec would be too coarse to be useful.
+
+---
+
 # Using Agent Skills
 
 ## Overview
@@ -118,6 +130,8 @@ Your job is surgical precision, not unsolicited renovation.
 ### 6. Verify, Don't Assume
 
 Every skill includes a verification step. A task is not complete until verification passes. "Seems right" is never sufficient — there must be evidence (passing tests, build output, runtime data).
+
+Per-skill verification is the local check. The project-wide bar that applies to _every_ change, regardless of which skill is active, is the Definition of Done: tests pass, no regressions, behavior verified at runtime, docs updated. See `references/definition-of-done.md`. It complements each task's acceptance criteria rather than replacing them.
 
 ## Failure Modes to Avoid
 
