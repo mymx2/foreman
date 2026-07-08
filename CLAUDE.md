@@ -1,1 +1,1 @@
-[AGENTS.MD](AGENTS.MD)
+[AGENTS.md](AGENTS.md)

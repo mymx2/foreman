@@ -13,7 +13,6 @@ const EXCLUDE_PATHS = new Set([
   ".github",
   "libraries",
   "README_CN.md",
-  "sync.ts",
   // gradle sub-paths
   join("gradle", "depLibs.versions.toml"),
   join("gradle", "configs", "checkstyle"),
