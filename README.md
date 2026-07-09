@@ -30,17 +30,18 @@ Skills encode the workflows, quality gates, and best practices that senior engin
 
 ## Commands
 
-7 slash commands that map to the development lifecycle. Each one activates the right skills automatically.
+8 slash commands that map to the development lifecycle. Each one activates the right skills automatically.
 
-| What you're doing    | Command          | Key principle           |
-| -------------------- | ---------------- | ----------------------- |
-| Define what to build | `/spec`          | Spec before code        |
-| Plan how to build it | `/plan`          | Small, atomic tasks     |
-| Build incrementally  | `/build`         | One slice at a time     |
-| Prove it works       | `/test`          | Tests are proof         |
-| Review before merge  | `/review`        | Improve code health     |
-| Simplify the code    | `/code-simplify` | Clarity over cleverness |
-| Ship to production   | `/ship`          | Faster is safer         |
+| What you're doing     | Command          | Key principle               |
+| --------------------- | ---------------- | --------------------------- |
+| Define what to build  | `/spec`          | Spec before code            |
+| Plan how to build it  | `/plan`          | Small, atomic tasks         |
+| Build incrementally   | `/build`         | One slice at a time         |
+| Prove it works        | `/test`          | Tests are proof             |
+| Review before merge   | `/review`        | Improve code health         |
+| Audit web performance | `/webperf`       | Measure before you optimize |
+| Simplify the code     | `/code-simplify` | Clarity over cleverness     |
+| Ship to production    | `/ship`          | Faster is safer             |
 
 Want fewer manual steps once the spec exists? **`/build auto`** generates the plan and implements every task in a single approved pass — you approve the plan once, then it runs autonomously. It removes the human stepping _between_ tasks, not the verification: every task is still test-driven and committed individually, and it pauses on failures or risky steps.
 
@@ -124,18 +125,23 @@ Pre-configured specialist personas for targeted reviews:
 | [security-auditor](agents/security-auditor.md)               | Security Engineer        | Vulnerability detection, threat modeling, OWASP assessment                                   |
 | [web-performance-auditor](agents/web-performance-auditor.md) | Web Performance Engineer | Core Web Vitals audit with Quick/Deep modes and a metric-honesty rule; run it via `/webperf` |
 
+See [docs/agents.md](docs/agents.md) for the decision matrix, orchestration rules, and how personas compose with skills and slash commands.
+
 ---
 
 ## Reference Checklists
 
 Quick-reference material that skills pull in when needed:
 
-| Reference                                                           | Covers                                                                     |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| [testing-patterns.md](references/testing-patterns.md)               | Test structure, naming, mocking, React/API/E2E examples, anti-patterns     |
-| [security-checklist.md](references/security-checklist.md)           | Pre-commit checks, auth, input validation, headers, CORS, OWASP Top 10     |
-| [performance-checklist.md](references/performance-checklist.md)     | Core Web Vitals targets, frontend/backend checklists, measurement commands |
-| [accessibility-checklist.md](references/accessibility-checklist.md) | Keyboard nav, screen readers, visual design, ARIA, testing tools           |
+| Reference                                                           | Covers                                                                                                      |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [definition-of-done.md](references/definition-of-done.md)           | Project-wide standing bar every change clears, contrasted with per-task acceptance criteria                 |
+| [testing-patterns.md](references/testing-patterns.md)               | Test structure, naming, mocking, React/API/E2E examples, anti-patterns                                      |
+| [security-checklist.md](references/security-checklist.md)           | Pre-commit checks, auth, input validation, headers, CORS, OWASP Top 10                                      |
+| [performance-checklist.md](references/performance-checklist.md)     | Core Web Vitals targets, frontend/backend checklists, measurement commands                                  |
+| [accessibility-checklist.md](references/accessibility-checklist.md) | Keyboard nav, screen readers, visual design, ARIA, testing tools                                            |
+| [observability-checklist.md](references/observability-checklist.md) | On-call questions, structured logging, RED/USE metrics, tracing, symptom-based alerting, pre-launch gate    |
+| [orchestration-patterns.md](references/orchestration-patterns.md)   | Endorsed multi-persona orchestration patterns, anti-patterns, and the "personas don't invoke personas" rule |
 
 ---
 
