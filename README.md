@@ -1,12 +1,13 @@
 # Project Guide
 
-| File      | Who reads it  | What it defines                      |
-| --------- | ------------- | ------------------------------------ |
-| README.md | Humans        | What the project is                  |
-| AGENTS.md | Coding agents | How to build the project             |
-| DESIGN.md | Design agents | How the project should look and feel |
+| File      | Who reads it  | What it defines                               |
+| --------- | ------------- | --------------------------------------------- |
+| README.md | Humans        | What the project is                           |
+| AGENTS.md | Coding agents | How to build the project                      |
+| DESIGN.md | Design agents | How the project should look and feel          |
+| SPEC.md   | Coding agents | What we're building and why (per sub-project) |
 
-`DESIGN.md` is not placed at the monorepo root. If it exists, it lives in each sub-project's own directory under `projects/`. This is intentional — different targets (admin dashboard, H5 mobile web, tablet, etc.) each have their own visual language, layout conventions, and component patterns, so a single shared design spec would be too coarse to be useful.
+`DESIGN.md` and `SPEC.md` are not placed at the monorepo root. They live in each sub-project's own directory under `projects/`. This is intentional — different targets (admin dashboard, H5 mobile web, tablet, etc.) each have their own visual language, layout conventions, and component patterns, so a single shared design spec would be too coarse to be useful.
 
 # Agent Skills
 
