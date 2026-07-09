@@ -91,7 +91,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/git-workflow-and-versioning/SKILL.md",
-      "computedHash": "f4687d5f0edc5693f1414546cd02909b22f4de61ef89d17254ed1ee7cdcffab5"
+      "computedHash": "8da737b02d1d96226a3e4ddfbcfbd25211a750279fdc10ff202a257ccbbf2c9a"
     },
     "github": {
       "source": "openai/plugins",
@@ -134,7 +134,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/planning-and-task-breakdown/SKILL.md",
-      "computedHash": "7625801d03c01b920da0854b9744f0ac9921167e3d91522d2faede89094cd42c"
+      "computedHash": "760b881a6566bd56af916ce3380436fb636e276bdbe0a89d335c09b88a49529e"
     },
     "security-and-hardening": {
       "source": "addyosmani/agent-skills",
@@ -158,7 +158,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/spec-driven-development/SKILL.md",
-      "computedHash": "09e8d56513241754714d9e71a5cd4c4b45c094a7790819ccc1396a8e139f2ba0"
+      "computedHash": "ad4ef7a7077b48336bbebb6236a92d442e2abbc434d88592c2f945f6eda8e878"
     },
     "test-driven-development": {
       "source": "addyosmani/agent-skills",

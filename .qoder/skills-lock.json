@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "skills": {
+    "claude-md-improver": {
+      "source": "anthropics/claude-plugins-official",
+      "sourceType": "github",
+      "skillPath": "plugins/claude-md-management/skills/claude-md-improver/SKILL.md",
+      "computedHash": "7b765125563b4e1490c925f72da35dcd004151e1469b9b680b3af7fa5f0b94e6"
+    },
+    "find-skills": {
+      "source": "mymx2/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "19945b12a1baae571cfd3c024a1c06bd40e542a3215eb363b9cdc99ae792a8a7"
+    },
+    "screenshot": {
+      "source": "openai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/.curated/screenshot/SKILL.md",
+      "computedHash": "08ad9780b78f73c1a9abdcedd443108019ba2264a56b7f287006cbe99c3ed0c1"
+    },
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/skill-creator/SKILL.md",
+      "computedHash": "7e3c9cd74e9e2b4828527a857170e86310f2dab5ea8030a9043df2c7e6c88857"
+    },
+    "skills-cli": {
+      "source": "mymx2/skills",
+      "sourceType": "github",
+      "skillPath": "skills/skills-cli/SKILL.md",
+      "computedHash": "1a83de802087acf25c89e6920ed412bf3830608b0cd342ffe7eceef18cd148dc"
+    },
+    "writing-guidelines": {
+      "source": "mymx2/skills",
+      "sourceType": "github",
+      "skillPath": "skills/writing-guidelines/SKILL.md",
+      "computedHash": "5673e21aefafa457c494c1672d08be291dbc5baf5cfacb65c9b74bd3604c11df"
+    },
+    "writing-review": {
+      "source": "mymx2/skills",
+      "sourceType": "github",
+      "skillPath": "skills/writing-review/SKILL.md",
+      "computedHash": "c67ace0807604585da1324c9b0f2c19d92733c852e7178edee69ccadf855dc9a"
+    }
+  }
+}

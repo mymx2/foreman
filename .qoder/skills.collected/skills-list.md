@@ -18,16 +18,16 @@ vpx skills add mymx2/skills \
   --skill skills-cli \
   --skill writing-guidelines \
   --skill writing-review \
-  -g
+  -g -y
 
 # openai/skills -- deprecated
-vpx skills add openai/skills --skill screenshot -g
+vpx skills add openai/skills --skill screenshot -g -y
 
 # anthropics/skills
-vpx skills add anthropics/skills --skill skill-creator -g
+vpx skills add anthropics/skills --skill skill-creator -g -y
 
 # anthropics/claude-plugins-official
-vpx skills add anthropics/claude-plugins-official --skill claude-md-improver -g
+vpx skills add anthropics/claude-plugins-official --skill claude-md-improver -g -y
 
 # tw93/Waza
 vpx skills add tw93/Waza \
@@ -39,7 +39,7 @@ vpx skills add tw93/Waza \
   --skill read \
   --skill write \
   --skill health \
-  -g
+  -g -y
 ```
 
 ### 技能索引
