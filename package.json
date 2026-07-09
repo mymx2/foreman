@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "fmt": "vp fmt"
+    "fmt": "vp fmt",
+    "prepare": "vp config"
   },
   "devDependencies": {
     "@types/node": "25.9.2",
