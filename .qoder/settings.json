@@ -1,5 +1,8 @@
 {
   "mcpServers-example": {
+    "deepwiki": {
+      "url": "https://mcp.deepwiki.com/mcp"
+    },
     "context7": {
       "url": "https://mcp.context7.com/mcp",
       "headers": {
@@ -11,6 +14,18 @@
       "headers": {
         "Authorization": "Bearer <GITHUB_TOKEN>"
       }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest", "--autoConnect"]
+    },
+    "tdesign-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "tdesign-mcp-server@latest"]
     }
   },
   "hooks": {
