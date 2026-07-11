@@ -4,13 +4,16 @@
   "type": "module",
   "scripts": {
     "fmt": "vp fmt",
-    "prepare": "vp config"
+    "prepare": "vp config",
+    "up": "taze -r -w -i"
   },
   "devDependencies": {
-    "@types/node": "25.9.2",
-    "@typescript/native-preview": "7.0.0-dev.20260509.2",
-    "typescript": "6.0.3",
-    "vite-plus": "catalog:"
+    "@types/node": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "taze": "catalog:",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   },
-  "packageManager": "pnpm@10.33.3"
+  "packageManager": "pnpm@11.11.0"
 }

@@ -23,6 +23,25 @@ Research first, build second. Test before shipping. Deliver a finished product i
 
 ---
 
+# Vite+ (vp) — Prefer over raw package managers
+
+**Prefer `vp` over pnpm/npm/yarn when available.** All dependency management, scripts, and dev commands should go through `vp`.
+
+- `vp help` to list all commands
+- `vp <command> --help` for details on a specific command
+
+```shell
+vp run fmt       # format
+vp run up        # update dependencies
+vp check --fix   # lint & auto-fix
+vp dev           # start Vite dev server
+vp build         # build project
+```
+
+**`vp <cmd>` = Vite+ built-in; `vp run <cmd>` = package.json script. If a same-named script exists in package.json, always use `vp run`.**
+
+---
+
 # Using Agent Skills
 
 ## Overview
