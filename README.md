@@ -7,11 +7,13 @@
 | DESIGN.md | Design agents | How the project should look and feel          |
 | SPEC.md   | Coding agents | What we're building and why (per sub-project) |
 
-`DESIGN.md` and `SPEC.md` are not placed at the monorepo root. They live in each sub-project's own directory under `projects/`. This is intentional — different targets (admin dashboard, H5 mobile web, tablet, etc.) each have their own visual language, layout conventions, and component patterns, so a single shared design spec would be too coarse to be useful.
+The root `SPEC.md` is an index that points to each sub-project's spec. Sub-project-level `SPEC.md` and `DESIGN.md` live under `projects/`, with each sub-project carrying only the files it needs.
 
-# Vite+
+---
 
-This project uses **Vite+** (`vp`) as the unified CLI. Prefer `vp` over pnpm/npm/yarn when available.
+# Vite+ (vp): Prefer over raw package managers
+
+All dependency management, scripts, and dev commands go through `vp`.
 
 - `vp help` to list all commands
 - `vp <command> --help` for details on a specific command
@@ -24,7 +26,7 @@ vp dev           # start Vite dev server
 vp build         # build project
 ```
 
-> `vp <cmd>` runs the Vite+ built-in; `vp run <cmd>` runs the package.json script. If a same-named script exists in package.json, always use `vp run`.
+**`vp <cmd>` = Vite+ built-in; `vp run <cmd>` = package.json script. If a same-named script exists in package.json, always use `vp run`.**
 
 # Agent Skills
 

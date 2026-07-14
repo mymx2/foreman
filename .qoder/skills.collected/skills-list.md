@@ -25,21 +25,6 @@ vpx skills add openai/skills --skill screenshot -g -y
 
 # anthropics/skills
 vpx skills add anthropics/skills --skill skill-creator -g -y
-
-# anthropics/claude-plugins-official
-vpx skills add anthropics/claude-plugins-official --skill claude-md-improver -g -y
-
-# tw93/Waza
-vpx skills add tw93/Waza \
-  --skill think \
-  --skill ui \
-  --skill check \
-  --skill hunt \
-  --skill learn \
-  --skill read \
-  --skill write \
-  --skill health \
-  -g -y
 ```
 
 ### 技能索引
@@ -52,15 +37,6 @@ vpx skills add tw93/Waza \
 | `writing-review` | mymx2/skills | 写作规范合规审查 |
 | `screenshot` | openai/skills | 桌面截图工具 |
 | `skill-creator` | anthropics/skills | Agent Skill 创建与优化 |
-| `claude-md-improver` | anthropics/claude-plugins-official | CLAUDE.md 审计与优化 |
-| `think` | tw93/Waza | 方案设计与决策 |
-| `ui` | tw93/Waza | 生产级 UI 设计 |
-| `check` | tw93/Waza | 代码审查与发布检查 |
-| `hunt` | tw93/Waza | 根因诊断与修复 |
-| `learn` | tw93/Waza | 深度研究与成稿 |
-| `read` | tw93/Waza | URL/PDF 阅读与摘要 |
-| `write` | tw93/Waza | 中英文润色与去 AI 味 |
-| `health` | tw93/Waza | 工程健康度审计 |
 
 ---
 
@@ -445,6 +421,21 @@ vpx skills add redis/agent-skills --skill redis-core --agent openclaw -p -y
 ### 安装命令
 
 ```bash
+# tw93/Waza
+vpx skills add tw93/Waza \
+  --skill think \
+  --skill ui \
+  --skill check \
+  --skill hunt \
+  --skill learn \
+  --skill read \
+  --skill write \
+  --skill health \
+  --agent openclaw -p -y
+
+# anthropics/claude-plugins-official
+vpx skills add anthropics/claude-plugins-official --skill claude-md-improver --agent openclaw -p -y
+
 # dgreenheck/webgpu-claude-skill — WebGPU 3D
 vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent openclaw -p -y
 ```
@@ -457,5 +448,14 @@ vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent
 
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
+| `think` | tw93/Waza | 方案设计与决策 |
+| `ui` | tw93/Waza | 生产级 UI 设计 |
+| `check` | tw93/Waza | 代码审查与发布检查 |
+| `hunt` | tw93/Waza | 根因诊断与修复 |
+| `learn` | tw93/Waza | 深度研究与成稿 |
+| `read` | tw93/Waza | URL/PDF 阅读与摘要 |
+| `write` | tw93/Waza | 中英文润色与去 AI 味 |
+| `health` | tw93/Waza | 工程健康度审计 |
+| `claude-md-improver` | anthropics/claude-plugins-official | CLAUDE.md 审计与优化 |
 | `webgpu-threejs-tsl` | dgreenheck/webgpu-claude-skill | Three.js WebGPU + TSL 着色器 |
 | `tencentos-expert` | 手动收集 | TencentOS 服务器运维诊断 |
