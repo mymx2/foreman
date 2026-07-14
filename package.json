@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "fmt": "vp fmt",
     "prepare": "vp config",
     "up": "taze -r -w -i"
   },
