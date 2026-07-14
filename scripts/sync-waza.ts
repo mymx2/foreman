@@ -19,12 +19,6 @@ const REPO_URL = "https://github.com/tw93/Waza";
 const RULES_FROM = join(WORKTREE_DIR, "rules");
 const RULES_TO = join(ROOT, AGENT_DIR, "rules");
 
-const DOCS_DIR = join(ROOT, "docs");
-
-const RESOLVER_PATH = join(WORKTREE_DIR, "skills", "RESOLVER.md");
-const ROUTING_SRC = join(RULES_FROM, "waza-routing.md");
-const ROUTING_PATH = join(DOCS_DIR, "__waza-routing.md");
-
 // ── helpers ─────────────────────────────────────────────────────────
 
 /**
@@ -63,7 +57,6 @@ function syncRules(): void {
   }
 
   for (const entry of readdirSync(RULES_FROM)) {
-    // waza-routing.md is output separately to docs/__waza-routing.md
     if (entry === "waza-routing.md") continue;
 
     const srcFile = join(RULES_FROM, entry);
@@ -98,46 +91,6 @@ function syncRules(): void {
   }
 }
 
-// ── 3. Append RESOLVER.md to waza-routing.md ────────────────────────
-function appendResolver(): void {
-  if (!existsSync(RESOLVER_PATH)) {
-    console.warn(`[waza] "${RESOLVER_PATH}" does not exist, skipping.`);
-    return;
-  }
-
-  if (!existsSync(ROUTING_SRC)) {
-    console.warn(`[waza] "${ROUTING_SRC}" does not exist, skipping append.`);
-    return;
-  }
-
-  // Use the source file as the authoritative body — no fragile text matching needed.
-  const srcBody = readFileSync(ROUTING_SRC, "utf-8").replace(/\r\n/g, "\n").trimEnd();
-  const resolverContent = readFileSync(RESOLVER_PATH, "utf-8").replace(/\r\n/g, "\n");
-
-  if (!existsSync(DOCS_DIR)) {
-    mkdirSync(DOCS_DIR, { recursive: true });
-  }
-
-  // Preserve any custom YAML frontmatter already present in the destination.
-  let frontmatter = "";
-  if (existsSync(ROUTING_PATH)) {
-    const destContent = readFileSync(ROUTING_PATH, "utf-8").replace(/\r\n/g, "\n");
-    frontmatter = extractFrontmatter(destContent);
-  }
-
-  const SEPARATOR = "\n\n<!-- ── RESOLVER.md (auto-appended by sync-waza.ts) ── -->";
-  const combined =
-    (frontmatter ? frontmatter + "\n" : "") +
-    srcBody +
-    SEPARATOR +
-    "\n\n" +
-    resolverContent.trimEnd() +
-    "\n";
-
-  writeFileSync(ROUTING_PATH, combined, "utf-8");
-  console.log(`[waza] Appended RESOLVER.md → ${ROUTING_PATH}`);
-}
-
 // ── Main ────────────────────────────────────────────────────────────
 function main(): void {
   console.log("[waza] Starting Waza sync...\n");
@@ -151,16 +104,14 @@ function main(): void {
 
   console.log();
 
-  appendResolver();
-
   console.log("\n[waza] Done.");
 
   // Run formatter if available
   try {
     const checkCmd = process.platform === "win32" ? "where vp 2>nul" : "which vp 2>/dev/null";
     execSync(checkCmd, { stdio: "ignore" });
-    console.log("\n[waza] Running vp run fmt...");
-    execSync("vp run fmt", { stdio: "inherit" });
+    console.log("\n[waza] Running vp fmt...");
+    execSync("vp fmt", { stdio: "inherit" });
   } catch {
     console.log("\n[waza] vp not found, skipping format.");
   }
