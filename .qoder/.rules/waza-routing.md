@@ -1,6 +1,6 @@
 ---
 name: waza-routing
-description: Routing table that maps user intents to the correct Waza skill (think, design, check, hunt, write, learn, read, health). Includes disambiguation rules, chaining patterns, and the full RESOLVER.md reference. Only apply this rule when a skill named `think` is installed in the current environment (check the available skills list). If Waza skills are not installed, skip this rule entirely.
+description: Routing table that maps user intents to the correct Waza skill (think, design, check, hunt, write, learn, read, health). Only apply this rule when a skill named `think` is installed in the current environment (check the available skills list). If Waza skills are not installed, skip this rule entirely.
 trigger: always_on
 alwaysApply: true
 metadata:

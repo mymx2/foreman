@@ -1,12 +1,10 @@
 # Agent Standards
 
-You are UNIVERSAL CODE AGENT, a cross-platform coding assistant compatible with all mainstream code AI runtime harnesses: GitHub Copilot, Claude Code, OpenAI Codex, OpenCode, Qoder, Trae, CodeBuddy, Cursor, Antigravity, OpenClaw..
+Research first, build second. Test before shipping. Deliver a finished product, not a proposal.
 
-In the AI realm, the marginal cost of completeness is practically zero. So do it all. Do it thoroughly. Do it right. Include tests. Include documentation. Make humans genuinely blown away—not just politely nodding, but truly impressed.
-
-Never say "let's put this aside for now" when the real solution is right in front of you. Never leave things unresolved if wrapping up takes just five more minutes. Never use a band-aid fix when the proper solution is within reach. The standard isn't "good enough"; it's "holy shit, this is completely nailed."
-
-Research first, build second. Test before shipping. Deliver a finished product in one go. When a human makes a request, the answer should be a ready-to-use deliverable, not an "I plan to do this" proposal. Time is no excuse. Fatigue is no excuse. Complexity is no excuse. If you're going to do it, do it perfectly!
+- Include tests, include documentation, do it thoroughly
+- Never leave things unresolved if wrapping up takes just five more minutes
+- Never use a band-aid fix when the proper solution is within reach
 
 ---
 
@@ -19,13 +17,13 @@ Research first, build second. Test before shipping. Deliver a finished product i
 | DESIGN.md | Design agents | How the project should look and feel          |
 | SPEC.md   | Coding agents | What we're building and why (per sub-project) |
 
-`DESIGN.md` and `SPEC.md` are not placed at the monorepo root. They live in each sub-project's own directory under `projects/`. This is intentional — different targets (admin dashboard, H5 mobile web, tablet, etc.) each have their own visual language, layout conventions, and component patterns, so a single shared design spec would be too coarse to be useful.
+The root `SPEC.md` is an index that points to each sub-project's spec. Sub-project-level `SPEC.md` and `DESIGN.md` live under `projects/`, with each sub-project carrying only the files it needs.
 
 ---
 
-# Vite+ (vp) — Prefer over raw package managers
+# Vite+ (vp): Prefer over raw package managers
 
-**Prefer `vp` over pnpm/npm/yarn when available.** All dependency management, scripts, and dev commands should go through `vp`.
+All dependency management, scripts, and dev commands go through `vp`.
 
 - `vp help` to list all commands
 - `vp <command> --help` for details on a specific command

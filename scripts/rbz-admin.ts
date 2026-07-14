@@ -66,6 +66,8 @@ function copyFiltered(srcDir: string, destDir: string, baseDir: string = srcDir)
 }
 
 // ── 3. Init git ────────────────────────────────────────────────────
+// @ts-ignore
+// oxlint-disable-next-line no-unused-vars
 function initGit(): void {
   if (existsSync(join(TARGET_DIR, ".git"))) {
     console.log("[init-backend] Git already initialized, skipping.");
@@ -98,8 +100,6 @@ function main(): void {
   copyFiltered(WORKTREE_DIR, TARGET_DIR);
 
   console.log();
-
-  initGit();
 
   console.log("\n[init-backend] Done.");
 }

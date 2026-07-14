@@ -17,7 +17,7 @@ const WORKTREE_DIR = join(ROOT, ".worktrees", "Waza");
 const REPO_URL = "https://github.com/tw93/Waza";
 
 const RULES_FROM = join(WORKTREE_DIR, "rules");
-const RULES_TO = join(ROOT, AGENT_DIR, "rules");
+const RULES_TO = join(ROOT, AGENT_DIR, ".rules");
 
 const RESOLVER_PATH = join(WORKTREE_DIR, "skills", "RESOLVER.md");
 const ROUTING_SRC = join(RULES_FROM, "waza-routing.md");
