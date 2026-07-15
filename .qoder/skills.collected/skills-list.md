@@ -443,6 +443,7 @@ vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent
 > `tencentos-expert` 为手动收集，无 skills.sh 安装命令。
 > `kdocs-skill`（金山文档）通过 git clone 安装到 `skills.disabled/`。
 > [飞书文档技能](https://www.skills.sh/larksuite/cli) 尚未收集。
+> 其余未作说明部分均来自个人创建或收集
 
 ### 技能索引
 
@@ -459,3 +460,4 @@ vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent
 | `claude-md-improver` | anthropics/claude-plugins-official | CLAUDE.md 审计与优化 |
 | `webgpu-threejs-tsl` | dgreenheck/webgpu-claude-skill | Three.js WebGPU + TSL 着色器 |
 | `tencentos-expert` | 手动收集 | TencentOS 服务器运维诊断 |
+| `sql-parser-cst` | 个人创建 | 解析 SQL 生成 CST 语法树，提取表结构与 SQL 元信息 |
