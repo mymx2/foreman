@@ -3,7 +3,7 @@
 一次性计划文件，不被 git 追踪。存放位置：
 
 ```
-tasks/__<sub_project_name>/YYYYMMDD/NN-plan-<kebab-slug>.md
+tasks/__<sub>/YYYYMMDD/NN-plan-<kebab-slug>.md
 ```
 
 - `YYYYMMDD` — 创建当日日期
