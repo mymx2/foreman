@@ -100,8 +100,6 @@ npx @google/design.md diff DESIGN.md DESIGN-v2.md
 
 ## The Specification
 
-The full DESIGN.md spec lives at [`docs/spec.md`](docs/spec.md). What follows is a condensed reference.
-
 ### File Structure
 
 A DESIGN.md file has two layers:
