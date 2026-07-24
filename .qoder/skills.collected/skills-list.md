@@ -235,7 +235,7 @@ vpx skills add microsoft/playwright-cli --skill playwright-cli --agent openclaw 
 
 ---
 
-## rbz-mini — 微信小程序
+## app-mini — 微信小程序
 
 Tech: 微信小程序, Skyline 渲染引擎, glass-easel
 
@@ -276,7 +276,7 @@ vpx skills add https://github.com/wechat-miniprogram/glass-easel/blob/master/gla
 
 ---
 
-## rbz-android — Android 原生
+## app-android — Android 原生
 
 Tech: Kotlin, Jetpack Compose, Android SDK
 

@@ -82,7 +82,7 @@ Tech: Vue 3 Composition API, TypeScript, Vite, UnoCSS, Pinia
 
 ---
 
-## rbz-mini (微信小程序)
+## app-mini (微信小程序)
 
 Tech: 微信小程序, Skyline 渲染引擎, glass-easel
 
@@ -104,7 +104,7 @@ Tech: 微信小程序, Skyline 渲染引擎, glass-easel
 
 ---
 
-## rbz-android (Android 原生)
+## app-android (Android 原生)
 
 Tech: Kotlin, Jetpack Compose, Android SDK
 
