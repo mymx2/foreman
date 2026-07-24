@@ -163,6 +163,7 @@ Tech: Kotlin, Spring Boot, Gradle KTS, PostgreSQL
 ### Persistence & Data
 
 - `jpa-spring-data-kotlin-mapper`
+- `jdbc-dsl`
 - `design-postgres-tables`
 - `redis-core`
 - `schema-migration-planner`
