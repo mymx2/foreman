@@ -80,6 +80,10 @@ Tech: Vue 3 Composition API, TypeScript, Vite, UnoCSS, Pinia
 - `playwright-cli`
 - `web-design-guidelines`
 
+### Toolchain
+
+- `vize`
+
 ---
 
 ## app-mini (微信小程序)

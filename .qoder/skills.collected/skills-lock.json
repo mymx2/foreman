@@ -25,6 +25,12 @@
       "skillPath": "device-ai/appfunctions/SKILL.md",
       "computedHash": "e1a0e8f9e5b562bbb0a7cdb603dda2da1c11d195a6ecc6486362916314ddd25a"
     },
+    "arrow-js": {
+      "source": "standardagents/arrow-js",
+      "sourceType": "github",
+      "skillPath": "packages/skill/resources/skill/SKILL.md",
+      "computedHash": "e29b17a31e4021fbdb038b31fb3130ef1115a701e4fa6924a3aacf3ebc370ec8"
+    },
     "brand-guidelines": {
       "source": "anthropics/skills",
       "sourceType": "github",

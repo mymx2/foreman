@@ -146,6 +146,8 @@ vpx skills add anthropics/skills \
   --skill webapp-testing \
   --skill xlsx \
   --agent openclaw -p -y
+
+vpx skills add https://github.com/standardagents/arrow-js/blob/main/packages/skill/resources/skill --agent openclaw -p -y
 ```
 
 ### 技能索引
@@ -208,6 +210,8 @@ vpx skills add vuejs-ai/skills \
 vpx skills add microsoft/playwright-cli --skill playwright-cli --agent openclaw -p -y
 ```
 
+> `vize` 为个人创建/收集，无 skills.sh 安装命令。
+
 ### 技能索引
 
 | 技能 | 来源 | 一句话 |
@@ -232,6 +236,7 @@ vpx skills add microsoft/playwright-cli --skill playwright-cli --agent openclaw 
 | `vitepress` | antfu/skills | 静态文档站生成 |
 | `slidev` | antfu/skills | Markdown 幻灯片 |
 | `web-design-guidelines` | antfu/skills | Web 设计与无障碍规范 |
+| `vize` | 个人创建 | Vue.js Rust 原生工具链（SFC 编译、Lint、格式化、类型检查、LSP） |
 
 ---
 
