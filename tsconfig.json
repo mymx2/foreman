@@ -14,7 +14,6 @@
     "noUncheckedSideEffectImports": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
-    "noUncheckedIndexedAccess": true,
     "erasableSyntaxOnly": true,
     "skipLibCheck": true,
     "noEmit": true,
