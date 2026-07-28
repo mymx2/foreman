@@ -27,4 +27,7 @@ export default defineConfig({
   staged: {
     '*': 'vp check --no-error-on-unmatched-pattern',
   },
+  test: {
+    exclude: ['**/node_modules/**', '**/dist/**', 'projects/**'],
+  },
 });

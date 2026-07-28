@@ -18,8 +18,8 @@
     "erasableSyntaxOnly": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "allowImportingTsExtensions": true,
     "noUnusedLocals": false,
     "types": ["node"]
-  }
+  },
+  "exclude": ["projects", "**/node_modules", "**/dist"]
 }
