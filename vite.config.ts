@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite-plus';
+import { defineConfig } from 'vite-plus'
 
 const ignorePatterns = [
   'pnpm-workspace.yaml',
@@ -9,7 +9,7 @@ const ignorePatterns = [
   'references',
   'projects',
   'skills',
-];
+]
 
 export default defineConfig({
   lint: {
@@ -21,7 +21,9 @@ export default defineConfig({
   },
   fmt: {
     singleQuote: true,
-    jsxSingleQuote: true,
+    semi: false,
+    arrowParens: 'avoid',
+    printWidth: 120,
     ignorePatterns: [...ignorePatterns],
   },
   staged: {
@@ -30,4 +32,4 @@ export default defineConfig({
   test: {
     exclude: ['**/node_modules/**', '**/dist/**', 'projects/**'],
   },
-});
+})
