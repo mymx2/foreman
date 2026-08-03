@@ -283,6 +283,12 @@
       "skillPath": "schema-migration-planner/SKILL.md",
       "computedHash": "cfef451b9b8664da36cd41752cc1361f908cea1a023bbf836af14f9dc9632e45"
     },
+    "shadcn-vue": {
+      "source": "unovue/shadcn-vue",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn-vue/SKILL.md",
+      "computedHash": "7037ba3c62e72d5324dbe0bfebe21d4fb8cb7aba5a2200dce96a797e948dc368"
+    },
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",

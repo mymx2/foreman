@@ -206,6 +206,9 @@ vpx skills add vuejs-ai/skills \
   --skill create-adaptable-composable \
   --agent openclaw -p -y
 
+# unovue/shadcn-vue
+vpx skills add unovue/shadcn-vue --agent openclaw -p -y
+
 # microsoft/playwright-cli
 vpx skills add microsoft/playwright-cli --skill playwright-cli --agent openclaw -p -y
 ```
