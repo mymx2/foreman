@@ -90,8 +90,8 @@ function main(): void {
   try {
     const checkCmd = process.platform === 'win32' ? 'where vp 2>nul' : 'which vp 2>/dev/null'
     execSync(checkCmd, { stdio: 'ignore' })
-    console.log('\n[init] Running vp run fmt...')
-    execSync('vp run fmt', { stdio: 'inherit' })
+    console.log('\n[init] Running vp fmt...')
+    execSync('vp fmt', { stdio: 'inherit' })
   } catch {
     console.log('\n[init] vp not found, skipping format.')
   }
