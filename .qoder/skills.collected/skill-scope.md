@@ -55,6 +55,7 @@ Tech: Vue 3 Composition API, TypeScript, Vite, UnoCSS, Pinia
 - `pinia`
 - `vite`
 - `unocss`
+- `shadcn-vue`
 
 ### Vue 生态最佳实践
 
@@ -80,9 +81,19 @@ Tech: Vue 3 Composition API, TypeScript, Vite, UnoCSS, Pinia
 - `playwright-cli`
 - `web-design-guidelines`
 
+### Validation & Forms
+
+- `valibot`
+- `formisch`
+
+### AI
+
+- `ai-sdk`
+
 ### Toolchain
 
 - `vize`
+- `arrow-js`
 
 ---
 

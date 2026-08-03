@@ -7,6 +7,12 @@
       "skillPath": "jetpack-compose/adaptive/SKILL.md",
       "computedHash": "0838968924e6fcc77c65022565f33be9e9aa5dcb9d5529f50852b9530c40cd6f"
     },
+    "agp-9-upgrade": {
+      "source": "android/skills",
+      "sourceType": "github",
+      "skillPath": "build-system/agp/agp-9-upgrade/SKILL.md",
+      "computedHash": "03f2379f02e971d76e3e89f0b63aa289b1b9240d873ccccc25924e7b0d8f3cdc"
+    },
     "ai-sdk": {
       "source": "vercel/ai",
       "sourceType": "github",
@@ -23,13 +29,13 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "devtools/android-cli/SKILL.md",
-      "computedHash": "2bd97ec12bcb40cc19469f7e3160ff2c2a83c60cb331e26bfcd1c46ed813b55b"
+      "computedHash": "d1d6a1ac872541e0ee42e93927b9898b575398df8f8a3ee2cc07687a5fab1004"
     },
     "appfunctions": {
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "device-ai/appfunctions/SKILL.md",
-      "computedHash": "e1a0e8f9e5b562bbb0a7cdb603dda2da1c11d195a6ecc6486362916314ddd25a"
+      "computedHash": "08462a95689f9a4367f27eeb88b8a777414107f397ad1e94aeab77f2cebcf05d"
     },
     "arrow-js": {
       "source": "standardagents/arrow-js",
@@ -83,7 +89,7 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "xr/display-glasses-with-jetpack-compose-glimmer/SKILL.md",
-      "computedHash": "7c98543c01da208689690a44bb825c07a33f2c6a44d5be44d7253c5f65fa6a21"
+      "computedHash": "9c2b529ffc37e069778de63d785cc2915601df6e727f8397d87b7ac521b1eae8"
     },
     "doc-coauthoring": {
       "source": "anthropics/skills",
@@ -113,13 +119,19 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "play/engage-sdk-integration/SKILL.md",
-      "computedHash": "6370450ee62a9a85458c94436fcc22ab9ab53139ed0d998cf4ccb587d037392e"
+      "computedHash": "daf48ddd07c73a15f5e58d87f4ed0948d3ffe4117ccd866efd536c9c0a719f09"
     },
     "error-model-validation-architect": {
       "source": "jetbrains/skills",
       "sourceType": "github",
       "skillPath": "error-model-validation-architect/SKILL.md",
       "computedHash": "d45230e378f2739a9f1674cef7fc6a7d4297472c6653f0aa50e1861afbca9583"
+    },
+    "formisch": {
+      "source": "open-circle/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/formisch/SKILL.md",
+      "computedHash": "24d27a0c7a09bd4dc71826882e24fd5953029fb9d9b660199219c285505d8513"
     },
     "frontend-design": {
       "source": "anthropics/skills",
@@ -197,7 +209,7 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "navigation/navigation-3/SKILL.md",
-      "computedHash": "bed127ab2fb03f84b375bb348d12890df75ebd53b45cba44272e7f719526a738"
+      "computedHash": "54905c96a787e48af6e1b9a352b68597eccb64f871d77828ef3732203f554bf9"
     },
     "observability-integrator": {
       "source": "jetbrains/skills",
@@ -275,7 +287,7 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "performance/r8-analyzer/SKILL.md",
-      "computedHash": "6ebfa0ef3b936b30e10f3a4781bc3e741315e20cf69e651aae6acfaf3a325ee0"
+      "computedHash": "351014594d3baa58d6c2ad40860250065efcc811445293a70f74861e68188b18"
     },
     "redis-core": {
       "source": "redis/agent-skills",
@@ -438,6 +450,12 @@
       "sourceType": "github",
       "skillPath": "upgrade-breaking-change-navigator/SKILL.md",
       "computedHash": "83657396664c8e12dd25ae3d5681ed0207dc76596921aa6d233ae5a9d689b7cc"
+    },
+    "valibot": {
+      "source": "open-circle/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/valibot/SKILL.md",
+      "computedHash": "31d519d234d3af2cb44fb777f613abf9c187959791af172221af7d0b7af6e892"
     },
     "verified-email": {
       "source": "android/skills",

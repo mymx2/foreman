@@ -169,6 +169,7 @@ vpx skills add https://github.com/standardagents/arrow-js/blob/main/packages/ski
 | `webapp-testing` | anthropics/skills | Web 应用测试策略 |
 | `slack-gif-creator` | anthropics/skills | Slack 动图生成 |
 | `skill-creator` | anthropics/skills | Agent Skill 创建与优化 |
+| `arrow-js` | standardagents/arrow-js | 轻量响应式 UI 框架 |
 
 ---
 
@@ -209,6 +210,12 @@ vpx skills add vuejs-ai/skills \
 # unovue/shadcn-vue
 vpx skills add unovue/shadcn-vue --agent openclaw -p -y
 
+# open-circle/agent-skills
+vpx skills add open-circle/agent-skills \
+  --skill valibot \
+  --skill formisch \
+  --agent openclaw -p -y
+
 # microsoft/playwright-cli
 vpx skills add microsoft/playwright-cli --skill playwright-cli --agent openclaw -p -y
 
@@ -217,6 +224,7 @@ vpx skills add https://github.com/vercel/ai --skill ai-sdk --agent openclaw -p -
 ```
 
 > `vize` 为个人创建/收集，无 skills.sh 安装命令。
+> `arrow-js` 来自 standardagents/arrow-js，已包含在上方安装命令中。
 
 ### 技能索引
 
@@ -242,6 +250,10 @@ vpx skills add https://github.com/vercel/ai --skill ai-sdk --agent openclaw -p -
 | `vitepress` | antfu/skills | 静态文档站生成 |
 | `slidev` | antfu/skills | Markdown 幻灯片 |
 | `web-design-guidelines` | antfu/skills | Web 设计与无障碍规范 |
+| `shadcn-vue` | unovue/shadcn-vue | shadcn/ui Vue 组件库 |
+| `valibot` | open-circle/agent-skills | 轻量 Schema 验证库 |
+| `formisch` | open-circle/agent-skills | 类型安全表单库（Valibot 生态） |
+| `ai-sdk` | vercel/ai | Vercel AI SDK（LLM 流式对话与工具调用） |
 | `vize` | 个人创建 | Vue.js Rust 原生工具链（SFC 编译、Lint、格式化、类型检查、LSP） |
 
 ---
