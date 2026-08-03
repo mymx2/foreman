@@ -23,6 +23,9 @@
         "Authorization": "Bearer <GITHUB_TOKEN>"
       }
     },
+    "mdn": {
+      "url": "https://mcp.mdn.mozilla.net"
+    },
     "shadcn-vue": {
       "command": "npx",
       "args": ["shadcn-vue@latest", "mcp"]
