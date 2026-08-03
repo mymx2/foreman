@@ -24,6 +24,7 @@ Tech: 文档生成、视觉设计、演示文稿
 ### Documents
 
 - `pdf`, `docx`, `pptx`, `xlsx`
+- `slidev`
 
 ### Visual & Creative
 
@@ -73,7 +74,6 @@ Tech: Vue 3 Composition API, TypeScript, Vite, UnoCSS, Pinia
 - `tsdown`
 - `turborepo`
 - `vitepress`
-- `slidev`
 
 ### Testing & Quality
 

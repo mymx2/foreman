@@ -148,6 +148,8 @@ vpx skills add anthropics/skills \
   --agent openclaw -p -y
 
 vpx skills add https://github.com/standardagents/arrow-js/blob/main/packages/skill/resources/skill --agent openclaw -p -y
+
+vpx skills add antfu/skills --skill slidev --agent openclaw -p -y
 ```
 
 ### 技能索引
@@ -170,6 +172,7 @@ vpx skills add https://github.com/standardagents/arrow-js/blob/main/packages/ski
 | `slack-gif-creator` | anthropics/skills | Slack 动图生成 |
 | `skill-creator` | anthropics/skills | Agent Skill 创建与优化 |
 | `arrow-js` | standardagents/arrow-js | 轻量响应式 UI 框架 |
+| `slidev` | antfu/skills | Markdown 幻灯片 |
 
 ---
 
@@ -189,7 +192,6 @@ vpx skills add antfu/skills \
   --skill vitepress \
   --skill vitest \
   --skill unocss \
-  --skill slidev \
   --skill tsdown \
   --skill turborepo \
   --skill pnpm \
@@ -248,7 +250,6 @@ vpx skills add https://github.com/vercel/ai --skill ai-sdk --agent openclaw -p -
 | `tsdown` | antfu/skills | TypeScript 库打包 |
 | `turborepo` | antfu/skills | Monorepo 构建系统 |
 | `vitepress` | antfu/skills | 静态文档站生成 |
-| `slidev` | antfu/skills | Markdown 幻灯片 |
 | `web-design-guidelines` | antfu/skills | Web 设计与无障碍规范 |
 | `shadcn-vue` | unovue/shadcn-vue | shadcn/ui Vue 组件库 |
 | `valibot` | open-circle/agent-skills | 轻量 Schema 验证库 |
