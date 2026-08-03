@@ -23,6 +23,10 @@
         "Authorization": "Bearer <GITHUB_TOKEN>"
       }
     },
+    "shadcn-vue": {
+      "command": "npx",
+      "args": ["shadcn-vue@latest", "mcp"]
+    },
     "tdesign-mcp-server": {
       "command": "npx",
       "args": ["-y", "tdesign-mcp-server@latest"]

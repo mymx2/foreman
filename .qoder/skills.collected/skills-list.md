@@ -211,6 +211,9 @@ vpx skills add unovue/shadcn-vue --agent openclaw -p -y
 
 # microsoft/playwright-cli
 vpx skills add microsoft/playwright-cli --skill playwright-cli --agent openclaw -p -y
+
+# vercel/ai
+vpx skills add https://github.com/vercel/ai --skill ai-sdk --agent openclaw -p -y
 ```
 
 > `vize` 为个人创建/收集，无 skills.sh 安装命令。
