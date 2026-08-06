@@ -23,7 +23,6 @@ export default defineConfig({
     singleQuote: true,
     semi: false,
     arrowParens: 'avoid',
-    printWidth: 120,
     ignorePatterns: [...ignorePatterns],
   },
   staged: {

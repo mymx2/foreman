@@ -30,6 +30,10 @@
       "command": "npx",
       "args": ["shadcn-vue@latest", "mcp"]
     },
+    "ai-elements-vue": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://registry.ai-elements-vue.com/mcp"]
+    },
     "tdesign-mcp-server": {
       "command": "npx",
       "args": ["-y", "tdesign-mcp-server@latest"]

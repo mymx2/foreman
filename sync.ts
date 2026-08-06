@@ -61,7 +61,8 @@ function syncDir(from: string, to: string, filter?: string[]): void {
     if (stat.isDirectory()) {
       cpSync(srcFile, destFile, { recursive: true })
     } else {
-      const shouldCopy = !existsSync(destFile) || statSync(srcFile).mtimeMs > statSync(destFile).mtimeMs
+      const shouldCopy =
+        !existsSync(destFile) || statSync(srcFile).mtimeMs > statSync(destFile).mtimeMs
       if (shouldCopy) {
         cpSync(srcFile, destFile)
         console.log(`[init] Synced: ${entry}`)
