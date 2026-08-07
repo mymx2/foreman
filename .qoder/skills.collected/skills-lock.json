@@ -31,6 +31,12 @@
       "skillPath": "devtools/android-cli/SKILL.md",
       "computedHash": "d1d6a1ac872541e0ee42e93927b9898b575398df8f8a3ee2cc07687a5fab1004"
     },
+    "android-intent-security": {
+      "source": "android/skills",
+      "sourceType": "github",
+      "skillPath": "security/android-intent-security/SKILL.md",
+      "computedHash": "032668596a1031d8c1952a666075f365127d98856f71040886baa3a55f6a118e"
+    },
     "appfunctions": {
       "source": "android/skills",
       "sourceType": "github",
@@ -48,6 +54,12 @@
       "sourceType": "github",
       "skillPath": "skills/brand-guidelines/SKILL.md",
       "computedHash": "c82f0b24cdcc7e2693a963d30c810558b7bb89ed84508b2328228d21256ef865"
+    },
+    "camerax": {
+      "source": "android/skills",
+      "sourceType": "github",
+      "skillPath": "camera/camerax/SKILL.md",
+      "computedHash": "50a99565089361b69f33702d75b998a25183f6d163d15da68eb05537f1a54485"
     },
     "canvas-design": {
       "source": "anthropics/skills",
@@ -252,6 +264,12 @@
       "sourceType": "github",
       "skillPath": "play/play-billing-library-version-upgrade/SKILL.md",
       "computedHash": "9fae407150f75cc759e3d3785ceefc41f9faf7f17886fd1fadcdb2ccd7cf1aab"
+    },
+    "play-policy-insights": {
+      "source": "android/skills",
+      "sourceType": "github",
+      "skillPath": "play/play-policy-insights/SKILL.md",
+      "computedHash": "b37522c0d832c2ec761ef0a2f9355c738107d63d8fa14ac9eee30d96c6342c5e"
     },
     "playwright-cli": {
       "source": "microsoft/playwright-cli",
@@ -528,6 +546,12 @@
       "sourceType": "github",
       "skillPath": "skills/vueuse-functions/SKILL.md",
       "computedHash": "0a762ae555673c6a7705749bd58d74e2ae9b07007a2cde8168f1f6c480b8d8d9"
+    },
+    "wear-compose-m3": {
+      "source": "android/skills",
+      "sourceType": "github",
+      "skillPath": "wear/wear-compose-m3/SKILL.md",
+      "computedHash": "fc8a324823a6e3b03b36329d1bd74cba505da50c7e741b8349e028501c3f7efb"
     },
     "web-artifacts-builder": {
       "source": "anthropics/skills",

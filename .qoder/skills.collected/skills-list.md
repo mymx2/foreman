@@ -312,23 +312,23 @@ vpx skills add android/skills \
   --skill android-cli \
   --skill agp-9-upgrade \
   --skill adaptive \
+  --skill android-intent-security \
   --skill appfunctions \
-  --skill base \
-  --skill camera1-to-camerax \
-  --skill display-ai-glasses-with-jetpack-compose-glimmer \
+  --skill camerax \
   --skill display-glasses-with-jetpack-compose-glimmer \
   --skill edge-to-edge \
   --skill engage-sdk-integration \
-  --skill jetpack-compose-m3 \
   --skill migrate-xml-views-to-jetpack-compose \
   --skill navigation-3 \
   --skill perfetto-sql \
   --skill perfetto-trace-analysis \
   --skill play-billing-library-version-upgrade \
+  --skill play-policy-insights \
   --skill r8-analyzer \
   --skill styles \
   --skill testing-setup \
   --skill verified-email \
+  --skill wear-compose-m3 \
   --agent openclaw -p -y
 ```
 
@@ -337,25 +337,25 @@ vpx skills add android/skills \
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
 | `android-cli` | android/skills | Android CLI：SDK 设置、模拟器、部署、文档搜索 |
-| `jetpack-compose-m3` | android/skills | Jetpack Compose + Material 3 最佳实践 |
-| `adaptive` | android/skills | 自适应布局：Window Size Classes 与响应式 UI |
-| `styles` | android/skills | Material 3 主题、样式与 Design Tokens |
-| `base` | android/skills | Android 项目基础规范 |
 | `agp-9-upgrade` | android/skills | Android Gradle Plugin 9 升级与迁移 |
+| `adaptive` | android/skills | 自适应布局：Window Size Classes 与响应式 UI |
+| `android-intent-security` | android/skills | Intent 安全审计与最佳实践 |
+| `appfunctions` | android/skills | Device AI AppFunctions 集成 |
+| `camerax` | android/skills | CameraX 相机开发指南 |
+| `display-glasses-with-jetpack-compose-glimmer` | android/skills | XR 显示眼镜 + Compose Glimmer |
+| `edge-to-edge` | android/skills | 全屏显示 / Edge-to-Edge 适配 |
+| `engage-sdk-integration` | android/skills | Engage SDK 集成 |
 | `migrate-xml-views-to-jetpack-compose` | android/skills | XML Views → Jetpack Compose 迁移 |
-| `play-billing-library-version-upgrade` | android/skills | Google Play Billing Library 版本升级 |
-| `camera1-to-camerax` | android/skills | Camera1 → CameraX 迁移 |
-| `r8-analyzer` | android/skills | R8/ProGuard 配置分析与审计 |
+| `navigation-3` | android/skills | Navigation 3 设置与迁移 |
 | `perfetto-sql` | android/skills | Perfetto 性能追踪 SQL 查询 |
 | `perfetto-trace-analysis` | android/skills | Perfetto Trace 文件分析 |
-| `edge-to-edge` | android/skills | 全屏显示 / Edge-to-Edge 适配 |
-| `navigation-3` | android/skills | Navigation 3 设置与迁移 |
-| `appfunctions` | android/skills | Device AI AppFunctions 集成 |
-| `engage-sdk-integration` | android/skills | Engage SDK 集成 |
-| `verified-email` | android/skills | 邮箱验证功能集成 |
-| `display-glasses-with-jetpack-compose-glimmer` | android/skills | XR 显示眼镜 + Compose Glimmer |
-| `display-ai-glasses-with-jetpack-compose-glimmer` | android/skills | AI 显示眼镜 + Compose Glimmer |
+| `play-billing-library-version-upgrade` | android/skills | Google Play Billing Library 版本升级 |
+| `play-policy-insights` | android/skills | Google Play 政策合规审计 |
+| `r8-analyzer` | android/skills | R8/ProGuard 配置分析与审计 |
+| `styles` | android/skills | Material 3 主题、样式与 Design Tokens |
 | `testing-setup` | android/skills | Android 测试环境配置 |
+| `verified-email` | android/skills | 邮箱验证功能集成 |
+| `wear-compose-m3` | android/skills | Wear OS Compose Material 3 指南 |
 
 ---
 
