@@ -1,7 +1,6 @@
 catalog:
-  "@types/node": ^26.1.2
-  "@typescript/native-preview": ^7.0.0-dev.20260707.2
   taze: ^19.17.1
+  "@types/node": ^26.1.2
   typescript: ^7.0.2
   vite: npm:@voidzero-dev/vite-plus-core@^0.2.7
   vite-plus: ^0.2.7
