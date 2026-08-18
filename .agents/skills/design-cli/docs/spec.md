@@ -23,9 +23,9 @@ Example:
 version: alpha
 name: Daylight Prestige
 colors:
-  primary: "#1A1C1E"
-  secondary: "#6C7278"
-  tertiary: "#B8422E"
+  primary: '#1A1C1E'
+  secondary: '#6C7278'
+  tertiary: '#B8422E'
 typography:
   h1:
     fontFamily: Public Sans
@@ -142,10 +142,10 @@ map\<string, Color>, that maps the name of the color token to its value.
 
 ```yaml
 colors:
-  primary: "#1A1C1E"
-  secondary: "#6C7278"
-  tertiary: "#B8422E"
-  neutral: "#F7F5F2"
+  primary: '#1A1C1E'
+  secondary: '#6C7278'
+  tertiary: '#B8422E'
+  neutral: '#F7F5F2'
 ```
 
 ## Typography
@@ -307,12 +307,12 @@ The components section defines a collection of design tokens used to ensure cons
 ```yaml
 components:
   button-primary:
-    backgroundColor: "{colors.primary-60}"
-    textColor: "{colors.primary-20}"
-    rounded: "{rounded.md}"
+    backgroundColor: '{colors.primary-60}'
+    textColor: '{colors.primary-20}'
+    rounded: '{rounded.md}'
     padding: 12px
   button-primary-hover:
-    backgroundColor: "{colors.primary-70}"
+    backgroundColor: '{colors.primary-70}'
 ```
 
 ### Component Property Tokens

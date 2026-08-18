@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
 const AGENT_DIR = '.qoder'
@@ -8,7 +8,7 @@ const ROOT = resolve(import.meta.dirname, '.')
 const WORKTREE_DIR = join(ROOT, '.worktrees', 'agent-skills')
 const REPO_URL = 'https://github.com/addyosmani/agent-skills'
 
-const SYNC_MAP: { from: string; to: string; filter?: string[] }[] = [
+const SYNC_MAP: { from: string; to: string; filter?: string[]; overwrite?: boolean }[] = [
   {
     from: join(WORKTREE_DIR, '.claude', 'commands'),
     to: join(ROOT, AGENT_DIR, 'commands'),
@@ -26,6 +26,11 @@ const SYNC_MAP: { from: string; to: string; filter?: string[] }[] = [
     to: join(ROOT, 'docs'),
     filter: ['agents.md'],
   },
+  {
+    from: join(WORKTREE_DIR, 'skills'),
+    to: join(ROOT, '.agents', 'skills'),
+    overwrite: true,
+  },
 ]
 
 // ── 1. Clone or pull repo ───────────────────────────────────────────
@@ -41,9 +46,21 @@ function ensureRepo(): void {
 }
 
 // ── 2. Sync directories ─────────────────────────────────────────────
-function syncDir(from: string, to: string, filter?: string[]): void {
+function syncDir(from: string, to: string, filter?: string[], overwrite?: boolean): void {
   if (!existsSync(from)) {
     console.warn(`[init] Source "${from}" does not exist, skipping.`)
+    return
+  }
+
+  if (overwrite) {
+    if (!existsSync(to)) mkdirSync(to, { recursive: true })
+    for (const entry of readdirSync(from)) {
+      const srcEntry = join(from, entry)
+      const destEntry = join(to, entry)
+      if (existsSync(destEntry)) rmSync(destEntry, { recursive: true, force: true })
+      cpSync(srcEntry, destEntry, { recursive: true })
+    }
+    console.log(`[init] Overwrite synced: ${from} → ${to}`)
     return
   }
 
@@ -79,9 +96,9 @@ function main(): void {
 
   console.log()
 
-  for (const { from, to, filter } of SYNC_MAP) {
+  for (const { from, to, filter, overwrite } of SYNC_MAP) {
     console.log(`[init] Syncing: ${from} → ${to}`)
-    syncDir(from, to, filter)
+    syncDir(from, to, filter, overwrite)
     console.log()
   }
 

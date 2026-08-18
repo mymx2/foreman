@@ -22,10 +22,10 @@ A DESIGN.md file combines machine-readable design tokens (YAML front matter) wit
 ---
 name: Heritage
 colors:
-  primary: "#1A1C1E"
-  secondary: "#6C7278"
-  tertiary: "#B8422E"
-  neutral: "#F7F5F2"
+  primary: '#1A1C1E'
+  secondary: '#6C7278'
+  tertiary: '#B8422E'
+  neutral: '#F7F5F2'
 typography:
   h1:
     fontFamily: Public Sans
@@ -159,12 +159,12 @@ Components map a name to a group of sub-token properties:
 ```yaml
 components:
   button-primary:
-    backgroundColor: "{colors.tertiary}"
-    textColor: "{colors.on-tertiary}"
-    rounded: "{rounded.sm}"
+    backgroundColor: '{colors.tertiary}'
+    textColor: '{colors.on-tertiary}'
+    rounded: '{rounded.sm}'
     padding: 12px
   button-primary-hover:
-    backgroundColor: "{colors.tertiary-container}"
+    backgroundColor: '{colors.tertiary-container}'
 ```
 
 Valid component properties: `backgroundColor`, `textColor`, `typography`, `rounded`, `padding`, `size`, `height`, `width`.
@@ -335,13 +335,13 @@ The linter runs nine rules against a parsed DESIGN.md. Each rule produces findin
 The linter is also available as a library:
 
 ```typescript
-import { lint } from "@google/design.md/linter";
+import { lint } from '@google/design.md/linter'
 
-const report = lint(markdownString);
+const report = lint(markdownString)
 
-console.log(report.findings); // Finding[]
-console.log(report.summary); // { errors, warnings, info }
-console.log(report.designSystem); // Parsed DesignSystemState
+console.log(report.findings) // Finding[]
+console.log(report.summary) // { errors, warnings, info }
+console.log(report.designSystem) // Parsed DesignSystemState
 ```
 
 ## Design Token Interoperability

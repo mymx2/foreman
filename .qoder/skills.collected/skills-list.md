@@ -45,34 +45,6 @@ vpx skills add anthropics/skills --skill skill-creator -g -y
 ### 安装命令
 
 ```bash
-# addyosmani/agent-skills
-vpx skills add addyosmani/agent-skills \
-  --skill api-and-interface-design \
-  --skill browser-testing-with-devtools \
-  --skill ci-cd-and-automation \
-  --skill code-review-and-quality \
-  --skill code-simplification \
-  --skill context-engineering \
-  --skill debugging-and-error-recovery \
-  --skill deprecation-and-migration \
-  --skill documentation-and-adrs \
-  --skill doubt-driven-development \
-  --skill frontend-ui-engineering \
-  --skill git-workflow-and-versioning \
-  --skill idea-refine \
-  --skill incremental-implementation \
-  --skill interview-me \
-  --skill observability-and-instrumentation \
-  --skill performance-optimization \
-  --skill planning-and-task-breakdown \
-  --skill security-and-hardening \
-  --skill shipping-and-launch \
-  --skill source-driven-development \
-  --skill spec-driven-development \
-  --skill test-driven-development \
-  --skill using-agent-skills \
-  --agent codex -p -y
-
 # openai/plugins — GitHub 协作
 vpx skills add https://github.com/openai/plugins/tree/main/plugins/github/skills \
   --skill gh-address-comments \
@@ -89,30 +61,6 @@ vpx skills add mymx2/skills --skill design-cli --agent codex -p -y
 
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
-| `api-and-interface-design` | addyosmani/agent-skills | API 与接口设计 |
-| `browser-testing-with-devtools` | addyosmani/agent-skills | Chrome DevTools 浏览器测试 |
-| `ci-cd-and-automation` | addyosmani/agent-skills | CI/CD 流水线自动化 |
-| `code-review-and-quality` | addyosmani/agent-skills | 多维代码审查 |
-| `code-simplification` | addyosmani/agent-skills | 代码简化与去复杂化 |
-| `context-engineering` | addyosmani/agent-skills | Agent 上下文优化 |
-| `debugging-and-error-recovery` | addyosmani/agent-skills | 系统化调试与错误恢复 |
-| `deprecation-and-migration` | addyosmani/agent-skills | 废弃与迁移管理 |
-| `documentation-and-adrs` | addyosmani/agent-skills | 文档与架构决策记录 |
-| `doubt-driven-development` | addyosmani/agent-skills | 对抗性决策审查 |
-| `frontend-ui-engineering` | addyosmani/agent-skills | 生产级 UI 工程 |
-| `git-workflow-and-versioning` | addyosmani/agent-skills | Git 工作流与版本管理 |
-| `idea-refine` | addyosmani/agent-skills | 创意精炼与结构化 |
-| `incremental-implementation` | addyosmani/agent-skills | 增量实现与验证 |
-| `interview-me` | addyosmani/agent-skills | 需求访谈与澄清 |
-| `observability-and-instrumentation` | addyosmani/agent-skills | 可观测性与埋点 |
-| `performance-optimization` | addyosmani/agent-skills | 性能优化 |
-| `planning-and-task-breakdown` | addyosmani/agent-skills | 任务拆解与规划 |
-| `security-and-hardening` | addyosmani/agent-skills | 安全加固 |
-| `shipping-and-launch` | addyosmani/agent-skills | 发布与上线 |
-| `source-driven-development` | addyosmani/agent-skills | 官方文档驱动开发 |
-| `spec-driven-development` | addyosmani/agent-skills | 规格驱动开发 |
-| `test-driven-development` | addyosmani/agent-skills | 测试驱动开发 |
-| `using-agent-skills` | addyosmani/agent-skills | Agent 技能发现与使用 |
 | `gh-address-comments` | openai/plugins | PR 评审评论处理 |
 | `gh-fix-ci` | openai/plugins | GitHub Actions CI 修复 |
 | `github` | openai/plugins | GitHub 仓库/PR/Issue 导航与摘要 |
