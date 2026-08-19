@@ -1,17 +1,27 @@
 ---
 name: find-skills
-description: 当用户提出诸如“我该如何做 X（即skill）”、“找一个用于 X 的技能”、“有没有可以……的技能”等问题，或表达扩展能力的兴趣时，帮助用户发现和安装智能体技能。当用户寻找可能以可安装技能形式存在的功能时，应使用此技能。
+description: 'Helps users discover and install agent skills from the open skills ecosystem. Use when the user asks how to do X, asks for a skill that does X, wonders whether a skill exists for a task, or wants to extend agent capabilities. Not for debugging an installed skill or authoring a new one.'
+when_to_use: 'find skills, 找技能, 发现技能, 技能推荐, skills.sh'
 license: MIT
 metadata:
   origin: https://github.com/mymx2/skills/skills/find-skills
   author: mymx2 <https://github.com/mymx2>
-  version: 2026.05.11
+  version: 2026.08.19
   source: https://skills.sh/vercel-labs/skills/find-skills <MIT>
 ---
 
 # 查找技能
 
+宁可用通用能力直接帮用户把事做了，也不推荐一个没验证过安装量和来源的技能——坏推荐的代价由用户承担。
+
 此技能可帮助你从开放的智能体技能生态系统中发现并安装技能。 技能即skill的中文翻译
+
+## Outcome Contract
+
+- **Outcome**: 用户拿到一个经过质量验证的技能推荐（含可运行的安装命令），或明确的"无合适技能"结论加替代方案。
+- **Done when**: 推荐前核实过安装量、来源信誉、GitHub Star 数；安装命令可直接运行。
+- **Evidence**: skills.sh 排行榜或 `npx skills find` 的实际输出，不是凭印象报名字。
+- **Authorization**: 搜索和查证可以直接做；执行安装会改动用户环境，先给命令、经用户同意后再代跑。
 
 ## 何时使用此技能
 
@@ -38,6 +48,8 @@ Skills CLI（`npx skills`）是开放智能体技能生态系统的包管理器�
 **浏览技能请访问：** https://skills.sh/
 
 ## 如何帮助用户查找技能
+
+按六步推进，每一步都有明确的通过标准：
 
 ### 第一步：了解他们的需求
 
@@ -102,7 +114,7 @@ npx skills add vercel-labs/agent-skills@react-best-practices
 
 ### 第六步：提供安装协助
 
-如果用户希望继续，你可以代为安装该技能：
+安装会改动用户环境，先把命令给用户确认；用户同意后再代为执行：
 
 ```bash
 npx skills add <owner/repo@skill> -g -y

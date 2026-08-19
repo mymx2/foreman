@@ -1,10 +1,11 @@
 ---
 name: vize
-description: "Vize Vue.js 工具链最佳实践。SFC 编译、Patina Lint、Glyph 格式化、Canon 类型检查、Vapor Mode、JSX/TSX、Musea 画廊、Nuxt 集成、unplugin/rspack、WASM 绑定、VS Code 编辑器的配置与决策指南。用户提到 vize、vize config、vize lint、vize fmt、vize check、vize build、vize doctor、vize inspector、vize ready、vize lsp、patina、glyph、canon、vapor mode、musea、art.vue、defineArt、@vizejs、vue toolchain、SFC compile、cross-file lint、跨文件分析、@vize:expected、@vize forget、vize annotations、comment annotations、@vizejs/wasm、@vizejs/unplugin、@vizejs/rspack-plugin、vize vscode、cross-file complexity 时务必使用本技能。也适用于从 ESLint/Prettier/vue-tsc/Volar 迁移到 Vize 的场景。"
-dispatch_intent: "Vue toolchain best practices, compilation, linting, formatting, type checking, Vapor mode, JSX/TSX, Musea gallery, Nuxt integration, comment annotations, doctor, inspector, unplugin, rspack, WASM, VS Code, cross-file complexity"
+description: "Vue.js Rust 原生工具链 Vize 最佳实践：SFC 编译、Patina Lint、Glyph 格式化、Canon 类型检查、Vapor Mode、JSX/TSX、Musea 画廊、Nuxt 集成、unplugin/rspack、WASM、VS Code 配置与决策。当用户提到 vize、patina、glyph、canon、vapor mode、musea、art.vue、defineArt、@vizejs/* 包、vize lint/fmt/check/build/doctor/inspector/lsp、跨文件分析、@vize 注释注解，或从 ESLint/Prettier/vue-tsc/Volar 迁移到 Vize 时使用。不适用于与 Vize 无关的通用 Vue 语法教学或构建问题。"
 ---
 
 # Vize: Vue.js Rust 原生工具链最佳实践
+
+一次解析、一棵 AST、一份配置 —— 所有配置决策都围绕这个前提展开。
 
 ## Outcome Contract
 
@@ -52,6 +53,8 @@ Source → Armature(解析器/Tokenizer) → Relief(AST) → Croquis(语义分�
 - `vize_vitrine` — NAPI/WASM 绑定层，供 JS 侧调用
 
 ## 项目设置
+
+按安装、Vite 插件、类型声明的顺序完成接入。
 
 ### 安装
 
@@ -101,13 +104,11 @@ vize({ root: import.meta.dirname, scanPatterns: ["src/**/*.vue"] });  // Monorep
 
 ## 从传统工具链迁移
 
-| 步骤 | 动作 | 验证 |
-|------|------|------|
-| 1 | 装 `@vizejs/vite-plugin`，移除 `@vitejs/plugin-vue` | `vp dev` 正常启动 |
-| 2 | 移除 ESLint + eslint-plugin-vue，换 `vize lint` | `vize lint` 无配置跑通 essential |
-| 3 | 移除 Prettier，换 `vize fmt` | `vize fmt --check` 格式一致 |
-| 4 | 移除 vue-tsc，换 `vize check` | `vize check` 类型诊断正常 |
-| 5 | 移除 Volar，配置 `vize lsp` | 编辑器补全和诊断正常 |
+1. 装 `@vizejs/vite-plugin`，移除 `@vitejs/plugin-vue`，验证 `vp dev` 正常启动。
+2. 移除 ESLint + eslint-plugin-vue，换 `vize lint`，验证无配置跑通 essential。
+3. 移除 Prettier，换 `vize fmt`，验证 `vize fmt --check` 格式一致。
+4. 移除 vue-tsc，换 `vize check`，验证类型诊断正常。
+5. 移除 Volar，配置 `vize lsp`，验证编辑器补全和诊断正常。
 
 迁移期间可保留旧工具做对比验证，逐个替换、逐个验证。
 
@@ -234,6 +235,8 @@ Nuxt 2 自动 host-compiler 兼容。art 文件需放 components 目录外避免
 完整模块选项、Bridge 选项、Musea-nuxt 配置见 [references/nuxt.md](references/nuxt.md)。
 
 ## 稳定性分层
+
+npm 包与 Rust Crate 各自按稳定性承诺分层，生产选型以 Alpha-supported 为底线。
 
 ### npm 包
 

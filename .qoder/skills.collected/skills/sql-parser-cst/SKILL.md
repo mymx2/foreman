@@ -6,9 +6,19 @@ description: >
   或任何需要保留注释、空白和精确语法的 SQL 静态分析时，使用此技能。
   也适用于处理 sql-parser-cst 类型（如 Program、Statement、CreateTableStmt、ColumnDefinition），
   或用户提到 CST 解析、SQL 语法树、sql-parser-cst 时。
+  不适用于需要连接真实数据库执行 SQL 的场景，也不适用于方言无关的通用 SQL 问答。
 ---
 
 # sql-parser-cst 技能
+
+CST 保留全部语法细节，代价是必须按判别联合逐节点精确取值。
+
+## Outcome Contract
+
+- Outcome: 用 sql-parser-cst 把 SQL 解析为 CST，完成遍历、转换或元信息提取。
+- Done when: 解析选项符合任务需求（保留空白/注释/位置），目标节点类型判断正确，结果可验证。
+- Evidence: `parse` 输出的 CST、提取到的结构化元信息、`show()` 还原结果。
+- Output: 可直接运行的 TypeScript 解析/提取代码。
 
 sql-parser-cst 将 SQL 解析为**具体语法树** (CST) — 与 AST 解析器不同，它保留所有语法元素
 （注释、空白、关键字大小写、引号），支持精确地还原为原始 SQL。
@@ -45,6 +55,8 @@ import type {
 ```
 
 ## 核心 API
+
+解析、序列化、遍历、转换四个入口覆盖绝大多数任务。
 
 ### parse(sql, options) → Program
 

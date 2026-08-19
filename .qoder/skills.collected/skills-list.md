@@ -361,7 +361,7 @@ vpx skills add redis/agent-skills --skill redis-core --agent openclaw -p -y
 | `kotlin-idiomatic-refactorer-spring-aware` | jetbrains/skills | Kotlin 代码清理（Spring 安全） |
 | `java-kotlin-migration-assistant` | jetbrains/skills | Java → Kotlin 迁移 |
 | `jpa-spring-data-kotlin-mapper` | jetbrains/skills | JPA 实体、Repository、N+1 |
-| `jdbc-dsl` | 本地提供 | JDBC DSL 查询构建（用户自定义提供） |
+| `jdbc-dsl` | 个人创建 | JDBC DSL 查询构建（用户自定义提供） |
 | `design-postgres-tables` | timescale/pg-aiguide | PostgreSQL 表设计、索引、JSONB |
 | `redis-core` | redis/agent-skills | Redis 数据建模：数据结构选择与键名规范 |
 | `schema-migration-planner` | jetbrains/skills | Flyway/Liquibase 零停机迁移 |

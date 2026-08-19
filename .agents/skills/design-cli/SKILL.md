@@ -1,357 +1,90 @@
 ---
 name: design-cli
-description: >
-  DESIGN.md 格式规范与 @google/design.md CLI 工具使用指南。涵盖设计系统的 YAML token 定义（颜色、字体、圆角、间距、组件）、Markdown 设计说明文档结构、lint 校验、diff 对比、export 导出（Tailwind v3/v4、DTCG）等全部功能。
-  当用户需要创建或编辑 DESIGN.md 设计系统文件、校验设计规范、对比设计 token 变更、导出设计 token 到 Tailwind/DTCG 格式、了解 DESIGN.md 格式规范，或使用 @google/design.md CLI 时使用。
+description: 'Guides creating, validating, diffing, and exporting DESIGN.md design-system files. Use when the user needs to create or edit a DESIGN.md, lint design tokens with the @google/design.md CLI, compare two versions, or export tokens to Tailwind/DTCG formats. Not for general UI design, typography review, or screenshot polish tasks without a DESIGN.md artifact.'
+when_to_use: 'DESIGN.md, design tokens, 设计系统文件, 设计 token 校验, designmd, tailwind token 导出'
 license: MIT
 metadata:
   origin: https://github.com/mymx2/skills/skills/design-cli
   author: mymx2 <https://github.com/mymx2>
-  version: 2026.06.17
+  version: 2026.08.19
 ---
 
 # DESIGN.md
 
-A format specification for describing a visual identity to coding agents. DESIGN.md gives agents a persistent, structured understanding of a design system.
-
-## The Format
-
-A DESIGN.md file combines machine-readable design tokens (YAML front matter) with human-readable design rationale (markdown prose). Tokens give agents exact values. Prose tells them _why_ those values exist and how to apply them.
-
-```md
----
-name: Heritage
-colors:
-  primary: '#1A1C1E'
-  secondary: '#6C7278'
-  tertiary: '#B8422E'
-  neutral: '#F7F5F2'
-typography:
-  h1:
-    fontFamily: Public Sans
-    fontSize: 3rem
-  body-md:
-    fontFamily: Public Sans
-    fontSize: 1rem
-  label-caps:
-    fontFamily: Space Grotesk
-    fontSize: 0.75rem
-rounded:
-  sm: 4px
-  md: 8px
-spacing:
-  sm: 8px
-  md: 16px
----
-
-## Overview
-
-Architectural Minimalism meets Journalistic Gravitas. The UI evokes a
-premium matte finish — a high-end broadsheet or contemporary gallery.
-
-## Colors
-
-The palette is rooted in high-contrast neutrals and a single accent color.
-
-- **Primary (#1A1C1E):** Deep ink for headlines and core text.
-- **Secondary (#6C7278):** Sophisticated slate for borders, captions, metadata.
-- **Tertiary (#B8422E):** "Boston Clay" — the sole driver for interaction.
-- **Neutral (#F7F5F2):** Warm limestone foundation, softer than pure white.
-```
-
-An agent that reads this file will produce a UI with deep ink headlines in Public Sans, a warm limestone background, and Boston Clay call-to-action buttons.
-
-## Getting Started
-
-Validate a DESIGN.md against the spec, catch broken token references, check WCAG contrast ratios, and surface structural findings — all as structured JSON that agents can act on.
-
-```bash
-npx @google/design.md lint DESIGN.md
-```
-
-```json
-{
-  "findings": [
-    {
-      "severity": "warning",
-      "path": "components.button-primary",
-      "message": "textColor (#ffffff) on backgroundColor (#1A1C1E) has contrast ratio 15.42:1 — passes WCAG AA."
-    }
-  ],
-  "summary": { "errors": 0, "warnings": 1, "info": 1 }
-}
-```
-
-Compare two versions of a design system to detect token-level and prose regressions:
-
-```bash
-npx @google/design.md diff DESIGN.md DESIGN-v2.md
-```
-
-```json
-{
-  "tokens": {
-    "colors": { "added": ["accent"], "removed": [], "modified": ["tertiary"] },
-    "typography": { "added": [], "removed": [], "modified": [] }
-  },
-  "regression": false
-}
-```
-
-## The Specification
-
-### File Structure
-
-A DESIGN.md file has two layers:
-
-1. **YAML front matter** — Machine-readable design tokens, delimited by `---` fences at the top of the file.
-2. **Markdown body** — Human-readable design rationale organized into `##` sections.
-
-The tokens are the normative values. The prose provides context for how to apply them.
-
-### Token Schema
-
-```yaml
-version: <string> # optional, current: "alpha"
-name: <string>
-description: <string> # optional
-colors:
-  <token-name>: <Color>
-typography:
-  <token-name>: <Typography>
-rounded:
-  <scale-level>: <Dimension>
-spacing:
-  <scale-level>: <Dimension | number>
-components:
-  <component-name>:
-    <token-name>: <string | token reference>
-```
-
-### Token Types
-
-| Type            | Format                                                                                                            | Example                              |
-| :-------------- | :---------------------------------------------------------------------------------------------------------------- | :----------------------------------- |
-| Color           | Any CSS color (hex, `rgb()`, `oklch()`, named, etc.)                                                              | `"#1A1C1E"`, `"oklch(62% 0.18 250)"` |
-| Dimension       | number + unit (`px`, `em`, `rem`)                                                                                 | `48px`, `-0.02em`                    |
-| Token Reference | `{path.to.token}`                                                                                                 | `{colors.primary}`                   |
-| Typography      | object with `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, `letterSpacing`, `fontFeature`, `fontVariation` | See example above                    |
-
-### Section Order
-
-Sections use `##` headings. They can be omitted, but those present must appear in this order:
-
-| #   | Section           | Aliases          |
-| :-- | :---------------- | :--------------- |
-| 1   | Overview          | Brand & Style    |
-| 2   | Colors            |                  |
-| 3   | Typography        |                  |
-| 4   | Layout            | Layout & Spacing |
-| 5   | Elevation & Depth | Elevation        |
-| 6   | Shapes            |                  |
-| 7   | Components        |                  |
-| 8   | Do's and Don'ts   |                  |
-
-### Component Tokens
-
-Components map a name to a group of sub-token properties:
-
-```yaml
-components:
-  button-primary:
-    backgroundColor: '{colors.tertiary}'
-    textColor: '{colors.on-tertiary}'
-    rounded: '{rounded.sm}'
-    padding: 12px
-  button-primary-hover:
-    backgroundColor: '{colors.tertiary-container}'
-```
-
-Valid component properties: `backgroundColor`, `textColor`, `typography`, `rounded`, `padding`, `size`, `height`, `width`.
-
-Variants (hover, active, pressed) are expressed as separate component entries with a related key name.
-
-### Consumer Behavior for Unknown Content
-
-| Scenario                      | Behavior                   |
-| :---------------------------- | :------------------------- |
-| Unknown section heading       | Preserve; do not error     |
-| Unknown color token name      | Accept if value is valid   |
-| Unknown typography token name | Accept as valid typography |
-| Unknown component property    | Accept with warning        |
-| Duplicate section heading     | Error; reject the file     |
+DESIGN.md 把设计系统写成 agent 可读的契约：YAML token 给出精确值，prose 解释为什么。只写 prose 不写 token 的"设计规范"对 agent 是装饰品——lint 过的 token 才是事实源。
 
-## CLI Reference
-
-### Installation
-
-```bash
-npm install @google/design.md
-```
-
-On **Windows**, quote the package name if your shell treats `@` specially (PowerShell, some terminals):
-
-```bash
-npm install "@google/design.md"
-```
-
-Or run directly (always resolves from the public npm registry):
-
-```bash
-npx @google/design.md lint DESIGN.md
-```
-
-On **Windows/PowerShell**, this direct form can produce no output (or open
-`DESIGN.md` in your Markdown editor) because the `.md` suffix in the `design.md`
-bin name collides with the Windows Markdown file association during command
-resolution. Run the dot-free `designmd` alias instead — point `npx` at the
-package with `-p`, then invoke `designmd`:
-
-```bash
-npx -p @google/design.md designmd lint DESIGN.md
-```
-
-The `designmd` shim resolves to the same entrypoint and works identically across
-all platforms.
-
-#### `npm error ENOVERSIONS` (“No versions available for @google/design.md”)
-
-The CLI is published as [`@google/design.md` on npm](https://www.npmjs.com/package/@google/design.md). `ENOVERSIONS` almost always means npm is not querying the public registry (custom `registry=` in `.npmrc`, a corporate mirror that has not synced this package, or a misconfigured `@google:registry` for the `@google` scope).
-
-Check your effective registry:
-
-```bash
-npm config get registry
-```
-
-For a normal install from the internet it should be `https://registry.npmjs.org/`. After fixing config, retry with `npm cache clean --force` if a stale 404 was cached.
-
-All commands accept a file path or `-` for stdin. Output defaults to JSON.
-
-> **Windows tip**: when invoking the CLI directly from a `package.json` script
-> (rather than through `npx`), use the `designmd` alias instead of `design.md`.
-> The `.md` suffix in the original bin name confuses Windows command resolution
-> with the file association for Markdown files. The `designmd` shim resolves to
-> the same entrypoint and works identically across all platforms.
->
-> ```jsonc
-> // package.json
-> {
->   "scripts": {
->     "design:lint": "designmd lint DESIGN.md",
->   },
-> }
-> ```
-
-### `lint`
-
-Validate a DESIGN.md file for structural correctness.
-
-```bash
-npx @google/design.md lint DESIGN.md
-npx @google/design.md lint --format json DESIGN.md
-cat DESIGN.md | npx @google/design.md lint -
-```
+## Outcome Contract
 
-| Option     | Type       | Default  | Description                          |
-| :--------- | :--------- | :------- | :----------------------------------- |
-| `file`     | positional | required | Path to DESIGN.md (or `-` for stdin) |
-| `--format` | `json`     | `json`   | Output format                        |
+- **Outcome**: 一份通过 `lint` 校验（exit 0）的 DESIGN.md，或一次有 JSON 证据的 diff/export 操作。
+- **Done when**: CLI 输出 JSON 中 `summary.errors` 为 0；改动后的 token 值全部来自用户输入或既有 token 引用，没有凭空编造。
+- **Evidence**: `lint` / `diff` / `export` 的 JSON 输出与退出码。
+- **Output**: 修改后的 DESIGN.md，加上 lint 结果摘要。
+- **Authorization**: 可以创建和编辑 DESIGN.md、运行 CLI。不要安装全局依赖、不要修改项目构建配置，除非用户明确要求。
 
-Exit code `1` if errors are found, `0` otherwise.
+## Mode Picker
 
-### `diff`
+| Ask                         | Mode                                  |
+| --------------------------- | ------------------------------------- |
+| 新建或修改 DESIGN.md        | [Create or Edit](#create-or-edit)     |
+| 校验现有文件                | [Validate](#validate)                 |
+| 对比两个版本                | [Compare Versions](#compare-versions) |
+| 导出 token 到 Tailwind/DTCG | [Export Tokens](#export-tokens)       |
 
-Compare two DESIGN.md files and report token-level changes.
+## Create or Edit
 
-```bash
-npx @google/design.md diff DESIGN.md DESIGN-v2.md
-```
+1. 已有 DESIGN.md 就先读，保留用户的 token 命名与 prose 语气；没有则按 references/format-spec.md 的结构新建。
+2. token 值必须来自用户或既有引用（`{colors.primary}` 形式），禁止编造色值、字号。
+3. prose 节解释设计意图（为什么选这个值、怎么用），不重复 token 值本身。
+4. 完成后必须走 [Validate](#validate)，把 lint JSON 摘要贴给用户。
 
-| Option     | Type       | Default  | Description                    |
-| :--------- | :--------- | :------- | :----------------------------- |
-| `before`   | positional | required | Path to the "before" DESIGN.md |
-| `after`    | positional | required | Path to the "after" DESIGN.md  |
-| `--format` | `json`     | `json`   | Output format                  |
+## Validate
 
-Exit code `1` if regressions are detected (more errors or warnings in the "after" file).
+1. 运行 `npx @google/design.md lint DESIGN.md`（Windows 上用 `designmd` 别名，见 Gotchas）。
+2. error 级 findings 必须修完再交付；warning 级逐条判断，不修的在交付说明里列出。
+3. 完整命令与选项表见 references/cli-reference.md。
 
-### `export`
+## Compare Versions
 
-Export DESIGN.md tokens to other formats.
+1. 运行 `npx @google/design.md diff <before> <after>`。
+2. 退出码 1 表示 after 引入回归（更多 error/warning），先把回归清零再谈 token 变更本身。
+3. 向用户汇报 `tokens` 里的 added/removed/modified，而不是贴整段 JSON。
 
-```bash
-npx @google/design.md export --format json-tailwind DESIGN.md > tailwind.theme.json
-npx @google/design.md export --format css-tailwind DESIGN.md > theme.css
-npx @google/design.md export --format dtcg DESIGN.md > tokens.json
-```
+## Export Tokens
 
-| Option     | Type                                                      | Default  | Description                          |
-| :--------- | :-------------------------------------------------------- | :------- | :----------------------------------- |
-| `file`     | positional                                                | required | Path to DESIGN.md (or `-` for stdin) |
-| `--format` | `json-tailwind` \| `css-tailwind` \| `tailwind` \| `dtcg` | required | Output format                        |
+1. 确认目标格式：Tailwind v3 用 `json-tailwind`，Tailwind v4 用 `css-tailwind`，跨工具流通用 `dtcg`。
+2. 运行 `npx @google/design.md export --format <fmt> DESIGN.md` 并重定向到目标文件。
+3. 导出后提醒用户：DESIGN.md 是源头，导出产物不要手改，改完重新导出。
 
-| Format          | Output | Description                                                   |
-| :-------------- | :----- | :------------------------------------------------------------ |
-| `json-tailwind` | JSON   | Tailwind v3 `theme.extend` config object                      |
-| `css-tailwind`  | CSS    | Tailwind v4 `@theme { ... }` block with CSS custom properties |
-| `tailwind`      | JSON   | Alias for `json-tailwind`                                     |
-| `dtcg`          | JSON   | W3C Design Tokens Format Module                               |
+## Hard Rules
 
-### `spec`
+- **先 lint 再交付。** 任何创建/编辑以 lint exit 0 为完成标准，没有例外。
+- **token 是规范值，prose 是理由。** 两者冲突时改 prose，不改 token 迎合文字。
+- **不编造设计值。** 颜色、字号、间距要么用户给，要么从既有 token 引用派生。
+- **Windows 用 `designmd`。** 任何平台不确定时都优先 `designmd` 别名，行为完全一致。
 
-Output the DESIGN.md format specification (useful for injecting spec context into agent prompts).
+## Rationalization Smells
 
-```bash
-npx @google/design.md spec
-npx @google/design.md spec --rules
-npx @google/design.md spec --rules-only --format json
-```
+- "改动很小，不用跑 lint"——broken-ref 和 contrast-ratio 都是小改动引入的；lint 只要一秒。
+- "prose 写详细点就等于设计系统"——没有 token 的 prose 无法被 lint，也无法被导出，对 agent 不可执行。
+- "warning 可以忽略"——warning 里藏着 missing-primary 和 missing-typography，agent 会因此自动编造主色和字体。
 
-| Option         | Type                 | Default    | Description                           |
-| :------------- | :------------------- | :--------- | :------------------------------------ |
-| `--rules`      | boolean              | `false`    | Append the active linting rules table |
-| `--rules-only` | boolean              | `false`    | Output only the linting rules table   |
-| `--format`     | `markdown` \| `json` | `markdown` | Output format                         |
+## Gotchas
 
-## Linting Rules
+| What happened                                                      | Rule                                                                    |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Windows/PowerShell 上 `npx @google/design.md` 无输出或打开了编辑器 | `.md` 后缀撞上 Windows 文件关联，用 `npx -p @google/design.md designmd` |
+| 安装报 `ENOVERSIONS`                                               | 几乎总是 registry 配置问题，`npm config get registry` 应指向公共源      |
+| `colours:` 被标 `unknown-key`                                      | linter 会识别已知 schema 键的拼写变体，按提示改正                       |
+| 组件写了 textColor 但没过 contrast-ratio                           | 该规则按 WCAG AA 4.5:1 判定，换色值而不是降标准                         |
 
-The linter runs nine rules against a parsed DESIGN.md. Each rule produces findings at a fixed severity level.
+## Output
 
-| Rule                 | Severity | What it checks                                                                                                                |
-| :------------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------- |
-| `broken-ref`         | error    | Token references (`{colors.primary}`) that don't resolve to any defined token                                                 |
-| `missing-primary`    | warning  | Colors are defined but no `primary` color exists — agents will auto-generate one                                              |
-| `contrast-ratio`     | warning  | Component `backgroundColor`/`textColor` pairs below WCAG AA minimum (4.5:1)                                                   |
-| `orphaned-tokens`    | warning  | Color tokens defined but never referenced by any component                                                                    |
-| `token-summary`      | info     | Summary of how many tokens are defined in each section                                                                        |
-| `missing-sections`   | info     | Optional sections (spacing, rounded) absent when other tokens exist                                                           |
-| `missing-typography` | warning  | Colors are defined but no typography tokens exist — agents will use default fonts                                             |
-| `section-order`      | warning  | Sections appear out of the canonical order defined by the spec                                                                |
-| `unknown-key`        | warning  | A top-level YAML key looks like a typo of a known schema key (e.g. `colours:` → `colors:`); custom extension keys stay silent |
+- 修改后的 DESIGN.md（或 diff/export 结果）。
+- lint JSON 的 `summary` 行与未处理 warning 清单。
+- 引用的参考文件：references/format-spec.md（格式规范）、references/cli-reference.md（CLI 完整参考）。
 
-### Programmatic API
+## Non-goals
 
-The linter is also available as a library:
-
-```typescript
-import { lint } from '@google/design.md/linter'
-
-const report = lint(markdownString)
-
-console.log(report.findings) // Finding[]
-console.log(report.summary) // { errors, warnings, info }
-console.log(report.designSystem) // Parsed DesignSystemState
-```
-
-## Design Token Interoperability
-
-DESIGN.md tokens are inspired by the [W3C Design Token Format](https://www.designtokens.org/). The `export` command converts tokens to other formats:
-
-- **Tailwind v3 config (JSON)** — `npx @google/design.md export --format json-tailwind DESIGN.md` — emits a `theme.extend` JSON object for `tailwind.config.js`. `--format tailwind` is a backwards-compatible alias.
-- **Tailwind v4 theme (CSS)** — `npx @google/design.md export --format css-tailwind DESIGN.md` — emits a CSS `@theme { ... }` block using Tailwind v4's CSS-variable token namespaces (`--color-*`, `--font-*`, `--text-*`, `--leading-*`, `--tracking-*`, `--font-weight-*`, `--radius-*`, `--spacing-*`).
-- **DTCG tokens.json** ([W3C Design Tokens Format Module](https://tr.designtokens.org/format/)) — `npx @google/design.md export --format dtcg DESIGN.md`
-
-## Source
-
-- Upstream: [https://github.com/google-labs-code/design.md](https://github.com/google-labs-code/design.md)
+- 不做没有 DESIGN.md 载体的通用 UI 设计或排版评审。
+- 不替代用户做设计决策（风格、品牌色由用户定，本技能保证其被结构化表达）。
+- 不维护导出产物的手动修改——源头改动后一律重新导出。

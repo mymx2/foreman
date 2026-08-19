@@ -203,7 +203,7 @@
       "source": "mymx2/skills",
       "sourceType": "github",
       "skillPath": "skills/kotlin-spring/SKILL.md",
-      "computedHash": "e39657f9111489dd4e8bb4beb05b4d9dbdc2e389070d7d8608a1a74e5fd7e2d8"
+      "computedHash": "80f0ca59c383c44c625cfc9a95dfd2241a20b2f214f257148b39dc06a5b58bd9"
     },
     "kotlin-spring-proxy-compatibility": {
       "source": "jetbrains/skills",

@@ -3,6 +3,8 @@ name: jdbc-dsl
 description: >
   使用基于 JdbcClient 扩展的 CRUD DSL 进行数据库操作，
   涵盖高层方法（insert/update/delete/select 等）及其自动行为、实体约定与底层 Builder SQL 生成规则。
+  当编写、审查或调试使用该 DSL 的数据库访问代码时使用。
+  不适用于通用 SQL 语法教学，也不适用于 MyBatis、JPA 等其他数据访问方案。
 license: MIT
 metadata:
   origin: https://github.com/mymx2/skills/jdbc-dsl
@@ -12,6 +14,22 @@ compatibility: Requires Kotlin, JDK25
 ---
 
 # JDBC CRUD 使用规则
+
+业务代码只走 `JdbcClient` 高层 DSL，底层 Builder 仅用于理解生成的 SQL。
+
+## Outcome Contract
+
+- Outcome: 业务代码通过 `JdbcClient` 高层 DSL 完成数据库操作，行为符合实体约定与自动规则。
+- Done when: 生成的 SQL 具备读写库绑定、逻辑删除、空条件保护和默认 limit，无 SQL 注入风险。
+- Evidence: 实体元数据配置、生成的 SQL 与参数、影响行数。
+- Output: 可直接落地的 Kotlin 调用代码。
+
+## 使用流程
+
+1. 按实体约定配置 `@Entity.Table` 与 `@Entity.Column` 元数据。
+2. 在 `JdbcClient` 高层 DSL 的 lambda 中通过 `s.where()` 链式拼装条件。
+3. 需要子查询时在 lambda 内构造 `SelectBuilder` 并挂到 `s.where()`。
+4. 依据「高层 DSL 的空条件差异」表确认空 where 语义，避免全表操作。
 
 文档分两层：
 
