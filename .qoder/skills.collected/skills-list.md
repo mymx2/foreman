@@ -87,7 +87,6 @@ vpx skills add anthropics/skills \
   --skill internal-comms \
   --skill pdf \
   --skill pptx \
-  --skill skill-creator \
   --skill slack-gif-creator \
   --skill theme-factory \
   --skill web-artifacts-builder \
@@ -118,7 +117,6 @@ vpx skills add antfu/skills --skill slidev --agent openclaw -p -y
 | `web-artifacts-builder` | anthropics/skills | Web 构建产物沙盒 |
 | `webapp-testing` | anthropics/skills | Web 应用测试策略 |
 | `slack-gif-creator` | anthropics/skills | Slack 动图生成 |
-| `skill-creator` | anthropics/skills | Agent Skill 创建与优化 |
 | `arrow-js` | standardagents/arrow-js | 轻量响应式 UI 框架 |
 | `slidev` | antfu/skills | Markdown 幻灯片 |
 
