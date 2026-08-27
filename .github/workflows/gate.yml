@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Gate
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  # ── 统一门禁 ───────────────────────────────────────────
+  gate:
+    name: Gate — lint · fmt · type · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: ✈ Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: 📦 Setup Vite+ (installs vp, Node, and dependencies)
+        uses: voidzero-dev/setup-vp@2dec1e33f4ab2c6d5bce1b0c4607961bb1a3f7a1 # v1
+        with:
+          run-install: true
+
+      - name: 🔍 Lint · fmt · type
+        run: vp check
+
+      - name: 🛡 Tests
+        run: vp test --passWithNoTests
