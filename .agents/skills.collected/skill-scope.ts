@@ -40,7 +40,6 @@ const GROUPS: SkillGroup[] = [
       "web-artifacts-builder",
       "webapp-testing",
       "slack-gif-creator",
-      "skill-creator",
       "arrow-js",
       "slidev",
     ],
@@ -121,7 +120,6 @@ const GROUPS: SkillGroup[] = [
     outputFile: "rbz-admin-SKILL.local.md",
     title: "# rbz-admin — Kotlin + Spring Boot 后端技能清单",
     skills: [
-      "kotlin-spring",
       "gradle-kotlin-dsl-doctor",
       "kotlin-spring-proxy-compatibility",
       "kotlin-idiomatic-refactorer-spring-aware",

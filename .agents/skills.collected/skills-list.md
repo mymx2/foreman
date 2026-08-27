@@ -3,7 +3,7 @@
 按领域组织的技能清单。每个领域包含安装命令和技能索引。
 
 > 安装时请用 `--skill` 显式指定需要的技能，禁止直接安装整个仓库。
-> `-g` 为全局安装；`--agent codex` 为项目级安装（根目录执行）；`--agent openclaw` 在 `.qoder/skills.collected/` 目录下执行。
+> `-g` 为全局安装；`--agent codex` 为项目级安装（根目录执行）；`--agent openclaw` 在 `.agents/skills.collected/` 目录下执行。
 
 ---
 
@@ -12,31 +12,23 @@
 ### 安装命令
 
 ```bash
-# mymx2/skills
-vpx skills add mymx2/skills \
-  --skill find-skills \
-  --skill skills-cli \
-  --skill writing-guidelines \
-  --skill writing-review \
-  -g -y
-
-# openai/skills -- deprecated
-vpx skills add openai/skills --skill screenshot -g -y
+# anthropics/claude-plugins-official
+vpx skills add https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management/skills --skill claude-md-improver -g -y
 
 # anthropics/skills
 vpx skills add anthropics/skills --skill skill-creator -g -y
+
+# openai/skills -- deprecated
+vpx skills add openai/skills --skill screenshot -g -y
 ```
 
 ### 技能索引
 
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
-| `find-skills` | mymx2/skills | 技能发现与安装助手 |
-| `skills-cli` | mymx2/skills | Skills CLI 完整使用指南 |
-| `writing-guidelines` | mymx2/skills | 技术文档写作规范 |
-| `writing-review` | mymx2/skills | 写作规范合规审查 |
-| `screenshot` | openai/skills | 桌面截图工具 |
+| `claude-md-improver` | anthropics/claude-plugins-official (claude-md-management) | CLAUDE.md 审计与优化 |
 | `skill-creator` | anthropics/skills | Agent Skill 创建与优化 |
+| `screenshot` | openai/skills | 桌面截图工具 |
 
 ---
 
@@ -52,9 +44,6 @@ vpx skills add https://github.com/openai/plugins/tree/main/plugins/github/skills
   --skill yeet \
   --skill github \
   --agent codex -p -y
-
-# mymx2/skills
-vpx skills add mymx2/skills --skill design-cli --agent codex -p -y
 ```
 
 ### 技能索引
@@ -65,7 +54,6 @@ vpx skills add mymx2/skills --skill design-cli --agent codex -p -y
 | `gh-fix-ci` | openai/plugins | GitHub Actions CI 修复 |
 | `github` | openai/plugins | GitHub 仓库/PR/Issue 导航与摘要 |
 | `yeet` | openai/plugins | 一键 stage + commit + push + PR |
-| `design-cli` | mymx2/skills | DESIGN.md 规范与 CLI 工具（token 定义、lint、diff、export） |
 
 ---
 
@@ -341,9 +329,6 @@ vpx skills add jetbrains/skills \
   --skill upgrade-breaking-change-navigator \
   --agent openclaw -p -y
 
-# mymx2/skills
-vpx skills add mymx2/skills --skill kotlin-spring --agent openclaw -p -y
-
 # timescale/pg-aiguide
 vpx skills add timescale/pg-aiguide --skill design-postgres-tables --agent openclaw -p -y
 
@@ -355,7 +340,6 @@ vpx skills add redis/agent-skills --skill redis-core --agent openclaw -p -y
 
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
-| `kotlin-spring` | mymx2/skills | Spring Boot 全家桶（25 个子技能） |
 | `gradle-kotlin-dsl-doctor` | jetbrains/skills | Gradle 构建调试与修复 |
 | `kotlin-spring-proxy-compatibility` | jetbrains/skills | @Transactional/@Cacheable 代理兼容 |
 | `kotlin-idiomatic-refactorer-spring-aware` | jetbrains/skills | Kotlin 代码清理（Spring 安全） |
@@ -404,9 +388,6 @@ vpx skills add tw93/Waza \
   --skill health \
   --agent openclaw -p -y
 
-# anthropics/claude-plugins-official
-vpx skills add anthropics/claude-plugins-official --skill claude-md-improver --agent openclaw -p -y
-
 # dgreenheck/webgpu-claude-skill — WebGPU 3D
 vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent openclaw -p -y
 ```
@@ -428,7 +409,6 @@ vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent
 | `read` | tw93/Waza | URL/PDF 阅读与摘要 |
 | `write` | tw93/Waza | 中英文润色与去 AI 味 |
 | `health` | tw93/Waza | 工程健康度审计 |
-| `claude-md-improver` | anthropics/claude-plugins-official | CLAUDE.md 审计与优化 |
 | `webgpu-threejs-tsl` | dgreenheck/webgpu-claude-skill | Three.js WebGPU + TSL 着色器 |
 | `tencentos-expert` | 手动收集 | TencentOS 服务器运维诊断 |
 | `sql-parser-cst` | 个人创建 | 解析 SQL 生成 CST 语法树，提取表结构与 SQL 元信息 |

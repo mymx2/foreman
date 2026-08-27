@@ -7,7 +7,7 @@ description: >
   不适用于通用 SQL 语法教学，也不适用于 MyBatis、JPA 等其他数据访问方案。
 license: MIT
 metadata:
-  origin: https://github.com/mymx2/skills/jdbc-dsl
+  origin: https://github.com/mymx2
   author: mymx2 <https://github.com/mymx2>
   version: 2026.05.06
 compatibility: Requires Kotlin, JDK25

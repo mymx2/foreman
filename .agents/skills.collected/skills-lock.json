@@ -199,12 +199,6 @@
       "skillPath": "kotlin-idiomatic-refactorer-spring-aware/SKILL.md",
       "computedHash": "e2363ef7727ea9a557d979b8ed5f0e80dc66287cf3f62fed58ec27bf0b2579e9"
     },
-    "kotlin-spring": {
-      "source": "mymx2/skills",
-      "sourceType": "github",
-      "skillPath": "skills/kotlin-spring/SKILL.md",
-      "computedHash": "80f0ca59c383c44c625cfc9a95dfd2241a20b2f214f257148b39dc06a5b58bd9"
-    },
     "kotlin-spring-proxy-compatibility": {
       "source": "jetbrains/skills",
       "sourceType": "github",

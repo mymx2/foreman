@@ -1,12 +1,6 @@
 {
   "version": 1,
   "skills": {
-    "design-cli": {
-      "source": "mymx2/skills",
-      "sourceType": "github",
-      "skillPath": "skills/design-cli/SKILL.md",
-      "computedHash": "c58952d6b404eb2deb1337575d00fac3c70ea00178ea7d9abd72ef1e1ba9641b"
-    },
     "gh-address-comments": {
       "source": "openai/plugins",
       "ref": "main",
