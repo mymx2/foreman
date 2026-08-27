@@ -1,1 +1,14 @@
+#!/bin/sh
+# 检查暂存区新增行是否包含敏感关键字（防止误提交本地配置）
+PART1="TO"
+PART2="DY"
+KEYWORD="${PART1}${PART2}"
+
+DIFF_CONTENT=$(git diff --cached --unified=0 | grep '^+' | grep -v '^+++')
+if [ -n "$DIFF_CONTENT" ] && echo "$DIFF_CONTENT" | grep -i "$KEYWORD" >/dev/null 2>&1; then
+  echo "❌ ERROR: detected forbidden keyword in added lines: '$KEYWORD'"
+  echo "🚫 Commit blocked: please remove sensitive content."
+  exit 1
+fi
+
 vp staged

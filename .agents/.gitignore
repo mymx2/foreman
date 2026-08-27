@@ -1,6 +1,1 @@
 skills.disabled
-
-# 🤡 Use TODY keyword to avoid accident commit info below:
-# 只忽略本目录（.qoder）下的 skills（软链接，可能是目录或符号链接文件）
-/skills
-/skills/
