@@ -35,12 +35,12 @@ Disposable types and naming rules are defined by the templates in `tasks/`: `pla
 
 ## Who Produces What
 
-| Moment                            | Artifact                                                                   |
-| --------------------------------- | -------------------------------------------------------------------------- |
-| `/think` planning a feature       | `NN-plan-<slug>.md` - approval gate; do NOT implement before user approves |
-| Plan approved, ready to build     | `NN-todo-<slug>.md` - checklist, update as tasks complete                  |
-| Early exploration, unshaped idea  | `NN-draft-<slug>.md`                                                       |
-| `/check` audit / pre-merge review | `NN-audit-<slug>.md` - same `NN` as the plan it audits                     |
+| Moment                                        | Artifact                                                                   |
+| --------------------------------------------- | -------------------------------------------------------------------------- |
+| Planning a feature (e.g. via `/think`)        | `NN-plan-<slug>.md` - approval gate; do NOT implement before user approves |
+| Plan approved, ready to build                 | `NN-todo-<slug>.md` - checklist, update as tasks complete                  |
+| Early exploration, unshaped idea              | `NN-draft-<slug>.md`                                                       |
+| Pre-merge review or audit (e.g. via `/check`) | `NN-audit-<slug>.md` - same `NN` as the plan it audits                     |
 
 ## Rules
 
