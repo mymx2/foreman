@@ -15,10 +15,9 @@ Research first, build second. Test before shipping. Deliver a finished product, 
 | README.md  | Humans        | What the project is                                 |
 | AGENTS.md  | Coding agents | How to build the project                            |
 | DESIGN.md  | Design agents | How the project should look and feel                |
-| SPEC.md    | Coding agents | What we're building and why (per sub-project)       |
 | tasks/*.md | Coding agents | Naming conventions for disposable working artifacts |
 
-The root `SPEC.md` is an index that points to each sub-project's spec. Sub-project-level `SPEC.md` and `DESIGN.md` live under `projects/`, with each sub-project carrying only the files it needs.
+Sub-project-level `AGENTS.md` and `DESIGN.md` live under `projects/`, with each sub-project carrying only the files it needs.
 
 ---
 
@@ -26,10 +25,10 @@ The root `SPEC.md` is an index that points to each sub-project's spec. Sub-proje
 
 Two tiers of planning documents:
 
-| Tier       | Location                                           | Lifecycle                                           |
-| ---------- | -------------------------------------------------- | --------------------------------------------------- |
-| Durable    | `projects/<sub>/SPEC.md`                           | Living spec, indexed by root `SPEC.md`, git-tracked |
-| Disposable | `tasks/__<sub>/YYYYMMDD/NN-<type>-<kebab-slug>.md` | One-shot, NOT git-tracked (`**/__*` is gitignored)  |
+| Tier       | Location                                           | Lifecycle                                          |
+| ---------- | -------------------------------------------------- | -------------------------------------------------- |
+| Durable    | `projects/<sub>/AGENTS.md`                         | Living guide, git-tracked                          |
+| Disposable | `tasks/__<sub>/YYYYMMDD/NN-<type>-<kebab-slug>.md` | One-shot, NOT git-tracked (`**/__*` is gitignored) |
 
 Disposable types and naming rules are defined by the templates in `tasks/`: `plan.md`, `todo.md`, `draft.md`, `audit.md`. `NN` is a per-day sequence shared across artifacts of one request - a plan and its todo/draft/audit share the same `NN`.
 
@@ -44,6 +43,6 @@ Disposable types and naming rules are defined by the templates in `tasks/`: `pla
 
 ## Rules
 
-- Before building in a sub-project, read its `projects/<sub>/SPEC.md` plus the latest plan/todo pair under `tasks/__<sub>/`.
-- Progress lives in todo; decisions that outlive the task get promoted back into `SPEC.md` / `DESIGN.md`, never left rotting in `tasks/__*`.
+- Before building in a sub-project, read its `projects/<sub>/AGENTS.md` plus the latest plan/todo pair under `tasks/__<sub>/`.
+- Progress lives in todo; decisions that outlive the task get promoted back into `AGENTS.md` / `DESIGN.md`, never left rotting in `tasks/__*`.
 - `tasks/*.md` (root level) are convention docs - edit them only to change the convention itself.
