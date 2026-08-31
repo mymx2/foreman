@@ -215,7 +215,8 @@ vpx skills add wechat-miniprogram/skyline-skills \
 vpx skills add https://github.com/wechat-miniprogram/glass-easel/blob/master/glass-easel-skills/glass-easel --agent openclaw -p -y
 ```
 
-> `wechat-miniprogram` 和 `tdesign-miniprogram` 来自 CodeBuddy，无 skills.sh 安装命令。
+- `wechat-miniprogram` 和 `tdesign-miniprogram` 来自 CodeBuddy，无 skills.sh 安装命令。
+- `wechatide-skill` 来自微信开发者工具。
 
 ### 技能索引
 
@@ -231,6 +232,7 @@ vpx skills add https://github.com/wechat-miniprogram/glass-easel/blob/master/gla
 | `skyline-worklet` | wechat-miniprogram/skyline-skills | UI 线程动画 |
 | `skyline-scroll-api` | wechat-miniprogram/skyline-skills | 滚动控制与下拉刷新 |
 | `skyline-wxss` | wechat-miniprogram/skyline-skills | WXSS/CSS 支持范围 |
+| `wechatide-skill` | 手动收集 | 微信开发者工具 wechatide |
 
 ---
 

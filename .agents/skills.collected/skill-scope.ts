@@ -88,6 +88,7 @@ const GROUPS: SkillGroup[] = [
       "skyline-worklet",
       "skyline-scroll-api",
       "skyline-wxss",
+      "wechatide-skill",
     ],
   },
   {
