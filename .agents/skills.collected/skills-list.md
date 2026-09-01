@@ -370,6 +370,7 @@ vpx skills add redis/agent-skills --skill redis-core --agent openclaw -p -y
 | `project-context-ingestion` | jetbrains/skills | 项目上下文采集 |
 | `upgrade-breaking-change-navigator` | jetbrains/skills | 大版本升级导航 |
 | `ci-cd-containerization-advisor` | jetbrains/skills | CI/CD 与容器化 |
+| `idea-mcp` | 个人创建 | IntelliJ IDEA 项目模型：符号定位、编译检查、xdebug 调试、数据库 |
 
 ---
 

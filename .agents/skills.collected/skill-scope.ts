@@ -149,6 +149,7 @@ const GROUPS: SkillGroup[] = [
       "project-context-ingestion",
       "upgrade-breaking-change-navigator",
       "ci-cd-containerization-advisor",
+      "idea-mcp",
     ],
   },
   {
