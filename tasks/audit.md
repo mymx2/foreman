@@ -11,3 +11,15 @@ tasks/__<sub>/YYYYMMDD/NN-audit-<kebab-slug>.md
 - `<kebab-slug>` — 小写英文短横线格式，概括需求的简短标识
 
 示例：`tasks/__example-app/20260115/01-audit-add-dark-mode.md`
+
+## 进度元信息
+
+文件头部必须携带 frontmatter，供不读正文即可判断进度：
+
+```markdown
+---
+status: in-progress | done
+---
+```
+
+流转：`in-progress` → `done`。创建时设置，状态变化时更新。

@@ -11,3 +11,15 @@ tasks/__<sub>/YYYYMMDD/NN-draft-<kebab-slug>.md
 - `<kebab-slug>` — 小写英文短横线格式，概括需求的简短标识
 
 示例：`tasks/__example-app/20260115/01-draft-add-dark-mode.md`
+
+## 进度元信息
+
+文件头部必须携带 frontmatter，供不读正文即可判断进度：
+
+```markdown
+---
+status: draft | abandoned
+---
+```
+
+流转：`draft` 直至提升为 plan 或被丢弃（`abandoned`）。创建时设置，状态变化时更新。
