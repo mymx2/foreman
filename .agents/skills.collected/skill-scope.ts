@@ -42,6 +42,7 @@ const GROUPS: SkillGroup[] = [
       "slack-gif-creator",
       "arrow-js",
       "slidev",
+      "storyset",
     ],
   },
   {

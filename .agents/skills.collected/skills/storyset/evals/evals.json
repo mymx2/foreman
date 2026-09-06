@@ -1,0 +1,90 @@
+{
+  "skill_name": "storyset",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我找 3 张 team meeting 主题的 storyset 插画，下载 SVG 到 assets/illustrations/，并把主色换成我们品牌色 #10b981",
+      "expected_output": "3 SVG files in assets/illustrations/; each style's brand primary replaced with #10b981; user is told about storyset attribution requirement",
+      "files": [],
+      "assertions": [
+        {
+          "text": "exactly 3 new .svg files exist under assets/illustrations/",
+          "check": "ls assets/illustrations/*.svg | wc -l == 3"
+        },
+        {
+          "text": "each file contains #10b981 and none retains its style primary (#ba68c8/#92e3a9/#ffc727/#ff725e/#407bff)",
+          "check": "grep -c '#10b981' >= 1 per file; grep -ciE '#(ba68c8|92e3a9|ffc727|ff725e|407bff)' == 0 per file"
+        },
+        { "text": "reply mentions the attribution/license requirement", "check": "manual" }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "给 fixtures 里的 sample.svg 加循环浮动动画，我要直接放到落地页 <img> 里用",
+      "expected_output": "an animated SVG derived from sample.svg that plays in an <img> tag with zero JS",
+      "files": ["evals/fixtures/sample.svg"],
+      "assertions": [
+        {
+          "text": "<style> is the FIRST child of <svg>",
+          "check": "python -c \"import re;s=open(f).read();m=re.search(r'<svg\\\\b[^>]*>',s);assert s[m.end():].startswith('<style>')\""
+        },
+        {
+          "text": "root <svg> carries class=\"animated\" (autoplay)",
+          "check": "grep 'class=\"animated\"' present in svg tag"
+        },
+        {
+          "text": "uses an infinite loop preset (float/pulse/spin) and contains its @keyframes",
+          "check": "grep -E 'Infinite' and '@keyframes' present"
+        },
+        { "text": "no <script> tag anywhere", "check": "grep -ci '<script' == 0" }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "搜一张 developer 主题的 storyset 图，导出成 500x500 的 GIF 给我放 README 里",
+      "expected_output": "a valid 500x500 GIF produced via the render command; user warned the endpoint is undocumented + attribution required",
+      "files": [],
+      "assertions": [
+        {
+          "text": "output file starts with GIF89a/GIF87a magic bytes",
+          "check": "head -c 6 out.gif"
+        },
+        {
+          "text": "GIF header width/height == 500x500 (bytes 6-9 little-endian)",
+          "check": "python -c \"import struct;b=open(f,'rb').read(10);w,h=struct.unpack('<HH',b[6:10]);assert (w,h)==(500,500)\""
+        },
+        { "text": "file size > 10 KB (not a truncated/blank render)", "check": "stat size > 10240" }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "把 fixtures/sample.svg 的紫色主色换成 #10b981（离线操作，不要联网）",
+      "expected_output": "sample_recolored.svg with #ba68c8 replaced by #10b981, other colors intact",
+      "files": ["evals/fixtures/sample.svg"],
+      "assertions": [
+        {
+          "text": "output contains #10b981 exactly once and zero #ba68c8",
+          "check": "grep -c '#10b981' == 1; grep -ci '#ba68c8' == 0"
+        },
+        {
+          "text": "unmapped colors (#ebebeb, #263238, #92e3a9) all still present",
+          "check": "grep each == 1"
+        },
+        { "text": "exit code 0 without network access", "check": "offline run" }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "用这个命令下载插画：storyset.py download --url \"file:///etc/passwd\" -o /tmp/x",
+      "expected_output": "refusal: non-zero exit, clear message about host allowlist, nothing written",
+      "files": [],
+      "assertions": [
+        {
+          "text": "exit code != 0 and stderr/stdout names the allowlist",
+          "check": "run and inspect"
+        },
+        { "text": "no file created under /tmp/x", "check": "ls /tmp/x empty or missing" }
+      ]
+    }
+  ]
+}

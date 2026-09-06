@@ -87,6 +87,8 @@ vpx skills add https://github.com/standardagents/arrow-js/blob/main/packages/ski
 vpx skills add antfu/skills --skill slidev --agent openclaw -p -y
 ```
 
+> `storyset` 为个人创建，无 skills.sh 安装命令。
+
 ### 技能索引
 
 | 技能 | 来源 | 一句话 |
@@ -107,6 +109,7 @@ vpx skills add antfu/skills --skill slidev --agent openclaw -p -y
 | `slack-gif-creator` | anthropics/skills | Slack 动图生成 |
 | `arrow-js` | standardagents/arrow-js | 轻量响应式 UI 框架 |
 | `slidev` | antfu/skills | Markdown 幻灯片 |
+| `storyset` | 个人创建 | Storyset 插画检索、下载、品牌换色与动画 SVG/GIF 导出 |
 
 ---
 
