@@ -1,3 +1,11 @@
+<div align="center">
+
+[![author](https://img.shields.io/badge/author-🤖_mymx2-E07A28?logo=github)](https://github.com/mymx2)
+[![License: MIT](https://img.shields.io/badge/License-MIT-A31F34)](https://mit-license.org)
+[![skills.sh](https://skills.sh/b/mymx2/foreman)](https://skills.sh/mymx2/foreman)
+
+</div>
+
 # Project Guide
 
 | File      | Who reads it  | What it defines                      |
