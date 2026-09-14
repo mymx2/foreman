@@ -160,6 +160,7 @@ const GROUPS: SkillGroup[] = [
       "tencentos-expert",
       "sql-parser-cst",
       "webgpu-threejs-tsl",
+      "shadowbot-cli",
     ],
   },
 ];
