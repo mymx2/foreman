@@ -161,6 +161,7 @@ const GROUPS: SkillGroup[] = [
       "sql-parser-cst",
       "webgpu-threejs-tsl",
       "shadowbot-cli",
+      "computer-flow",
     ],
   },
 ];
