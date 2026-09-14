@@ -1,12 +1,14 @@
 ---
 name: shadowbot-cli
-description: "通过 shadowbot-cli（官方 shadowbot.shell-cli）操作本地已安装的影刀RPA 6.3+ 客户端：运行应用、查询任务与日志、管理触发器与消息、在 Studio 中创建或编辑流程、插入并填充可视化指令、保存编译与运行验证。当用户要求运行影刀应用、排查影刀任务、编写或修改影刀流程、管理影刀触发器时使用。不适用于未安装影刀 6.3+ 客户端的机器，不用于影刀云端企业版开放API或旧版社区 MCP Server 场景。"
-when_to_use: 运行影刀应用, 影刀任务日志, 影刀流程编辑, 插入影刀指令, shadowbot-cli, 影刀触发器, 影刀studio
+description: "通过 shadowbot-cli（官方 shadowbot.shell-cli）及可直调的本地 MCP 端点操作影刀 RPA 6.3+ 客户端：运行应用、查询任务与日志、在 Studio 中创建或编辑流程、插入并填充可视化指令、保存编译与运行验证，以及读取官方 wiki 文档与流程变量清单等 CLI 未暴露的端点工具。当用户要求运行影刀应用、排查影刀任务、编写或修改影刀流程、查询影刀指令或 SDK 文档时使用。不适用于未安装影刀 6.3+ 客户端的机器，不用于影刀云端企业版开放API或旧版社区 MCP Server 场景。"
+when_to_use: 运行影刀应用, 影刀任务日志, 影刀流程编辑, 插入影刀指令, shadowbot-cli, 影刀触发器, 影刀studio, 影刀MCP端点
 ---
 
 # ShadowBot CLI
 
 唯一可靠的编程口子是官方 `shadowbot.shell-cli`：它封装了客户端进程内的本地 REST API（127.0.0.1）。**客户端没启动，所有命令都会失败**——先确认影刀在运行，再执行任何业务命令。
+
+CLI 之下还有一层：客户端暴露两个标准 MCP 端点（streamable-http，见「本地 MCP 端点」章节），应按 MCP 客户端配置接入。CLI 未暴露的 `wiki.*`、`flow.list_variables`、`flow.get_variable_snapshots`、`app.resource.*`、`app.reload` 等工具经 MCP 连接使用；`catalog.block_summary`、`flow.blocks.forms` 则被服务端禁用（`TOOL_DISABLED` / `TOOL_NOT_FOUND`），两条路径都走不通。
 
 ## Outcome Contract
 
@@ -41,10 +43,40 @@ when_to_use: 运行影刀应用, 影刀任务日志, 影刀流程编辑, 插入�
 2. `shadowbot-cli studio flow list` 拿到 `<flow-id>`（默认 main），`studio flow blocks-list --flow-id <flow-id>` 查看现有指令。
 3. 查指令原型名与字段契约：执行 `scripts/block-lookup.mjs`（传 `search <关键词>` 找名字、`detail <prototype_name>` 出字段）。服务端的 catalog 查询工具被禁用，必须走本地知识库，禁止凭记忆编造。
 4. `shadowbot-cli studio flow edit-blocks --flow-id <flow-id> --op insert --blocks '[{"prototype_name":"<名>","comment":"<注释>"}]' --index -1`，从响应记下 `block_id` 与每个字段的默认形态。
-5. 填参数：`shadowbot-cli studio flow fill-blocks --flow-id <flow-id> --fills @fills.json`。值采用 `{"expression":"'<文本>'"}` 形态（文本字面量套单引号）；复杂 JSON 一律走 `@file` 传参，避免 shell 转义事故。
+5. 填参数：`shadowbot-cli studio flow fill-blocks --flow-id <flow-id> --fills @fills.json`。值的写法：普通字面量直接传（`"hello"`、`12`），需要表达式/变量/运算时用 `{"expression":"..."}`；复杂 JSON 一律走 `@file` 传参，避免 shell 转义事故。权威写法见端点工具 `wiki.read` 的 `wiki/guides/visualflow/value-types`（或 `wiki.search` 查「字段值」）。
 6. `shadowbot-cli studio app save` 保存并编译。
 7. `shadowbot-cli studio app run --flow-id <flow-id> --timeout 90s` 运行验证；失败用 `shadowbot-cli studio diagnostics snapshot` 与 `studio app logs` 定位，修复后回到第 5 步。
 8. `shadowbot-cli studio current sync` 同步上传并关闭应用。
+
+## 本地 MCP 端点
+
+客户端（Studio 应用打开后）在本地暴露两个标准 MCP 端点（streamable-http）。**用 MCP 客户端配置连接，不要用命令行拼请求**：
+
+```json
+{
+  "mcpServers": {
+    "shadowbot-studio": {
+      "type": "streamable-http",
+      "url": "http://127.0.0.1:42500/api/v1/mcp"
+    },
+    "shadowbot-browser": {
+      "type": "streamable-http",
+      "url": "http://127.0.0.1:42500/api/v1/browser-use-mcp/mcp"
+    }
+  }
+}
+```
+
+| 端点 | 路径 | 工具 |
+| --- | --- | --- |
+| Studio MCP | `/api/v1/mcp` | 40 个：`app.*` / `flow.*` / `codeflow.*` / `wiki.*` / `diagnostics.*` / `selector.*` |
+| Browser Use MCP | `/api/v1/browser-use-mcp/mcp` | 19 个：`web_create` / `web_snapshot` / `web_action*` / `web_build_selector*` / `web_review` 等 |
+
+- **端口**：当前为 42500（跨客户端重启稳定）。若连接失败，读取 `%TEMP%\shadowbot.cli.1.port` 文件内容确认实际端口后更新配置——这是客户端每次启动刷新的端口文件，勿假设永远不变。
+- **前提**：影刀客户端需处于运行状态；Studio 应用打开后能力最全（部分工具要求 workspace 打开）。
+- **与 CLI 的关系**：CLI 只把部分工具包装成子命令；同一批工具用 MCP 连接时全部可用。CLI 没有的能力经 MCP 使用，特别是：`wiki.list` / `wiki.read` / `wiki.search`（官方编写契约与 xbot SDK 文档，本地最权威的影刀知识库）、`flow.list_variables`（查流程变量与可见范围）、`app.resource.*`（资源文件）、`app.reload`、`flow.get_variable_snapshots`（运行后变量快照）。
+- **服务端禁用**（连接后调用仍会被拒，勿反复尝试）：`catalog.block_summary`（→403 TOOL_DISABLED，指令元数据从 `scripts/block-lookup.mjs` 的本地知识库拿）、`flow.blocks.forms`（→404 TOOL_NOT_FOUND，工具在服务端已删除）。
+- **HTTP 400 与 403/404 的区分**：400 多为参数缺失，补齐必填参数重试；403 TOOL_DISABLED / 404 TOOL_NOT_FOUND 是服务端策略，换参数也无效。
 
 ## Common Rationalizations
 
@@ -79,9 +111,12 @@ when_to_use: 运行影刀应用, 影刀任务日志, 影刀流程编辑, 插入�
 | `studio` 命令报 studio MCP CLI support is disabled | 环境变量未生效；用 PATH 里的 `shadowbot-cli` shim，或手动设置 `SWITCH_STUDIO_MCP_CLI_SUPPORT=1` |
 | `studio create` 超时但应用已建 | 默认 15s 太短；加 `--timeout 60s`，重试前先 `console app` 查重 |
 | `catalog.blocks` / `flow blocks-forms` 返回 TOOL_DISABLED | 服务端禁用；改用 `scripts/block-lookup.mjs` 查本地知识库 |
-| `fill-blocks` 报 unknown value tag | 值形态错误；文本用 `{"expression":"'文本'"}`，复杂 JSON 用 `@file` |
+| `fill-blocks` 报 unknown value tag / 值不生效 | 值形态错误：字面量直接传（`"hello"`、`12`），表达式/变量用 `{"expression":"..."}`；权威说明见 MCP 工具 `wiki.read` 的 `wiki/guides/visualflow/value-types` |
+| 端点调用返回 400 | 参数缺失（与禁用无关）；补齐必填参数重试。403 TOOL_DISABLED / 404 TOOL_NOT_FOUND 才是策略禁用 |
 | 回收或详情报“应用不存在” | 6.0.x 时代的本地残留应用；请用户在客户端内处理 |
 | `console task run` 报没有操作权限 | 应用未同步到云端；先在 Studio 里 `save` 再运行 |
+| 需要官方编写规范 / SDK API 参考 | 经 MCP 连接调 `wiki.search` 搜关键词、`wiki.read` 读全文（doc_id 前缀 `wiki/guides/` 或 `wiki/xbot_sdk/`），比任何外部资料权威 |
+| 想查某流程的变量名与作用域 | CLI 无此子命令；经 MCP 连接调 `flow.list_variables`（传 `flow_id`） |
 
 ## Output
 
