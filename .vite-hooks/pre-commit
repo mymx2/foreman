@@ -1,5 +1,8 @@
 #!/bin/sh
 # 检查暂存区新增行是否包含敏感关键字（防止误提交本地配置）
+# 注意：本脚本由 hooks helper 以 `sh -e` 执行，diff 管道零匹配的退出码会触发
+# errexit（纯删除提交必现），故检查块显式 set +e。
+set +e
 PART1="TO"
 PART2="DY"
 KEYWORD="${PART1}${PART2}"
@@ -10,5 +13,6 @@ if [ -n "$DIFF_CONTENT" ] && echo "$DIFF_CONTENT" | grep -i "$KEYWORD" >/dev/nul
   echo "🚫 Commit blocked: please remove sensitive content."
   exit 1
 fi
+set -e
 
 vp staged
