@@ -1,0 +1,46 @@
+{
+  "name": "@skills/mobile-use",
+  "version": "1.0.0",
+  "description": "Discover, operate, and verify Android, HarmonyOS, and iOS devices through the host toolchain (adb, hdc, simctl). Vendor-neutral CLI.",
+  "license": "MIT",
+  "bin": {
+    "mobile-use": "./../scripts/mobile-use.mjs",
+    "mobile-use-verify": "./../scripts/verify-artifact-receipt.mjs"
+  },
+  "files": [
+    "../scripts"
+  ],
+  "type": "module",
+  "exports": {
+    "./mobile-use": "./../scripts/mobile-use.mjs",
+    "./verify-artifact-receipt": "./../scripts/verify-artifact-receipt.mjs",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "node ./build.mjs",
+    "dev": "vp pack --watch",
+    "check": "vp check",
+    "lint": "vp lint",
+    "fmt": "vp fmt",
+    "test": "vp test",
+    "prepublishOnly": "vp run build",
+    "prepare": "vp config --no-hooks"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "bumpp": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.5.1",
+      "onFail": "download"
+    }
+  },
+  "engines": {
+    "node": ">=24.19.0"
+  }
+}

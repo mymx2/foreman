@@ -116,6 +116,7 @@ const GROUPS: SkillGroup[] = [
       "testing-setup",
       "verified-email",
       "wear-compose-m3",
+      "mobile-use",
     ],
   },
   {

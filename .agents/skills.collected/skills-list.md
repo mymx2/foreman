@@ -295,6 +295,7 @@ vpx skills add android/skills \
 | `testing-setup` | android/skills | Android 测试环境配置 |
 | `verified-email` | android/skills | 邮箱验证功能集成 |
 | `wear-compose-m3` | android/skills | Wear OS Compose Material 3 指南 |
+| `mobile-use` | 手动收集 | 通用手机操控：adb/simctl(WDA)/HDC 直驱 Android/iOS/HarmonyOS，语义 UI、截图录屏、原生测试，无厂商绑定 |
 
 ---
 
