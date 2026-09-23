@@ -422,3 +422,5 @@ vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent
 | `sql-parser-cst` | 个人创建 | 解析 SQL 生成 CST 语法树，提取表结构与 SQL 元信息 |
 | `shadowbot-cli` | 个人创建 | 通过官方 CLI 操作本地影刀 RPA：运行应用、编辑流程指令、查任务日志 |
 | `computer-flow` | 个人创建 | 通用电脑工作流自动化：读 Excel/CSV、驱动桌面 GUI/网页/API/邮件，固化为本地 Python 脚本（运行时零 AI） |
+| `self-iterating-system` | 个人创建 | 自迭代 Multi-Agent 系统设计：五层架构、双闭环、可证伪交付物与分层记忆（行业无关） |
+| `agentic-game-dev` | 个人创建 | 小游戏研发实操：调研→GDD→美术/音频→编码→关卡工厂→宿主接入→验收三性 |
