@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { parseArguments } from "../src/bin/mobile-use.ts";
+import { parseArguments } from "../src/cli/mobile-use.ts";
 import {
   operationAndInput,
   sessionSelection,

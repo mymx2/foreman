@@ -1,4 +1,4 @@
-//#region src/bin/mobile-use.d.ts
+//#region src/cli/mobile-use.d.ts
 export interface RunCliOptions {
   stdout?: NodeJS.WritableStream;
   stderr?: NodeJS.WritableStream;

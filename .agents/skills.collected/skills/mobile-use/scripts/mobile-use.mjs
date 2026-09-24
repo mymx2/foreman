@@ -3017,9 +3017,9 @@ async function checkIos(host) {
 	});
 }
 //#endregion
-//#region src/bin/mobile-use.ts
+//#region src/cli/mobile-use.ts
 const SCHEMA_VERSION = 1;
-const CLI_VERSION = "1.0.0";
+const CLI_VERSION = process.env.CLI_VERSION ?? "0.7.5";
 const JSON_FLAGS = /* @__PURE__ */ new Map([
 	["action_json", "action"],
 	["condition_json", "condition"],

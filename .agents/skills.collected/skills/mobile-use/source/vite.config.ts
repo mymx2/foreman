@@ -7,7 +7,7 @@ import { defineConfig } from "vite-plus";
 export default defineConfig({
   pack: {
     entry: {
-      "mobile-use": "src/bin/mobile-use.ts",
+      "mobile-use": "src/cli/mobile-use.ts",
       "verify-artifact-receipt": "src/verify-artifact-receipt.ts",
     },
     format: ["esm"],
@@ -23,7 +23,7 @@ export default defineConfig({
     },
     exports: {
       bin: {
-        "mobile-use": "./src/bin/mobile-use.ts",
+        "mobile-use": "./src/cli/mobile-use.ts",
         "mobile-use-verify": "./src/verify-artifact-receipt.ts",
       },
     },
