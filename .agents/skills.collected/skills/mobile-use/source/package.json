@@ -19,6 +19,7 @@
   "scripts": {
     "build": "node ./build.mjs",
     "dev": "vp pack --watch",
+    "up": "taze -r -w -i",
     "check": "vp check",
     "lint": "vp lint",
     "fmt": "vp fmt",
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "bumpp": "catalog:",
+    "taze": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"
