@@ -1,0 +1,10 @@
+{
+  "name": "layout-adaptation-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "设计稿自动布局适配脚本依赖",
+  "dependencies": {
+    "socket.io-client": "^4.7.5"
+  }
+}
