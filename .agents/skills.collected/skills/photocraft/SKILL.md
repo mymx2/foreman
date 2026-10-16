@@ -2,7 +2,8 @@
 name: photocraft
 description: |
   通过 control 协议或 headless CLI 操作 PhotoCraft 图像编辑器。当用户要驱动 PhotoCraft 做图像编辑自动化时使用，
-  范围：编辑图层、选区、文字与滤镜，查询文档结构与字体，检索外部字体目录并补齐缺失字体，批量转换格式。
+  范围：编辑图层、选区、文字与滤镜，查询文档结构与字体，检索外部字体目录并补齐缺失字体，批量转换格式，
+  两个稿件的渲染一致性校验（重写/重组后的像素级回归）。
   不适用于：普通图片格式转换（直接用 CLI convert 即可，无需加载本技能）、
   Figma/浏览器内设计稿操作（走 chrome 或其他技能）、Python/PIL 纯代码绘图。
 ---
@@ -24,6 +25,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 - 查询 PSD 使用的字体（含缺失字体清单）、图层树、文档元数据。
 - 文字图层缺字体、要找字体或换字体：`type.fonts` + `type.resolveMissingFonts` 定位，`scripts/fonts/hellofont-search.py` 检索字由目录。
 - 批量转换/处理一个目录的图片且需要引擎命令（旋转、滤镜、调整）参与。
+- 重写/重组后的渲染一致性校验（两个稿子逐像素比对）：`scripts/psd-compare.py`。
 
 ## Process
 
@@ -42,8 +44,11 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 5. **长任务用作业**。所有 `filter.*`、`edit.contentAwareFill`、photomerge 等默认同步等待；要异步就 `engine.execute` 加 `wait: false` 拿 job id，轮询 `jobs.list` 到 done/failed/cancelled 再做后续编辑。作业运行期间它会锁住所属文档，相关命令报 "still running on this document"。超时或断连后先 inspect 文档与历史再决定是否重放——操作可能已完成，盲目重试会双份执行。批量不是事务：中途失败时前序步骤已进历史，先 inspect 现状再续做，不整体重放。
    完成标准：`jobs.list` 中无涉及目标文档的 running 作业。
 
-6. **字体获取**。定字体先看现状：`engine.execute type.fonts {}` 拿已装清单、`type.resolveMissingFonts {}` 拿缺失清单。缺了或要换字体，先跑 `scripts/fonts/zitijia-free.py`（运行它）走免费商用直链——`fetch` 抓目录、`search` 过滤、`download <itemId>` 直接落 zip 并解出 ttf，装进系统即可用；要更大目录或字由生态时用 `scripts/fonts/hellofont-search.py`（运行它，关键词加标签 id，如 `73` 免费商用、`15` 黑体，完整表在 `references/hellofont.md`），但字由字体只给候选与授权类型，文件得经客户端按账号授权落地。两条路都只碰免费/开源授权，付费条目不下载；落地路径与红线见 `references/hellofont.md`。装好后回 `type.fonts` 确认字体名可见，再往 `text.font` 写。缺失字体阻止交付，不自动替换近似字体——要换先出候选让用户定。
+6. **字体获取**。定字体先看现状：`engine.execute type.fonts {}` 拿已装清单、`type.resolveMissingFonts {}` 拿缺失清单。缺了或要换字体，先跑 `scripts/fonts/zitijia-free.py`（运行它）走免费商用直链——`fetch` 抓目录、`search` 过滤、`download <itemId>` 直接落 zip 并解出 ttf；要更大目录或字由生态时用 `scripts/fonts/hellofont-search.py`（运行它，关键词加标签 id，如 `73` 免费商用、`15` 黑体，完整表在 `references/hellofont.md`），但字由字体只给候选与授权类型，文件得经客户端按账号授权落地。两条路都只碰免费/开源授权，付费条目不下载；落地路径与红线见 `references/hellofont.md`。拿到的字体先进字体根目录登记（用户目录下的 `fonts\`，即 `%USERPROFILE%\fonts`，目录形式、登记表字段与红线见其 README；未登记的字体不装不用）。启用看 CLI 能力：`photocraft-cli --help` 有 `--font-dir`（#3459 合并发布后）→ headless 直接 `--font-dir <字体根目录>` 或 `type.registerFonts {path}`，进程退出即失效、不落系统；没有 → `tools\fontctl.ps1` 按登记表做过渡安装/卸载（GUI 会话合并后也仍走它，PR 不含桌面 control 通道），装完重启 PhotoCraft 才可见。装好/注册后回 `type.fonts` 确认字体名可见，再往 `text.font` 写。缺失字体阻止交付，不自动替换近似字体——要换先出候选让用户定。
    完成标准：目标字体在 `type.fonts` 中可见且名字一致，或已交付候选清单与授权状态等用户决策。
+
+7. **一致性校验**。重写、重组过的稿件要证明渲染没变，跑 `scripts/psd-compare.py`（运行它）`<旧稿> <新稿>`（依赖 Pillow）：同一引擎（`photocraft-cli convert`）把两边渲染成 PNG，先比渲染 PNG 的哈希（一致即逐像素一致），不一致再逐像素 diff 并出差异图，报告一行 JSON。`--fuzz` 是每通道容差，默认 0（严格一致），对比在 8-bit RGBA 空间；输入直接给 PNG 时跳过渲染。同引擎重写预期零噪声、严格一致，只有跨工具的稿子（如 Photoshop 直接导出）才给容差。
+   完成标准：报告 `result` 为 `identical` 且 `warnings` 为空或已转述，或已交付 `diffImage` 与差异像素比例、定位到差异区域。
 
 ## Common Rationalizations
 
@@ -67,6 +72,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 3. 收尾 `session.inspect` 确认没有遗留的临时测试文档。
 4. 修改 `scripts/photocraft-bridge.py` 或怀疑本机环境异常时，跑 `scripts/test-bridge.py`（运行它，自带 fake control server，无需 PhotoCraft）；全绿再继续，任何失败先看 stderr 与对应用例。
 5. 改过 CLI 用法后做小画布往返自检：`run --new` 起小图执行目标命令 → `convert` 出 PNG → `info` 核对（子命令与 flags 以 `photocraft-cli --help` 为准，不凭记忆拼）。
+6. 改过 `scripts/psd-compare.py` 后用 `run --new` 造一对相同稿、一对改动稿自检：相同对报 `identical` 且退出码 0，改动对报 `differs`、出 `diffImage` 且退出码 1。
 
 ## Hard Rules
 
@@ -90,6 +96,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 | 中文文件名解压后乱码 | zip 内是 GBK 编码，`zitijia-free.py` 已还原，别用别的工具直接解 |
 | hellofont 字体卡片有"下载"却拿不到 ttf | 网页只唤起字由客户端（`localhost:59527` / `hellofont://`），字体文件由客户端按账号授权落地，见 `references/hellofont.md` |
 | 把目录里的 `ProductFileName` 写进 `text.font` 不生效 | 那是落盘文件名不是家族名；以 `type.fonts` 返回的字体名为准 |
+| `--font-dir` 可用了还在 fontctl 装给 headless | headless 直接 `--font-dir`/`type.registerFonts`（不落系统）；fontctl 只留给 GUI 会话和合并前过渡 |
 | 像素工具点在文字/形状/智能对象/填充层上 | 弹"栅格化?"框：confirm = 栅格化+绘制两个历史步，cancel 不动手 |
 | bridge 预览像窗口截图 | GUI 桥接的预览是应用窗口截图（`ui.screenshot`），文档渲染走 headless `doc.render` |
 | 需要渲染/导出但 GUI 桥接缺对应方法 | 存分层 checkpoint，转 headless（`doc.save`/`doc.render`）继续 |
@@ -99,6 +106,9 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 | 崩溃后想直接改文档数据目录 | 只用 `Recovery` 恢复，不手改 `tiles/`/`blobs/` |
 | GUI 裸启动不知道端口 | PhotoCraft 自动选端口并把 token 写进其配置目录的 control.token；bridge 会探测 7878–7881 |
 | 中文文档名乱码 | 终端编码问题；用 `python -X utf8` 跑 bridge，别用管道转码 |
+| 拿 PSD 文件哈希判重写前后一致 | 结构重写后 PSD 字节必不同；一致性以渲染出的 PNG 为准（`psd-compare.py` 的做法） |
+| 两个稿子画布尺寸不同还硬比 | 尺寸不同直接判不一致，先统一画布再比 |
+| 跨工具稿子报零星像素差异 | 跨引擎导出的 PNG 有合法抗锯齿噪声，给 `--fuzz`；同引擎渲染不该有噪声，有差异就是真差异 |
 
 ## Output
 
