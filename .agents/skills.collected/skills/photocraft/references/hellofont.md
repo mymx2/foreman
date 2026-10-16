@@ -10,7 +10,7 @@
 
 ## 目录检索接口
 
-`scripts/hellofont-search.py` 封装了此接口，直接运行它即可；手工复现时：
+`scripts/fonts/hellofont-search.py` 封装了此接口，直接运行它即可；手工复现时：
 
 ```
 POST https://back3.hellofont.cn/FontDistributionManagement/api/FontSearch/GetFontSearchItem
@@ -70,8 +70,33 @@ id，要么整个字段连同关键词一起省略语义（关键词可为空串
 对 PhotoCraft 的衔接：字体激活/安装进系统后，`type.fonts` 能列出、文字图层的 `text.font`
 可直接引用（字体名以 `type.fonts` 返回为准，不是 `ProductFileName`）。
 
+## 字体家（zitijia.com）免费商用：可全自动
+
+`scripts/fonts/zitijia-free.py` 封装了这条链路，字体文件能直接落地，不需要账号、不需要客户端：
+
+```
+fetch --pages 1-3          抓 /t/免费商用 目录到本地缓存（1146 条，?page=N 分页）
+search <关键词>            在缓存里按字体名过滤
+url / download <itemId>    POST /downloadCheck {"itemId":...} → 返回 zip 直链 → 存盘
+```
+
+下载直链形如 `https://static.zitijia.com/file/item/<yyyymm>/<dd>/<itemId>/f.zip`，
+解压即得 ttf（zip 内文件名多为 GBK 编码，脚本已做还原），包内通常带「版权说明.txt」。
+
+站点对免费商用板块的定义：下载后可用于商业用途不需要授权；但明确写了"本站收集于网络，
+本站不享有任何版权……如您想通过免费下载的字体进行商业用途使用，强烈提醒联系对应厂商或原作者
+进行版权授权购买"（字体详情页）。所以用这条链路下载的字体，商用前仍以包内版权说明与原作者
+授权为准，不可二次销售。付费条目（1 元下载 / 个人版付费 / 在线授权）不在脚本范围内。
+
+## 探过但不做的站点
+
+- **中文网字计划**（chinese-font.netlify.app）：开源 Web 字体 CDN，版权最干净但发的是 woff2
+  分包，PhotoCraft 装不了；桌面用得上的是它的上游（Google Fonts / Fontsource），需要另接。
+- **tukuppt.com**（熊猫办公）：`/ziti/` 列表页可读，但任何字体详情页都触发 JS 反爬挑战。
+  绕过该挑战属于检测规避，不做；不看挑战脚本、不模拟校验、不蹭其会员下载通道。
+
 ## 红线
 
 - 只走客户端激活、官方下载或明确开源授权的渠道拿字体文件；不写、不跑绕过授权的抓取。
-- 「免费商用」不等于无条件使用，产出物对外前核对详情页授权条款。
+- 「免费商用」不等于无条件使用，产出物对外前核对详情页授权条款与包内版权说明。
 - 目录接口签名参数是复现官网查询用的公开值，不用于批量抓库、分发或转售。

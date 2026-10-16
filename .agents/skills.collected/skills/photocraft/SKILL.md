@@ -22,7 +22,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 
 - 用户明说 PhotoCraft / Photocraft，或要求对 PSD/pcraft 文件做图层级编辑自动化。
 - 查询 PSD 使用的字体（含缺失字体清单）、图层树、文档元数据。
-- 文字图层缺字体、要找字体或换字体：`type.fonts` + `type.resolveMissingFonts` 定位，`scripts/hellofont-search.py` 检索字由目录。
+- 文字图层缺字体、要找字体或换字体：`type.fonts` + `type.resolveMissingFonts` 定位，`scripts/fonts/hellofont-search.py` 检索字由目录。
 - 批量转换/处理一个目录的图片且需要引擎命令（旋转、滤镜、调整）参与。
 
 ## Process
@@ -42,7 +42,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 5. **长任务用作业**。所有 `filter.*`、`edit.contentAwareFill`、photomerge 等默认同步等待；要异步就 `engine.execute` 加 `wait: false` 拿 job id，轮询 `jobs.list` 到 done/failed/cancelled 再做后续编辑。作业运行期间它会锁住所属文档，相关命令报 "still running on this document"。超时或断连后先 inspect 文档与历史再决定是否重放——操作可能已完成，盲目重试会双份执行。批量不是事务：中途失败时前序步骤已进历史，先 inspect 现状再续做，不整体重放。
    完成标准：`jobs.list` 中无涉及目标文档的 running 作业。
 
-6. **字体获取**。定字体先看现状：`engine.execute type.fonts {}` 拿已装清单、`type.resolveMissingFonts {}` 拿缺失清单。缺了或要换字体，跑 `scripts/hellofont-search.py`（运行它）检索字由目录——关键词加标签 id（如 `73` 免费商用、`15` 黑体，完整表在 `references/hellofont.md`），得到 `name`/`family` 候选与授权类型（free/member/licensed）。字体文件只走正规渠道落地（字由客户端激活、官方下载或明确开源授权，路径与红线见 `references/hellofont.md`）；装好后回 `type.fonts` 确认字体名可见，再往 `text.font` 写。缺失字体阻止交付，不自动替换近似字体——要换先出候选让用户定。
+6. **字体获取**。定字体先看现状：`engine.execute type.fonts {}` 拿已装清单、`type.resolveMissingFonts {}` 拿缺失清单。缺了或要换字体，先跑 `scripts/fonts/zitijia-free.py`（运行它）走免费商用直链——`fetch` 抓目录、`search` 过滤、`download <itemId>` 直接落 zip 并解出 ttf，装进系统即可用；要更大目录或字由生态时用 `scripts/fonts/hellofont-search.py`（运行它，关键词加标签 id，如 `73` 免费商用、`15` 黑体，完整表在 `references/hellofont.md`），但字由字体只给候选与授权类型，文件得经客户端按账号授权落地。两条路都只碰免费/开源授权，付费条目不下载；落地路径与红线见 `references/hellofont.md`。装好后回 `type.fonts` 确认字体名可见，再往 `text.font` 写。缺失字体阻止交付，不自动替换近似字体——要换先出候选让用户定。
    完成标准：目标字体在 `type.fonts` 中可见且名字一致，或已交付候选清单与授权状态等用户决策。
 
 ## Common Rationalizations
@@ -86,6 +86,8 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 | 图层树里找不到子层 | 嵌套字段叫 `children` 不是 `layers` |
 | 文字图层字体名查不到安装状态 | 用 `engine.execute type.resolveMissingFonts {}` 拿缺失清单，`type.fonts` 拿已装清单 |
 | `hellofont-search.py` 只回 `{"TimeStamp": ...}` | 关键词和标签都没给，或标签传了空数组；关键词与 `--tags` 至少给一个 |
+| 要能直接落地的字体文件 | 用 `zitijia-free.py`（免费商用 zip 直链）；hellofont 只给候选，文件要经客户端授权 |
+| 中文文件名解压后乱码 | zip 内是 GBK 编码，`zitijia-free.py` 已还原，别用别的工具直接解 |
 | hellofont 字体卡片有"下载"却拿不到 ttf | 网页只唤起字由客户端（`localhost:59527` / `hellofont://`），字体文件由客户端按账号授权落地，见 `references/hellofont.md` |
 | 把目录里的 `ProductFileName` 写进 `text.font` 不生效 | 那是落盘文件名不是家族名；以 `type.fonts` 返回的字体名为准 |
 | 像素工具点在文字/形状/智能对象/填充层上 | 弹"栅格化?"框：confirm = 栅格化+绘制两个历史步，cancel 不动手 |
