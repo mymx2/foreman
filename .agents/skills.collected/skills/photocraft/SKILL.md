@@ -3,7 +3,7 @@ name: photocraft
 description: |
   通过 control 协议或 headless CLI 操作 PhotoCraft 图像编辑器。当用户要驱动 PhotoCraft 做图像编辑自动化时使用，
   范围：编辑图层、选区、文字与滤镜，查询文档结构与字体，检索外部字体目录并补齐缺失字体，批量转换格式，
-  两个稿件的渲染一致性校验（重写/重组后的像素级回归）。
+  两个稿件的渲染一致性校验（重写/重组后的像素级回归），老照片修复、去物修补、抠图合成等修复制图工活。
   不适用于：普通图片格式转换（直接用 CLI convert 即可，无需加载本技能）、
   Figma/浏览器内设计稿操作（走 chrome 或其他技能）、Python/PIL 纯代码绘图。
 ---
@@ -26,6 +26,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 - 文字图层缺字体、要找字体或换字体：`type.fonts` + `type.resolveMissingFonts` 定位，`scripts/fonts/hellofont-search.py` 检索字由目录。
 - 批量转换/处理一个目录的图片且需要引擎命令（旋转、滤镜、调整）参与。
 - 重写/重组后的渲染一致性校验（两个稿子逐像素比对）：`scripts/psd-compare.py`。
+- 老照片修复、去物修补、抠图合成、版式制图：固定顺序与验收标准见 `references/retouch-composite.md`。
 
 ## Process
 
@@ -33,22 +34,25 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
    完成标准：bridge 返回了目标会话的文档列表，或 headless 端口已应答 auth。
 
 2. **查命令签名**。任何命令的参数先查注册表再写：bridge 发 `engine.commands`，或终端跑 `photocraft-cli commands --filter <text>`（909 条，`--json` 含完整参数描述）；按业务意图过滤（用功能词搜，不猜命令 id），细节先翻 `references/control-protocol.md` 对应小节。`params` 必须是 JSON object，传数组/字符串/数字会被整条拒绝。
-   完成标准：拿到了目标命令的参数描述原文，而不是凭印象拼参数。
+   完成标准：拿到了目标命令的参数描述原文，以原文为准拼参数。
 
-3. **编辑与验证闭环**。用 `engine.execute {command, params}` 执行（不弹对话框，直接用默认值）；要交互对话框时才用 `ui.menu.invoke` + `ui.dialog.*`。每步编辑后立即 `document.inspect` 验证层树/属性/历史符合预期，失败就修，通过才进下一步；同一修法第二次仍失败就换方案的形状，不再微调参数。层树嵌套在 `children` 字段，文字图层的字体在 `text.font`。
+3. **编辑与验证闭环**。用 `engine.execute {command, params}` 执行（不弹对话框，直接用默认值）；要交互对话框时才用 `ui.menu.invoke` + `ui.dialog.*`。每步编辑后立即 `document.inspect` 验证层树/属性/历史符合预期，失败就修，通过才进下一步；同一修法第二次仍失败就换方案的形状，不再微调参数。层树嵌套在 `children` 字段，文字图层的字体在 `text.font`。属性回显≠生效——混合模式、透明度、蒙版能让改动数学上无声消失；关键改动做渲染前后像素差探针（`doc.render` + `scripts/psd-compare.py`），验收双尺度：fit 看构图色彩、100% 看修补伪影。
    完成标准：inspect 返回的目标字段与用户意图一致。
 
-4. **文件进出**。引擎命令里凡是带磁盘路径的（`file.open`、`file.save`、`file.saveACopy`、`file.openAs`、`file.export.*`、`layer.exportAs` 等）一律被拒，报 "uses ambient filesystem paths and is disabled"——这不是故障，是能力域隔离。读写改走：GUI 桥接 `app.open {path}` / `app.save {path}`（相对 automation root 的相对路径；`app.save` 不带 path 只回写原 PSD/.pcraft）；headless 用 `doc.open/doc.save`；不走会话的纯转换直接 `photocraft-cli convert/run/batch`。回执里的 `warnings` 要读给用户（如"adjustment layer flattened"）。输出父目录须已存在；分层编辑先落可编辑母版（PSD/PSB/.pcraft）再导出平图。
+4. **文件进出**。引擎命令里凡是带磁盘路径的（`file.open`、`file.save`、`file.saveACopy`、`file.openAs`、`file.export.*`、`layer.exportAs` 等）一律被拒，报 "uses ambient filesystem paths and is disabled"——报错是设计行为：能力域隔离。读写改走：GUI 桥接 `app.open {path}` / `app.save {path}`（相对 automation root 的相对路径；`app.save` 不带 path 只回写原 PSD/.pcraft）；headless 用 `doc.open/doc.save`；不走会话的纯转换直接 `photocraft-cli convert/run/batch`。回执里的 `warnings` 要读给用户（如"adjustment layer flattened"）。输出父目录须已存在；分层编辑先落可编辑母版（PSD/PSB/.pcraft）再导出平图。
    完成标准：`app.save`/`doc.save` 回执含落盘 `path` 且 `warnings` 已解释。
 
 5. **长任务用作业**。所有 `filter.*`、`edit.contentAwareFill`、photomerge 等默认同步等待；要异步就 `engine.execute` 加 `wait: false` 拿 job id，轮询 `jobs.list` 到 done/failed/cancelled 再做后续编辑。作业运行期间它会锁住所属文档，相关命令报 "still running on this document"。超时或断连后先 inspect 文档与历史再决定是否重放——操作可能已完成，盲目重试会双份执行。批量不是事务：中途失败时前序步骤已进历史，先 inspect 现状再续做，不整体重放。
    完成标准：`jobs.list` 中无涉及目标文档的 running 作业。
 
-6. **字体获取**。定字体先看现状：`engine.execute type.fonts {}` 拿已装清单、`type.resolveMissingFonts {}` 拿缺失清单。缺了或要换字体，先跑 `scripts/fonts/zitijia-free.py`（运行它）走免费商用直链——`fetch` 抓目录、`search` 过滤、`download <itemId>` 直接落 zip 并解出 ttf；要更大目录或字由生态时用 `scripts/fonts/hellofont-search.py`（运行它，关键词加标签 id，如 `73` 免费商用、`15` 黑体，完整表在 `references/hellofont.md`），但字由字体只给候选与授权类型，文件得经客户端按账号授权落地。两条路都只碰免费/开源授权，付费条目不下载；落地路径与红线见 `references/hellofont.md`。拿到的字体先进字体根目录登记（用户目录下的 `fonts\`，即 `%USERPROFILE%\fonts`，目录形式、登记表字段与红线见其 README；未登记的字体不装不用）。启用看 CLI 能力：`photocraft-cli --help` 有 `--font-dir`（#3459 合并发布后）→ headless 直接 `--font-dir <字体根目录>` 或 `type.registerFonts {path}`，进程退出即失效、不落系统；没有 → `tools\fontctl.ps1` 按登记表做过渡安装/卸载（GUI 会话合并后也仍走它，PR 不含桌面 control 通道），装完重启 PhotoCraft 才可见。装好/注册后回 `type.fonts` 确认字体名可见，再往 `text.font` 写。缺失字体阻止交付，不自动替换近似字体——要换先出候选让用户定。
+6. **字体获取**。定字体先看现状：`engine.execute type.fonts {}` 拿已装清单、`type.resolveMissingFonts {}` 拿缺失清单。缺了或要换字体，先跑 `scripts/fonts/zitijia-free.py`（运行它）走免费商用直链——`fetch` 抓目录、`search` 过滤、`download <itemId>` 直接落 zip 并解出 ttf；要更大目录或字由生态时用 `scripts/fonts/hellofont-search.py`（运行它，关键词加标签 id，如 `73` 免费商用、`15` 黑体，完整表在 `references/hellofont.md`），但字由字体只给候选与授权类型，文件得经客户端按账号授权落地。两条路都只碰免费/开源授权，付费条目不下载；落地路径与红线见 `references/hellofont.md`。拿到的字体先进字体根目录登记（用户目录下的 `fonts\`，即 `%USERPROFILE%\fonts`，目录形式、登记表字段与红线见其 README；未登记的字体不装不用）。启用看 CLI 能力：`photocraft-cli --help` 有 `--font-dir`（#3459 合并发布后）→ headless 直接 `--font-dir <字体根目录>` 或 `type.registerFonts {path}`，进程退出即失效、不落系统；没有 → 字体根目录下的 `tools\fontctl.ps1` 按登记表做过渡安装/卸载（GUI 会话合并后也仍走它，PR 不含桌面 control 通道），装完重启 PhotoCraft 才可见。装好/注册后回 `type.fonts` 确认字体名可见，再往 `text.font` 写。缺失字体阻止交付，不自动替换近似字体——要换先出候选让用户定。
    完成标准：目标字体在 `type.fonts` 中可见且名字一致，或已交付候选清单与授权状态等用户决策。
 
 7. **一致性校验**。重写、重组过的稿件要证明渲染没变，跑 `scripts/psd-compare.py`（运行它）`<旧稿> <新稿>`（依赖 Pillow）：同一引擎（`photocraft-cli convert`）把两边渲染成 PNG，先比渲染 PNG 的哈希（一致即逐像素一致），不一致再逐像素 diff 并出差异图，报告一行 JSON。`--fuzz` 是每通道容差，默认 0（严格一致），对比在 8-bit RGBA 空间；输入直接给 PNG 时跳过渲染。同引擎重写预期零噪声、严格一致，只有跨工具的稿子（如 Photoshop 直接导出）才给容差。
    完成标准：报告 `result` 为 `identical` 且 `warnings` 为空或已转述，或已交付 `diffImage` 与差异像素比例、定位到差异区域。
+
+8. **修复与制图**。修复稿按固定顺序走：先修结构（去尘/划痕/撕痕）→ 色调对比 → 最后才是上色增强；调整一律全局→局部，去噪在最终锐化前（完整顺序见 `references/retouch-composite.md`）。动手前先出诊断清单、划定硬锚（人脸、解剖结构、文字、logo、产品设计、地标禁动）与软锚，修补只碰软锚；烘焙类滤镜优先 `filter.convertForSmartFilters` 或转智能对象留回改余地，做不到就复制图层在副本上做。抠图走取选区→反选→羽化约 2px→转蒙版，不擦像素。人像自然度、上色克制、构图与导出细则见 `references/retouch-composite.md`。
+   完成标准：双尺度验收通过（fit 构图色彩、100% 无修补伪影），硬锚未被擅动或已获确认，交付为分层母版+平图双件（除非用户只要其一）。
 
 ## Common Rationalizations
 
@@ -64,10 +68,11 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 - 在命令参数里塞绝对路径绕过能力域。
 - 批量 `--in-place` 或覆盖保存前未确认。
 - 缺字体时擅自换近似字体交付。
+- 擅动硬锚区域（人脸、文字、logo、产品轮廓），或对上色/补全不作推断声明。
 
 ## Verification
 
-1. 每次编辑后 `document.inspect` 对应字段可见变化（层、属性、历史状态数）。
+1. 每次编辑后 `document.inspect` 对应字段可见变化（层、属性、历史状态数）；修复/制图另做双尺度看图（fit 构图色彩、100% 伪影）与像素探针复核，探针改过状态的已复原或已报出。
 2. 保存后回执 `path` 存在、`warnings` 为空或已转述。
 3. 收尾 `session.inspect` 确认没有遗留的临时测试文档。
 4. 修改 `scripts/photocraft-bridge.py` 或怀疑本机环境异常时，跑 `scripts/test-bridge.py`（运行它，自带 fake control server，无需 PhotoCraft）；全绿再继续，任何失败先看 stderr 与对应用例。
@@ -109,6 +114,11 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 | 拿 PSD 文件哈希判重写前后一致 | 结构重写后 PSD 字节必不同；一致性以渲染出的 PNG 为准（`psd-compare.py` 的做法） |
 | 两个稿子画布尺寸不同还硬比 | 尺寸不同直接判不一致，先统一画布再比 |
 | 跨工具稿子报零星像素差异 | 跨引擎导出的 PNG 有合法抗锯齿噪声，给 `--fuzz`；同引擎渲染不该有噪声，有差异就是真差异 |
+| 属性改完不验证就交付 | 混合/透明度/蒙版可让改动静默无效，关键改动做渲染前后像素差探针 |
+| 修复/调整顺序倒置（先上色后修结构、先锐化后去噪） | 顺序固定：结构→色调→上色增强；去噪→最终锐化；全局→局部 |
+| 烘焙滤镜直接上原图 | 优先 `convertForSmartFilters`/转智能对象留回改余地，做不到才复制图层在副本上做 |
+| 抠图靠擦像素 | 取选区→反选→羽化约 2px→转蒙版，交付的是蒙版 |
+| 批量修复跑完只抽查 | 逐张出 no_op/inconclusive/unrestored 清单，静默跳过算失败 |
 
 ## Output
 
