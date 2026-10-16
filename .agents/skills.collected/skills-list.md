@@ -111,6 +111,7 @@ vpx skills add antfu/skills --skill slidev --agent openclaw -p -y
 | `slidev` | antfu/skills | Markdown 幻灯片 |
 | `storyset` | 个人创建 | Storyset 插画检索、下载、品牌换色与动画 SVG/GIF 导出 |
 | `ardot` | 本仓（repros 吸收） | Ardot 设计工具 MCP 伞技能：像素网格 / 衍生展示区 / 文本布局适配 |
+| `photocraft` | mroxso/artcraft-skills | PhotoCraft 图像编辑自动化：control 协议 / MCP bridge / headless CLI，图层选区文字与批处理 |
 
 ---
 

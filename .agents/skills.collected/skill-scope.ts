@@ -44,6 +44,7 @@ const GROUPS: SkillGroup[] = [
       "slidev",
       "storyset",
       "ardot",
+      "photocraft",
     ],
   },
   {
