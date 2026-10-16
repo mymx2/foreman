@@ -2,7 +2,7 @@
 name: photocraft
 description: |
   通过 control 协议或 headless CLI 操作 PhotoCraft 图像编辑器。当用户要驱动 PhotoCraft 做图像编辑自动化时使用，
-  范围：编辑图层、选区、文字与滤镜，查询文档结构与字体，批量转换格式。
+  范围：编辑图层、选区、文字与滤镜，查询文档结构与字体，检索外部字体目录并补齐缺失字体，批量转换格式。
   不适用于：普通图片格式转换（直接用 CLI convert 即可，无需加载本技能）、
   Figma/浏览器内设计稿操作（走 chrome 或其他技能）、Python/PIL 纯代码绘图。
 ---
@@ -22,6 +22,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 
 - 用户明说 PhotoCraft / Photocraft，或要求对 PSD/pcraft 文件做图层级编辑自动化。
 - 查询 PSD 使用的字体（含缺失字体清单）、图层树、文档元数据。
+- 文字图层缺字体、要找字体或换字体：`type.fonts` + `type.resolveMissingFonts` 定位，`scripts/hellofont-search.py` 检索字由目录。
 - 批量转换/处理一个目录的图片且需要引擎命令（旋转、滤镜、调整）参与。
 
 ## Process
@@ -40,6 +41,9 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 
 5. **长任务用作业**。所有 `filter.*`、`edit.contentAwareFill`、photomerge 等默认同步等待；要异步就 `engine.execute` 加 `wait: false` 拿 job id，轮询 `jobs.list` 到 done/failed/cancelled 再做后续编辑。作业运行期间它会锁住所属文档，相关命令报 "still running on this document"。超时或断连后先 inspect 文档与历史再决定是否重放——操作可能已完成，盲目重试会双份执行。
    完成标准：`jobs.list` 中无涉及目标文档的 running 作业。
+
+6. **字体获取**。定字体先看现状：`engine.execute type.fonts {}` 拿已装清单、`type.resolveMissingFonts {}` 拿缺失清单。缺了或要换字体，跑 `scripts/hellofont-search.py`（运行它）检索字由目录——关键词加标签 id（如 `73` 免费商用、`15` 黑体，完整表在 `references/hellofont.md`），得到 `name`/`family` 候选与授权类型（free/member/licensed）。字体文件只走正规渠道落地（字由客户端激活、官方下载或明确开源授权，路径与红线见 `references/hellofont.md`）；装好后回 `type.fonts` 确认字体名可见，再往 `text.font` 写。
+   完成标准：目标字体在 `type.fonts` 中可见且名字一致，或已交付候选清单与授权状态等用户决策。
 
 ## Common Rationalizations
 
@@ -67,6 +71,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 - 端口探测模式会把 token 发给探测区间内第一个 auth 通过的本地监听进程；不信任本机环境时显式 `--port` 或 `PHOTOCRAFT_CONTROL_PORT` 指定。
 - `params` 只能是 JSON object、省略或 null。
 - 凭据不进命令行参数、不打印、不提交；从 token 文件或环境变量读。
+- 字体文件获取只走正规渠道（字由客户端激活、官方下载或明确开源授权）；不写、不跑绕过授权的字体抓取。
 - 批量步数上限 256；headless 预览边长上限 2048px。
 
 ## Gotchas
@@ -77,6 +82,9 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 | 保存/打开报 ambient filesystem paths | 换 `app.open`/`app.save`（GUI）或 `doc.*`（headless），路径相对 automation root |
 | 图层树里找不到子层 | 嵌套字段叫 `children` 不是 `layers` |
 | 文字图层字体名查不到安装状态 | 用 `engine.execute type.resolveMissingFonts {}` 拿缺失清单，`type.fonts` 拿已装清单 |
+| `hellofont-search.py` 只回 `{"TimeStamp": ...}` | 关键词和标签都没给，或标签传了空数组；关键词与 `--tags` 至少给一个 |
+| hellofont 字体卡片有"下载"却拿不到 ttf | 网页只唤起字由客户端（`localhost:59527` / `hellofont://`），字体文件由客户端按账号授权落地，见 `references/hellofont.md` |
+| 把目录里的 `ProductFileName` 写进 `text.font` 不生效 | 那是落盘文件名不是家族名；以 `type.fonts` 返回的字体名为准 |
 | GUI 裸启动不知道端口 | PhotoCraft 自动选端口并把 token 写进其配置目录的 control.token；bridge 会探测 7878–7881 |
 | 中文文档名乱码 | 终端编码问题；用 `python -X utf8` 跑 bridge，别用管道转码 |
 
