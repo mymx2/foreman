@@ -27,8 +27,8 @@ APPID/SECRET 是官网前端 `all.js` 里 `u.ajax` header 构造处的公开值�
 `https://www.hellofont.cn/dist/all.js` 的 `header:function` 处重新核对，或用环境变量
 `HELLOFONT_APPID` / `HELLOFONT_SECRET` 覆盖。
 
-注意：`fontTagIdList` 传空数组或空串时服务端只回 `{"TimeStamp": ...}` 且无错误；要么给真实标签
-id，要么整个字段连同关键词一起省略语义（关键词可为空串但字段需在）。
+注意：`fontTagIdList` 传空数组或空串时服务端可能只回 `{"TimeStamp": ...}` 且无错误。
+`hellofont-search.py` 在没有 `--tags` 时会省略该字段；若服务端仍只回 `TimeStamp`，脚本会报错，而不是把它当作 0 条命中。
 
 响应（`SearchCount` / `totalCount` 为总数）：
 
@@ -75,13 +75,13 @@ id，要么整个字段连同关键词一起省略语义（关键词可为空串
 `scripts/fonts/zitijia-free.py` 封装了这条链路，字体文件能直接落地，不需要账号、不需要客户端：
 
 ```
-fetch --pages 1-3          抓 /t/免费商用 目录到本地缓存（1146 条，?page=N 分页）
+fetch --pages 1-3          抓 /t/免费商用 目录到本地缓存（1146 条，?page=N 分页；download 前必须先有缓存）
 search <关键词>            在缓存里按字体名过滤
-url / download <itemId>    POST /downloadCheck {"itemId":...} → 返回 zip 直链 → 存盘
+url / download <itemId>    POST /downloadCheck {"itemId":...} → 返回 zip 直链 → 存盘并安全解出字体
 ```
 
-下载直链形如 `https://static.zitijia.com/file/item/<yyyymm>/<dd>/<itemId>/f.zip`，
-解压即得 ttf（zip 内文件名多为 GBK 编码，脚本已做还原），包内通常带「版权说明.txt」。
+下载直链形如 `https://static.zitijia.com/file/item/<yyyymm>/<dd>/<itemId>/f.zip`。
+`download` 只接受纯数字 `itemId` 且必须在免费商用目录缓存中；下载后会拒绝 zip-slip 和绝对路径，把字体解到 `<--to>/<itemId>/`（zip 内文件名多为 GBK 编码，脚本会还原），包内通常带「版权说明.txt」。
 
 站点对免费商用板块的定义：下载后可用于商业用途不需要授权；但明确写了"本站收集于网络，
 本站不享有任何版权……如您想通过免费下载的字体进行商业用途使用，强烈提醒联系对应厂商或原作者

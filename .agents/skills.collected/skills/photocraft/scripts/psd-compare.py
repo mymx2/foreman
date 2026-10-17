@@ -22,6 +22,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import struct
 import subprocess
@@ -33,6 +34,7 @@ EXIT_DIFF = 1
 EXIT_ERROR = 2
 
 DEFAULT_CLI_PATH = r"C:\Program Files\PhotoCraft\photocraft-cli.exe"
+RENDER_TIMEOUT = 300
 
 
 def find_cli():
@@ -64,13 +66,19 @@ def png_size(path):
 
 
 def render(cli, src, out_png):
-    """用 photocraft-cli convert 渲染（平图 PNG）。返回警告文本列表。"""
-    r = subprocess.run([cli, "convert", src, out_png],
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
-    warns = [ln.strip() for ln in (r.stdout + "\n" + r.stderr).splitlines() if ln.strip()]
+    """用 photocraft-cli convert 渲染（平图 PNG）。返回 (warnings, log)。"""
+    try:
+        r = subprocess.run([cli, "convert", src, out_png],
+                           capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=RENDER_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"渲染超时（{RENDER_TIMEOUT}s）: {src}")
+    log = [ln.strip() for ln in (r.stdout + "\n" + r.stderr).splitlines() if ln.strip()]
+    warns = [ln for ln in log
+             if re.search(r"warn|warning|flatten|fallback|unsupported|not supported|警告|失败|回落", ln, re.I)]
     if r.returncode != 0 or not os.path.isfile(out_png):
-        raise RuntimeError(f"渲染失败 {src}: {' | '.join(warns) or f'exit {r.returncode}'}")
-    return warns
+        raise RuntimeError(f"渲染失败 {src}: {' | '.join(log) or f'exit {r.returncode}'}")
+    return warns, log
 
 
 def compare_pixels(old_png, new_png, fuzz):
@@ -85,7 +93,7 @@ def compare_pixels(old_png, new_png, fuzz):
         return {"result": "differs", "reason": "size",
                 "oldSize": list(a.size), "newSize": list(b.size), "size": None,
                 "differingPixels": None, "totalPixels": None,
-                "percent": None, "maxChannelDelta": None}
+                "percent": None, "maxChannelDelta": None, "diffImage": None}
 
     diff = ImageChops.difference(a, b)
     extrema = diff.getextrema()
@@ -134,25 +142,30 @@ def main():
         if not os.path.isfile(p):
             print(json.dumps({"result": "error", "error": f"文件不存在: {p}"}, ensure_ascii=False))
             return EXIT_ERROR
+    if os.path.samefile(args.old, args.new):
+        print(json.dumps({"result": "error", "error": "old 与 new 是同一个文件；回归比较需要两个不同稿"},
+                         ensure_ascii=False))
+        return EXIT_ERROR
 
     out_dir = args.out or tempfile.mkdtemp(prefix="psd-compare-")
     os.makedirs(out_dir, exist_ok=True)
 
-    report = {"result": "error", "fuzz": args.fuzz, "out": out_dir, "warnings": []}
+    report = {"result": "error", "fuzz": args.fuzz, "out": out_dir, "warnings": [], "log": []}
     try:
         cli = args.cli or find_cli()
         sides = {}
         for name, src in (("old", args.old), ("new", args.new)):
             if src.lower().endswith(".png"):
-                png, warns = src, []
+                png, warns, log = src, [], []
             else:
                 if not cli:
                     raise RuntimeError("找不到 photocraft-cli（--cli 指定，或装到 PATH / 默认目录）")
                 png = os.path.join(out_dir, f"{name}.png")
-                warns = render(cli, src, png)
+                warns, log = render(cli, src, png)
             sides[name] = {"input": os.path.abspath(src), "render": os.path.abspath(png),
                            "sha256": sha256(png)}
             report["warnings"].extend(warns)
+            report["log"].extend(log)
 
         report["old"], report["new"] = sides["old"], sides["new"]
 
@@ -170,7 +183,20 @@ def main():
                 report["diffImage"] = os.path.abspath(diff_path)
     except Exception as e:
         report = {"result": "error", "error": str(e), "fuzz": args.fuzz,
-                  "out": out_dir, "warnings": report.get("warnings", [])}
+                  "out": out_dir, "warnings": report.get("warnings", []),
+                  "log": report.get("log", [])}
+
+    if report.get("result") == "identical":
+        stale_diff = os.path.join(out_dir, "diff.png")
+        if os.path.exists(stale_diff):
+            os.remove(stale_diff)
+    if args.out is None and report.get("result") == "identical":
+        shutil.rmtree(out_dir, ignore_errors=True)
+        report["out"] = None
+        report["tempCleaned"] = True
+        for side in ("old", "new"):
+            if isinstance(report.get(side), dict):
+                report[side]["render"] = None
 
     print(json.dumps(report, ensure_ascii=False))
     return {"identical": EXIT_SAME, "differs": EXIT_DIFF}.get(report["result"], EXIT_ERROR)

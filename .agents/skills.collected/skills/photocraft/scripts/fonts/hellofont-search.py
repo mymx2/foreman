@@ -2,7 +2,7 @@
 """hellofont-search.py — 字由（hellofont.cn）字体目录检索。
 
 用法：
-  python hellofont-search.py 站酷                 # 关键词搜索
+  python hellofont-search.py 站酷                 # 关键词搜索（不传空 tags）
   python hellofont-search.py 黑体 --tags 15,73    # 关键词 + 标签（黑体 & 免费商用）
   python hellofont-search.py --tags 73 --page-size 50   # 只按标签浏览
 
@@ -46,8 +46,9 @@ def search(keyword, tags, page, page_size, order):
         "pageSize": page_size,
         "orderTag": order,
         "searchKey": keyword,
-        "fontTagIdList": tags,
     }
+    if tags:
+        payload["fontTagIdList"] = tags
     req = urllib.request.Request(
         SEARCH_URL,
         data=json.dumps(payload).encode("utf-8"),
@@ -62,6 +63,8 @@ def search(keyword, tags, page, page_size, order):
     )
     with urllib.request.urlopen(req, timeout=20) as resp:
         data = json.loads(resp.read().decode("utf-8", "replace"))
+    if "FontList" not in data and "SearchCount" not in data and data.get("TimeStamp"):
+        raise RuntimeError("服务端只返回 TimeStamp：关键词/标签组合无效；只给关键词时不要传空 --tags")
     raw_list = data.get("FontList") or []
     fonts = []
     for f in raw_list:
@@ -86,6 +89,11 @@ def search(keyword, tags, page, page_size, order):
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
     ap = argparse.ArgumentParser(description="字由字体目录检索（只查目录，不下载字体文件）")
     ap.add_argument("keyword", nargs="?", default="", help="字体名/关键词，可空")
     ap.add_argument("--tags", default="", help="标签 id，逗号分隔，如 15,73（详见 references/hellofont.md）")
@@ -103,7 +111,7 @@ def main():
     except urllib.error.HTTPError as e:
         print(json.dumps({"ERROR": f"HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:200]}"}))
         return 1
-    except (urllib.error.URLError, OSError, ValueError) as e:
+    except (urllib.error.URLError, OSError, ValueError, RuntimeError) as e:
         print(json.dumps({"ERROR": str(e)}))
         return 1
     print(json.dumps(result, ensure_ascii=False))

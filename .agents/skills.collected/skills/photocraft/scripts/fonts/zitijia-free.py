@@ -7,11 +7,12 @@
 用法：
   python zitijia-free.py search 圆体          # 在本地抓取的目录里按名称过滤
   python zitijia-free.py search 圆体 --limit 5
-  python zitijia-free.py fetch --pages 1-3    # 抓目录到本地缓存并输出
-  python zitijia-free.py download <itemId> [--to DIR]   # 取下载直链并存盘
-  python zitijia-free.py url <itemId>         # 只打印下载直链
+  python zitijia-free.py fetch --pages 1-3    # 抓目录到本地缓存并输出；download 前必须先有缓存
+  python zitijia-free.py download <itemId> [--to DIR] [--force]  # 校验免费目录、下载并安全解出字体
+  python zitijia-free.py url <itemId>         # 只打印下载直链（需先 fetch）
 
 stdout 输出一行 JSON。目录缓存落在系统临时目录（不进仓库），`--refresh` 强制重抓。
+`download` 先核对缓存中的免费商用条目，再限制下载主机并安全解压，拒绝 zip-slip/绝对路径。
 
 授权边界（见 references/hellofont.md 的字体红线一节）：
 - 只走免费商用标签；不碰"1元下载""个人版付费""在线授权"的付费条目。
@@ -22,6 +23,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 import time
@@ -34,6 +36,10 @@ BASE = "https://www.zitijia.com"
 FREE_TAG_PATH = "/t/" + urllib.parse.quote("免费商用")
 CACHE = os.path.join(tempfile.gettempdir(), "zitijia-free-cache.json")
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0"}
+MAX_ZIP_BYTES = 200 * 1024 * 1024
+MAX_MEMBER_BYTES = 100 * 1024 * 1024
+MAX_EXTRACT_BYTES = 300 * 1024 * 1024
+EXTRACT_EXTS = {".ttf", ".otf", ".ttc", ".txt", ".md", ".pdf"}
 
 
 def _get(url, timeout=25):
@@ -82,7 +88,28 @@ def fetch(pages, refresh):
             "fonts": sorted(fonts.values(), key=lambda f: f["name"])}
 
 
+def _load_cache():
+    if not os.path.isfile(CACHE):
+        return None
+    try:
+        with open(CACHE, encoding="utf-8") as f:
+            return json.load(f)
+    except (ValueError, OSError):
+        return None
+
+
+def _assert_free(item_id):
+    if not re.fullmatch(r"\d+", item_id):
+        raise ValueError(f"itemId 必须是纯数字: {item_id!r}")
+    cache = _load_cache()
+    if cache is None:
+        raise RuntimeError("免费商用目录缓存不存在；先运行 fetch --pages 1-5")
+    if item_id not in (cache.get("fonts") or {}):
+        raise RuntimeError(f"itemId {item_id} 不在免费商用目录缓存中，拒绝下载")
+
+
 def download_url(item_id):
+    _assert_free(item_id)
     req = urllib.request.Request(
         BASE + "/downloadCheck",
         data=json.dumps({"itemId": item_id}).encode(),
@@ -93,24 +120,90 @@ def download_url(item_id):
     url = data.get("url") or ""
     if url.startswith("//"):
         url = "https:" + url
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https" or parsed.hostname != "static.zitijia.com":
+        raise RuntimeError(f"下载直链不是 https://static.zitijia.com: {url!r}")
     return url, data
 
 
-def download(item_id, to_dir):
-    url, raw = download_url(item_id)
-    if not url:
-        return {"ERROR": f"no url for {item_id}", "raw": raw}
+def _safe_part(part):
+    part = re.sub(r'[<>:"|?*\x00-\x1f]', "_", part).strip().rstrip(".")
+    if part in ("", ".", ".."):
+        raise RuntimeError("zip 内含非法路径")
+    return part
+
+
+def _safe_extract(zip_path, out_dir):
+    out_root = os.path.abspath(out_dir)
+    os.makedirs(out_root, exist_ok=True)
+    extracted = []
+    total = 0
+    with zipfile.ZipFile(zip_path) as z:
+        for info in z.infolist():
+            if info.is_dir():
+                continue
+            if info.file_size > MAX_MEMBER_BYTES:
+                raise RuntimeError(f"zip 内单文件超过 {MAX_MEMBER_BYTES // (1024 * 1024)}MiB: {info.filename}")
+            name = _fix_name(info.filename).replace("\\", "/")
+            if name.startswith("/") or re.match(r"^[A-Za-z]:", name):
+                raise RuntimeError(f"zip 内含绝对路径: {info.filename}")
+            parts = [p for p in name.split("/") if p and p != "."]
+            if not parts or any(p == ".." for p in parts):
+                raise RuntimeError(f"zip 内含路径穿越: {info.filename}")
+            parts = [_safe_part(p) for p in parts]
+            if os.path.splitext(parts[-1])[1].lower() not in EXTRACT_EXTS:
+                continue
+            dest = os.path.abspath(os.path.join(out_root, *parts))
+            if os.path.commonpath([out_root, dest]) != out_root:
+                raise RuntimeError(f"zip 解压目标越界: {info.filename}")
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            read = 0
+            with z.open(info) as src, open(dest, "wb") as dst:
+                while True:
+                    chunk = src.read(1 << 20)
+                    if not chunk:
+                        break
+                    read += len(chunk)
+                    if read > MAX_MEMBER_BYTES or total + read > MAX_EXTRACT_BYTES:
+                        raise RuntimeError(f"zip 解压超过大小上限: {info.filename}")
+                    dst.write(chunk)
+            total += read
+            extracted.append(os.path.relpath(dest, out_root))
+    return extracted
+
+
+def download(item_id, to_dir, force=False):
+    url, _ = download_url(item_id)
     os.makedirs(to_dir, exist_ok=True)
     dest = os.path.join(to_dir, f"{item_id}.zip")
-    urllib.request.urlretrieve(url, dest)
+    if os.path.exists(dest) and not force:
+        raise RuntimeError(f"zip 已存在: {dest}；确认覆盖加 --force")
+    tmp = dest + ".part"
+    total = 0
     try:
-        with zipfile.ZipFile(dest) as z:
-            names = [_fix_name(n) for n in z.namelist()]
-    except zipfile.BadZipFile:
-        names = []
-    return {"id": item_id, "url": url, "zip": dest,
-            "size": os.path.getsize(dest), "contents": names,
-            "installable": [n for n in names if n.lower().endswith((".ttf", ".otf", ".ttc"))]}
+        with urllib.request.urlopen(url, timeout=30) as resp:
+            final = urllib.parse.urlparse(resp.geturl())
+            if final.scheme != "https" or final.hostname != "static.zitijia.com":
+                raise RuntimeError(f"下载重定向到非白名单地址: {resp.geturl()}")
+            with open(tmp, "wb") as f:
+                while True:
+                    chunk = resp.read(1 << 20)
+                    if not chunk:
+                        break
+                    total += len(chunk)
+                    if total > MAX_ZIP_BYTES:
+                        raise RuntimeError(f"zip 超过 {MAX_ZIP_BYTES // (1024 * 1024)}MiB")
+                    f.write(chunk)
+        os.replace(tmp, dest)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+    extract_dir = os.path.join(to_dir, item_id)
+    extracted = _safe_extract(dest, extract_dir)
+    fonts = [n for n in extracted if n.lower().endswith((".ttf", ".otf", ".ttc"))]
+    return {"id": item_id, "url": url, "zip": dest, "size": os.path.getsize(dest),
+            "extractDir": extract_dir, "extracted": extracted, "fonts": fonts,
+            "installable": fonts, "freeListChecked": True}
 
 
 def _fix_name(name):
@@ -128,6 +221,11 @@ def _fix_name(name):
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
     ap = argparse.ArgumentParser(description="字体家免费商用字体检索与下载")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
@@ -141,9 +239,10 @@ def main():
     f.add_argument("--pages", default="1-5")
     f.add_argument("--refresh", action="store_true")
 
-    d = sub.add_parser("download", help="下载单个 itemId 的字体压缩包")
+    d = sub.add_parser("download", help="下载单个 itemId 的字体压缩包并安全解压")
     d.add_argument("item_id")
     d.add_argument("--to", default=os.path.join(tempfile.gettempdir(), "zitijia-downloads"))
+    d.add_argument("--force", action="store_true", help="覆盖已存在的 zip")
 
     u = sub.add_parser("url", help="只打印下载直链")
     u.add_argument("item_id")
@@ -167,14 +266,14 @@ def main():
                               "cached": len(cache["fonts"]), "hits": hits[:args.limit]},
                              ensure_ascii=False))
         elif args.cmd == "download":
-            print(json.dumps(download(args.item_id, args.to), ensure_ascii=False))
+            print(json.dumps(download(args.item_id, args.to, args.force), ensure_ascii=False))
         elif args.cmd == "url":
             url, raw = download_url(args.item_id)
             print(json.dumps({"id": args.item_id, "url": url, "raw": raw}, ensure_ascii=False))
     except urllib.error.HTTPError as e:
         print(json.dumps({"ERROR": f"HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:200]}"}))
         return 1
-    except (urllib.error.URLError, OSError, ValueError) as e:
+    except (urllib.error.URLError, OSError, ValueError, RuntimeError, zipfile.BadZipFile) as e:
         print(json.dumps({"ERROR": str(e)}))
         return 1
     return 0
