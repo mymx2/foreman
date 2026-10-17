@@ -2,11 +2,11 @@
 """psd-audit.py — PSD 结构审计与规范化前后对比（只读）。
 
 用法:
-  python psd-audit.py audit <psd> [--json] [--strict] [--installed-fonts FILE] [--max-depth 4]
-  python psd-audit.py compare <old> <new> [--json] [--strict] [--installed-fonts FILE] [--max-depth 4]
+  python psd-audit.py audit <psd> [--json] [--strict] [--installed-fonts FILE] [--max-depth N]
+  python psd-audit.py compare <old> <new> [--json] [--strict] [--installed-fonts FILE] [--max-depth N]
 
-检查：根组分类与顺序、默认/重复名、空组、嵌套深度、根层散落、隐藏层、
-文字层与字体、文字组内非文字层、可疑栅格化文字、同级层过多。
+检查：根组节点树前缀、默认/重复名、空组、嵌套深度（仅在显式设 --max-depth 时）、根层散落、隐藏层、
+文字层与字体、可疑栅格化文字、同级层过多。
 
 --installed-fonts 接受 JSON：字符串数组，或 {"fonts": [...]}；元素可为字符串，
 或含 family/name/postscript_name 的对象。PSD 字体表里的 family 常为空，只有
@@ -24,7 +24,15 @@ import re
 import sys
 from collections import Counter
 
-ROOT_CATEGORIES = ["参考", "调整", "装饰", "文字", "主体", "背景"]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import psd_contract  # noqa: E402  契约常量单点定义
+from psd_contract import (  # noqa: E402
+    NODE_ROOT_PREFIXES,
+    is_page_wrapper,
+    is_node_root,
+    is_node_group,
+    hidden_allowed as contract_hidden_allowed,
+)
 DEFAULT_NAME_RE = re.compile(
     r"^(图层|Layer|组|Group|文本|Text|文字图层|形状|Shape|智能对象|Smart Object|"
     r"调整图层|Adjustment Layer|填充|Fill|Color Fill|Gradient Fill|Pattern Fill|"
@@ -36,7 +44,6 @@ DEFAULT_NAME_RE = re.compile(
 )
 COPY_RE = re.compile(r"(?:\s*(?:副本|拷贝|copy)(?:\s*\d+)?)$", re.I)
 TEXT_NAME_RE = re.compile(r"(文字|标题|正文|文案|按钮|\b(?:title|heading|text)\b)", re.I)
-PAGE_GROUP_RE = re.compile(r"^(页面|版本)_")
 SEVERITY_ORDER = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
 MAX_SIBLINGS = 30
 
@@ -89,61 +96,26 @@ def display_path(ancestors, name):
     return "/".join(parts)
 
 
-def is_page_wrapper(name):
-    return bool(PAGE_GROUP_RE.match(name or ""))
+def text_layer_in_node(ancestors):
+    """节点树下文字层应在节点组内（组件_/区块_/页面_/参考_/版本_），而不是散落在根层。"""
+    return any(psd_contract.is_node_group(name) for name in ancestors)
 
 
-def valid_category_position(name, index, ancestors):
-    """标准分类只允许在根级，或页面/版本包装组的直接子级。"""
-    if name not in ROOT_CATEGORIES:
-        return False
-    if index == 0:
-        return True
-    return index == 1 and is_page_wrapper(ancestors[0] if ancestors else "")
-
-
-def has_valid_text_group(ancestors):
-    return any(
-        name == "文字" and valid_category_position(name, i, ancestors)
-        for i, name in enumerate(ancestors)
-    )
-
-
-def hidden_allowed(ancestors, name, is_group):
-    """隐藏内容只允许在有效的 参考 组或根级 版本_* 组下。"""
-    for i, ancestor in enumerate(ancestors):
-        if ancestor == "参考" and valid_category_position(ancestor, i, ancestors):
-            return True
-        if i == 0 and (ancestor or "").startswith("版本_"):
-            return True
-    if is_group and name == "参考" and valid_category_position(name, len(ancestors), ancestors):
-        return True
-    return bool(is_group and not ancestors and (name or "").startswith("版本_"))
+def hidden_allowed(ancestors, name, is_group=True):
+    """隐藏内容允许在 参考_* 组或 版本_* 包装下（与 psd_contract / layout-design 同语义）。"""
+    return contract_hidden_allowed(ancestors, name)
 
 
 def check_reference_and_order(child_groups, children, path_prefix, issues):
-    present = [g for g in child_groups if (g.name or "") in ROOT_CATEGORIES]
-    indices = [ROOT_CATEGORIES.index(g.name) for g in present]
-    # psd_tools 的层列表自下而上；标准顺序自上而下，所以索引应递减。
-    if indices != sorted(indices, reverse=True):
-        add_issue(
-            issues, "MEDIUM", "ROOT_ORDER", path_prefix or "<root>",
-            "根分类顺序不符合 参考→调整→装饰→文字→主体→背景（自上而下）",
-            "按标准顺序重排根组",
-        )
-    ref = next((g for g in present if g.name == "参考"), None)
+    """节点树下不再固定根组顺序；只检查 参考_* 组必须隐藏。"""
+    ref = next((g for g in child_groups if (g.name or "").startswith("参考_")), None)
     if ref is not None:
-        if not children or children[-1] is not ref:
-            add_issue(
-                issues, "MEDIUM", "REFERENCE_NOT_TOP", display_path([path_prefix] if path_prefix else [], ref.name),
-                "参考组不在最上层", "把参考组移到顶层并保持隐藏",
-            )
         if ref.visible is not False:
             add_issue(
                 issues, "MEDIUM", "REFERENCE_VISIBLE", display_path([path_prefix] if path_prefix else [], ref.name),
                 "参考组没有隐藏", "隐藏参考组，避免进入最终合成",
             )
-    return present
+    return child_groups
 
 
 def audit_tree(psd, path, installed_fonts, max_depth):
@@ -169,43 +141,32 @@ def audit_tree(psd, path, installed_fonts, max_depth):
     for layer in root_loose:
         add_issue(
             issues, "HIGH", "ROOT_LOOSE_LAYER", display_path([], layer.name or ""),
-            "根层存在未分组的图层", "把内容移入 背景/主体/文字/装饰/调整 组",
+            "根层存在未分组的图层", "把内容移入 组件_ 或 区块_ 组",
         )
 
-    canonical = [g for g in root_groups if (g.name or "") in ROOT_CATEGORIES]
-    wrappers = [g for g in root_groups if PAGE_GROUP_RE.match(g.name or "")]
-    unknown = [g for g in root_groups if g not in canonical and g not in wrappers]
+    # 节点树契约：根组必须以 页面_/区块_/参考_/版本_ 开头
+    valid_root = [g for g in root_groups if (g.name or "").startswith(NODE_ROOT_PREFIXES)]
+    unknown = [g for g in root_groups if g not in valid_root]
     for group in unknown:
         add_issue(
             issues, "MEDIUM", "ROOT_UNKNOWN_GROUP", display_path([], group.name or ""),
-            "根组不是标准分类，也不是 页面_/版本_ 包装组", "改用标准根分类或页面/版本包装",
+            "根组命名不合规（应以 页面_/区块_/参考_/版本_ 开头）",
+            "改用节点树前缀命名",
         )
-    if wrappers and canonical:
-        add_issue(
-            issues, "MEDIUM", "MIXED_ROOT_LAYOUT", "<root>",
-            "同时存在页面/版本包装组和裸根分类", "统一用一种布局",
-        )
-    if canonical:
-        check_reference_and_order(canonical, root, "", issues)
+    if valid_root:
+        check_reference_and_order(valid_root, root, "", issues)
+    # 页面/版本包装组：内部应以 区块_/组件_/参考_ 组织，不允许散落图层
+    wrappers = [g for g in valid_root if is_page_wrapper(g.name or "")]
     for wrapper in wrappers:
         children = list(wrapper)
         child_groups = [c for c in children if c.is_group()]
-        for child in children:
-            if not child.is_group():
-                add_issue(
-                    issues, "HIGH", "PAGE_LOOSE_LAYER", display_path([wrapper.name], child.name or ""),
-                    "页面/版本包装组内存在未分组的图层", "移入该页面的标准分类组",
-                )
-        page_unknown = [g for g in child_groups if (g.name or "") not in ROOT_CATEGORIES]
+        # 元素层可直放 页面_/版本_ 下（见 ALLOW_NESTED），由 NODE_PREFIX_MISMATCH 管前缀合规
+        page_unknown = [g for g in child_groups if not psd_contract.is_node_group(g.name or "")]
         for group in page_unknown:
             add_issue(
                 issues, "MEDIUM", "PAGE_UNKNOWN_GROUP", display_path([wrapper.name], group.name or ""),
-                "页面/版本包装组内的子组不是标准分类", "改用六个标准分类",
-            )
-        if not any((g.name or "") in ROOT_CATEGORIES for g in child_groups):
-            add_issue(
-                issues, "MEDIUM", "PAGE_NO_CATEGORY", display_path([], wrapper.name or ""),
-                "页面/版本包装组内没有标准分类组", "按 背景/主体/文字/装饰/调整/参考 分组",
+                "页面/版本包装组内的子组命名不合规（应为 节点组前缀）",
+                "改用节点树前缀命名（design-spec.md 第 3 节）",
             )
         check_reference_and_order(child_groups, children, wrapper.name or "", issues)
 
@@ -225,20 +186,22 @@ def audit_tree(psd, path, installed_fonts, max_depth):
             stats["total"] += 1
             stats["maxDepth"] = max(stats["maxDepth"], depth)
             current_depth_flagged = depth_flagged
-            if depth > max_depth and not depth_flagged:
+            # max_depth 为 0/负数时不限制深度：组件内部多层嵌套是正常的，
+            # 深度只作参考统计（stats.maxDepth），不作判级依据
+            if max_depth > 0 and depth > max_depth and not depth_flagged:
                 add_issue(
                     issues, "MEDIUM", "DEPTH_EXCEEDED", path,
-                    f"嵌套深度 {depth} 超过上限 {max_depth}", "合并或扁平化中间层",
+                    f"嵌套深度 {depth} 超过设定上限 {max_depth}", "合并或扁平化中间层",
                 )
                 current_depth_flagged = True
 
             if not name.strip():
-                add_issue(issues, "HIGH", "EMPTY_NAME", path, "图层名为空", "按 类别_语义 命名")
+                add_issue(issues, "HIGH", "EMPTY_NAME", path, "图层名为空", "按元素类型前缀命名（design-spec.md）")
             else:
                 if name != name.strip():
                     add_issue(issues, "HIGH", "WHITESPACE_NAME", path, "名称含首尾空格", "去掉首尾空格")
                 if DEFAULT_NAME_RE.match(name.strip()):
-                    add_issue(issues, "HIGH", "DEFAULT_NAME", path, "使用默认图层名", "按 类别_语义 命名")
+                    add_issue(issues, "HIGH", "DEFAULT_NAME", path, "使用默认图层名", "按元素类型前缀命名（design-spec.md）")
                 elif COPY_RE.search(name.strip()):
                     add_issue(issues, "MEDIUM", "COPY_NAME", path, "名称带副本/拷贝/copy 后缀", "用语义名或 _01/_02 区分")
             if "/" in name:
@@ -252,13 +215,23 @@ def audit_tree(psd, path, installed_fonts, max_depth):
             else:
                 seen_names[key] = path
 
+            # 节点树边界：子层前缀必须符合父组允许的子前缀
+            if ancestors and not psd_contract.child_prefix_ok(ancestors[-1], name):
+                add_issue(
+                    issues, "MEDIUM", "NODE_PREFIX_MISMATCH", path,
+                    f"层级不符：{name} 不应出现在 {ancestors[-1]} 下",
+                    "见 psd_contract.ALLOW_NESTED / design-spec.md 第 3 节",
+                )
+
             is_group = layer.is_group()
             if is_group:
                 stats["groups"] += 1
                 if len(layer) == 0:
                     add_issue(issues, "HIGH", "EMPTY_GROUP", path, "空组", "删除空组")
-                elif len(layer) == 1:
-                    add_issue(issues, "LOW", "SINGLE_CHILD_GROUP", path, "组内只有一个子层", "确认是否有分组必要")
+                elif len(layer) == 1 and not psd_contract.is_node_group(name):
+                    # 节点组（页面_/区块_/组件_/参考_/版本_）是语义容器，单元素正常；
+                    # 其他组只有一个子层才是冗余包装
+                    add_issue(issues, "MEDIUM", "SINGLE_CHILD_GROUP", path, "组内只有一个子层（冗余组）", "确认是否有分组必要，无则合并到父级")
             else:
                 stats["leaves"] += 1
                 if getattr(layer, "kind", None) == "smartobject":
@@ -275,7 +248,7 @@ def audit_tree(psd, path, installed_fonts, max_depth):
                     )
 
             if not is_group:
-                in_text = has_valid_text_group(ancestors)
+                in_text = text_layer_in_node(ancestors)
                 if getattr(layer, "kind", None) == "type":
                     stats["text"] += 1
                     fonts = []
@@ -312,24 +285,30 @@ def audit_tree(psd, path, installed_fonts, max_depth):
                     if not in_text:
                         add_issue(
                             issues, "MEDIUM", "TEXT_OUTSIDE_TEXT_GROUP", path,
-                            "文字层不在有效的 文字 组下（根级或页面/版本包装组的直接子级）",
-                            "移入有效的 文字 组，保持文字可编辑",
+                            "文字层不在组件/区块组内（节点树契约）",
+                            "移入 区块_ 下的 组件_ 组，保持文字可编辑",
                         )
                 else:
-                    if in_text:
-                        severity = "HIGH" if layer.kind in ("pixel", "smartobject") else "MEDIUM"
+                    # 节点树下元素类型混杂正常，但「命名像文字却是像素层」是栅格化嫌疑，
+                    # 无论在组件内还是根层都要报（否则组件内栅格化文字静默过验收）
+                    if TEXT_NAME_RE.search(name):
                         add_issue(
-                            issues, severity, "NON_TEXT_IN_TEXT_GROUP", path,
-                            "文字组内存在非文字层", "确认是否栅格化文字；是则重打，否则移到 装饰/主体",
-                        )
-                    if TEXT_NAME_RE.search(name) and not in_text:
-                        add_issue(
-                            issues, "LOW", "POSSIBLE_RASTERIZED_TEXT", path,
+                            issues, "MEDIUM", "POSSIBLE_RASTERIZED_TEXT", path,
                             "非文字层但名称像文字，可能已栅格化", "确认；能从文案重打就重打",
                         )
 
             if is_group:
                 walk(layer, ancestors + [name], current_depth_flagged)
+
+        # 视觉层序：psd_tools 自下而上，背景_* 元素应在 children 开头（最底）
+        child_names = [(c.name or "") for c in children]
+        bg_idx = [i for i, nm in enumerate(child_names) if nm.startswith("背景_")]
+        if bg_idx and min(bg_idx) != 0:
+            add_issue(
+                issues, "MEDIUM", "BACKGROUND_NOT_BOTTOM", path_prefix or "<root>",
+                f"背景层不在最底层: {child_names}（背景_ 应在最前，psd_tools 自下而上）",
+                "把 背景_* 移到组内最底",
+            )
 
     walk(psd, [])
     issues.sort(key=lambda x: (SEVERITY_ORDER.get(x["severity"], 9), x["path"], x["code"]))
@@ -340,7 +319,7 @@ def audit_tree(psd, path, installed_fonts, max_depth):
         "colorMode": int(psd.color_mode),
         "depth": int(psd.depth),
         "stats": stats,
-        # 面板自上而下的根组顺序；psd_tools 内部列表自下而上。
+        # 层树顺序；psd_tools 内部列表自下而上。
         "rootGroups": [g.name or "" for g in reversed(root_groups)],
         "fonts": [{"name": n, "style": s} for n, s in sorted(font_inventory)],
         "issues": issues,
@@ -448,7 +427,7 @@ def main():
         parser.add_argument("--json", action="store_true", help="输出一行 JSON")
         parser.add_argument("--strict", action="store_true", help="MEDIUM 也视为失败（规范化验收）")
         parser.add_argument("--installed-fonts", default=None, help="辅助字体清单 JSON（需含 PostScript 或 PSD 家族名）")
-        parser.add_argument("--max-depth", type=int, default=4, help="允许的最大嵌套深度（默认 4）")
+        parser.add_argument("--max-depth", type=int, default=0, help="允许的最大嵌套深度；0 或负数表示不限制（默认 0）")
 
     a = sub.add_parser("audit", help="审计单个 PSD")
     a.add_argument("psd")
@@ -460,9 +439,6 @@ def main():
     common(c)
 
     args = ap.parse_args()
-    if args.max_depth < 1:
-        print("ERROR: --max-depth 必须 >= 1", file=sys.stderr)
-        return 2
     try:
         installed = load_installed_fonts(args.installed_fonts)
         if args.cmd == "audit":

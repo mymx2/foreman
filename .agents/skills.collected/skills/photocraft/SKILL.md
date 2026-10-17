@@ -1,17 +1,33 @@
 ---
 name: photocraft
 description: |
-  通过 PhotoCraft 做 PSD/pcraft 分层稿的图层级编辑自动化：不规范 PSD 的结构规范化与视觉复刻，图层、选区、文字、滤镜编辑，
+  通过 PhotoCraft 做 PSD/pcraft 分层稿的图层级编辑自动化：新建规范稿与制图规范（画布尺寸、栅格间距、层级契约、命名层树），
+  不规范 PSD 的结构规范化与视觉复刻，图层、选区、文字、滤镜编辑，栅格布局与自动对齐分布，
   文档结构与字体现状查询，缺失字体检索与替换，需要引擎命令参与的目录批量处理，两稿渲染一致性校验（像素级回归），
   分层稿交付归档，以及老照片修复、去物修补、抠图合成、抠图切图与资产导出。当用户要驱动 PhotoCraft、对 PSD 做上述操作，或对已渲染位图做抠图/裁边/资产导出时使用。
   不适用于：普通图片格式转换（直接用 CLI convert 即可，无需加载本技能）、
   Figma/浏览器内设计稿操作（走 chrome 或其他技能）、Python/PIL 纯代码绘图。
-when_to_use: 'photocraft, PhotoCraft, PSD 图层编辑, PSD 规范化, PSD 复刻, pcraft, 图层树查询, 层树整理, PSD 结构审计, 缺失字体, 字体替换, 字体补齐, 渲染一致性, 像素级回归, 分层稿交付, 老照片修复, 去物修补, 抠图合成, 抠图, 切图, 裁白边, 去白边, 资产导出, 图层导出, 多倍图, PhotoCraft 批量处理'
+when_to_use: 'photocraft, PhotoCraft, PSD 制图规范, 新建规范稿, 怎么设计好一个 PSD, 画布尺寸, 栅格布局, grid 布局, 自动布局, 对齐分布, 参考线, 列网格, 间距摆放, 画布对齐, 层级契约, 图层命名规范, PSD 图层编辑, PSD 规范化, PSD 复刻, pcraft, 图层树查询, 层树整理, PSD 结构审计, 缺失字体, 字体替换, 字体补齐, 渲染一致性, 像素级回归, 分层稿交付, 老照片修复, 去物修补, 抠图合成, 抠图, 切图, 裁白边, 去白边, 资产导出, 图层导出, 多倍图, PhotoCraft 批量处理'
 ---
 
 # PhotoCraft
 
 GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读写永远走能力域方法，不走含磁盘路径的引擎命令。
+
+## 环境定位（任何命令前先确认）
+
+`photocraft-cli` **默认不在 PATH**，直接敲会报 `command not found`——这不是没装，是没加路径。按序定位：
+
+1. `photocraft-cli --version`（在 PATH 时直接用）。
+2. 不在 PATH 时按平台找安装目录的 `photocraft-cli.exe` / `photocraft-cli`：
+   - Windows：`C:\Program Files\PhotoCraft\`、`%LOCALAPPDATA%\Programs\PhotoCraft\`；装过就有 `%APPDATA%\Photocraft\control.token` 与 `preferences.json`，这两个文件存在即证明装过。
+   - macOS：`/Applications/PhotoCraft.app/Contents/MacOS/`、`/usr/local/bin/`。
+3. 还找不到就用系统能力查（`list_apps`、`where`/`which`、`Get-ChildItem -Recurse -Filter photocraft*`），别靠记忆猜路径。
+4. 找到后用**带路径的绝对路径**调用（如 `"C:\Program Files\PhotoCraft\photocraft-cli.exe" commands`），或把目录加进 PATH 再敲裸命令。
+
+无法定位时才降级：GUI 会话靠 `scripts/photocraft-bridge.py` 的 `engine.commands`，headless 会话靠 `photocraft-cli mcp`。`--version` 只在 PATH 可用时才能敲，别拿它当安装证明。
+
+完成标准：拿到了一个能执行的 CLI 路径，`photocraft-cli --version` 或绝对路径调用有版本输出（0.9.0 = `photocraft-cli 0.9.0 (c699e3cda, 2026-10-14)`）。
 
 ## Outcome Contract
 
@@ -33,6 +49,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 - 分层稿交付与归档：给稿目录补齐随稿字体副本（授权允许时）与 `<稿名>.md` 描述文件，规则见 `references/delivery.md`。
 - 抠主体、去透明/纯色边、按图层或区域导出多倍图：规则见 `references/cutout-slicing.md`，裁边/命名/倍率用 `scripts/trim-export.py`。
 - 收到不规范/单文件 PSD，要补字体、整理分组与命名、做规范复刻并证明视觉一致：按「规范化/复刻模式」走，规范见 `references/psd-normalization.md`，结构审计用 `scripts/psd-audit.py`。
+- 按栅格/间距摆放元素、批量对齐分布、建参考线：按「自动布局模式」走（`layer.translate` / `edit.transform` / `layer.align.*` / `layer.distribute.*` / `view.newGuideLayout`）。
 
 ## Process
 
@@ -48,8 +65,10 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 | 分层稿交付归档 | 1 → 2 → 3 → 4 → 10 |
 | 不规范 PSD 规范化/复刻 | 走下方「规范化/复刻模式」 |
 | 纯位图裁切/切图导出 | 直接走「切图与资产导出」，不需要 PhotoCraft 会话 |
-| PSD 图层/组抠图导出 | 1 → 2 → 3 → 8（语义抠图）→ 切图模式 |
+- PSD 图层/组抠图导出 | 1 → 2 → 3 → 8（语义抠图）→ 切图模式 |
 | 纯批量转换（无编辑验证） | 2 → 4（CLI）或 1 → 2 → 5 |
+| 栅格布局、对齐分布、建参考线 | 走「自动布局模式」 |
+| 新建规范稿（从零起稿） | 走「设计制作规范」，规范见 `references/design-spec.md` |
 
 1. **选会话**。先探测再动手：GUI 会话跑 `scripts/photocraft-bridge.py`（运行它；下称 bridge）的 `ui.inspect`，看返回的文档/窗口列表；headless 会话用 `session.list` 拿文档列表。编辑用户打开的文档只能在 GUI 会话做。无 GUI 或要无人值守批处理时，用 `photocraft-cli serve --port <port> --control-token-file <tokenfile> --automation-read-root <workdir> --automation-write-root <workdir>` 起 headless 会话（token/root 缺一不可，否则 auth 或文件访问 fail closed），bridge 加 `--port` 连它。两个会话的文档互不可见；headless 的文件方法集更宽（`doc.open/doc.save/doc.render`），GUI 桥接靠 `app.open/app.save`。
    完成标准：GUI `ui.inspect` 返回了目标文档/窗口，或 headless `session.list` 返回了文档列表且端口已应答 auth。
@@ -87,7 +106,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 
 1. **审计原稿**。原稿只读，先记 SHA256；跑 `scripts/psd-audit.py audit <原稿> --json > <稿目录>/audit-before.json`（运行它），再在 PhotoCraft 打开，用 `document.inspect` 与 `type.resolveMissingFonts` 核对层树、文字和真实缺失字体。完成标准：问题清单与重建计划已出，原稿未被修改。
 2. **冻结视觉基线**。用同一引擎把原稿渲染成 PNG（headless `photocraft-cli convert` 或 `doc.render`），保存到 `<稿目录>/baseline.png` 并记 hash。完成标准：基线图可复跑，后续对比都以它为准。
-3. **设计目标层树**。按 `references/psd-normalization.md` 的六类根组与 `类别_语义[_状态]` 命名，写旧层→新组映射；标出合并层、栅格化文字、缺源素材、无法恢复项。完成标准：每个原层都有归属或例外说明。
+3. **设计目标层树**。按 `references/design-spec.md` 的节点树（`页面_`/`区块_`/`组件_` + 元素前缀）写旧层→新组映射；标出合并层、栅格化文字、缺源素材、无法恢复项。完成标准：每个原层都有归属或例外说明。
 4. **另存并重建**。用 `app.save {path: "<稿目录>/<稿名>_规范.psd"}` 另存规范稿，确认当前文档已指向它，记录原稿/规范稿 SHA256；建组、改名、移动层、转智能对象、补蒙版/调整层，每批改动后 `document.inspect` 复核。完成标准：层树符合规范，文字仍可编辑，原稿 SHA256 未变。
 5. **补字体并回写**。`type.resolveMissingFonts` → 候选 → 用户确认 → 安装/注册 → 在规范稿上写 `text.font` → `type.fonts` 复核；记录原字体、实际字体、授权和视觉差。禁用 `type.replaceAllMissingFonts`。完成标准：文字层无缺失字体，或替换已获用户确认并记录。
 6. **视觉验收**。`python scripts/psd-compare.py <原稿渲染> <规范稿渲染> --out <稿目录>/psd-compare-out > <稿目录>/visual-diff.json`，目标 `identical`；有差异逐像素定位并修复；跨工具来源才给 `--fuzz` 并写明原因。另做 fit/100% 双尺度目检。完成标准：一致，或差异已解释并被接受。
@@ -105,6 +124,73 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 5. **验收**。抠图边缘 100% 看浅/深/棋盘格，并看 `sourceHasAlpha`/`sourceTransparentRatio`/`sourceAlphaBBox` 与 `alphaBBox`；`contentTransparentRatio` 为 0 是硬边裁剪的正常结果，`paddingOnlyAlpha` 只说明最终透明来自 padding，不能单独否定有源 alpha 的抠图。裁切看 bbox/padding 和纸边策略；导出看尺寸/命名/alpha/manifest 与 `failures` 为空；整幅合成用 `psd-compare.py`，资产先贴回原画布再比。完成标准：spec 全对，边缘无白边/halo，原稿和母版保留。
 6. **交付**。切图/资产放 `assets/`，清单放 assets 的父目录 `assets-manifest.json`（用 `--manifest` 指定），原稿、母版、中间图分开保存，不覆盖。完成标准：`assets-manifest.json` 的路径/哈希/bbox/参数与实际文件对账、`failures` 为空，画心/含纸边与投影策略已写入描述文件。
 
+## 设计制作规范模式
+
+**从零新建规范稿**时走这条分支，规范见 `references/design-spec.md`（画布尺寸表、栅格与间距刻度、层级契约、命名、层树、文字、布局执行、验收）。
+
+路由边界：`design-spec.md` 回答**做成什么样**，`psd-normalization.md` 回答**怎么把烂稿修成规范稿**。已有稿子的质量判定属于规范化/复刻模式（先审计再修），不重复走本模式。两者目标结构一致，冲突处以 design-spec.md 为准。
+
+1. **先拿 spec**。画布尺寸、列数、margin、gutter、命名模板、交付目标（是否进引擎）都要问清。**项目 spec 优先于规范默认值**，不要拿规范覆盖用户给的数值。
+2. **算栅格**。`python scripts/layout-design.py calc --width <W> --margin <M> --gutter <G> --columns <C>`（运行它）出列宽、步距、列起点与右余量。列宽取 8 的倍数让步距合规，别自己凑。
+   完成标准：报告 `pitchOn8pt` 为 true，`allOn8pt` 为 true。
+3. **建组（从底向上）**。按节点树建组（`区块_` → `组件_` → 元素）。建层时新建层默认落在当前层上方，所以底层（背景、底色）先建，上层（卡片、标题）后建。
+   **只用实际要用的组**：空组会被 `psd-audit.py` 判 HIGH（`EMPTY_GROUP`），未使用的类别直接不建。
+4. **建内容层，然后必须 `moveTo into`**。这是最容易漏的一步：**新建层默认落在当前选中层的同级，不会自动进入组**。即使先 `layer.select` 选中组再 `layer.new.layer`/`type.create`，新层也是与组平级。每建一层都要补一条
+   `layer.moveTo {layer:<新层id>, target:<组id>, position:"into"}`，
+   否则根层散落，`psd-audit.py` 和 `check` 都判 HIGH。
+   `type.create` 的 `x`/`y` 是基线锚点，实际 bounds 的 x 会偏几像素，摆位前以 `doc.inspect` 的 bounds 为准。
+5. **验收**。`doc.inspect` 存成 JSON，跑 `python scripts/layout-design.py check --spec <spec.json> --inspect <inspect.json>`（运行它）。它查根组命名（应以 `页面_`/`区块_`/`参考_`/`版本_` 开头）、命名（默认名/同级重名 = HIGH，副本后缀 = MEDIUM）、空组（HIGH）、根层散落（HIGH）、隐藏层位置、x 是否落在栅格列、y 与间距是否为 8pt 倍数。
+   **spec.json 要带 `height`**：铺满画布的底图层（`[0,0,W,H]`）靠它识别并豁免栅格检查，否则底色会被误判「x=0 不在栅格列上」。
+   完成标准：退出码 0，或 MEDIUM/LOW 逐条有结论。
+6. **收尾**。结构另过 `scripts/psd-audit.py audit --strict`（读 PSD 文件，与 check 的输入源不同、不能互相替代），视觉过 `psd-compare.py`。保存用 `doc.save {path}`，`warnings` 必须为空或逐条解释。
+
+## 自动布局模式
+
+需要按栅格/间距摆放元素，或让一批元素自动对齐分布时走这条分支。PhotoCraft 没有 Figma Auto Layout 那种「容器自动重排」，但**几何基元齐备**：能算坐标、能写回、能对齐分布、能建参考线。布局是「算 + 写 + 验」，不是靠容器。
+
+### 基元
+
+`doc.*`（`doc.new`/`doc.inspect`/`doc.render`/`doc.save`）是 **headless `serve` 的会话方法**，不是引擎命令 —— 喂给 `engine.execute` 会报 unknown command。引擎命令里对应的那个叫 `document.inspect`（要在 GUI 或经 `engine.execute` 包裹使用），`doc.new`/`doc.render`/`doc.save` 则只有会话方法。
+
+| 命令 / 会话方法 | 参数 | 用途 |
+| --- | --- | --- |
+| `layer.translate` | `{layer, dx, dy, units:"px"\|"pt", target:"pixels"\|"mask"}` | 相对位移。**绝对定位的主力**：`dx = 目标x - 当前x` |
+| `edit.transform` | `{layer, rect:[x0,y0,x1,y1]（源框，不单独使用）, quad:[[x,y]×4]（目标四角）, matrix:[a,b,c,d,e,f], scaleX%, scaleY%, rotate, dx, dy}` | 精确摆位、缩放、旋转。**`rect` 只是源框，必须配 `quad`/`matrix`/`scaleX` 之一**，单传 `rect` 报 "pass `quad` …, `matrix`, or `scaleX`…" |
+| `layer.align.topEdges` 等 6 条 | `{to:"auto"\|"layers"\|"selection"\|"canvas"}` | 6 向对齐。`to:"canvas"` 对齐画布，做页边距用这个 |
+| `layer.distribute.*` 共 8 条 | `{}` | 等距分布（水平/垂直/六向边缘与中心） |
+| `view.newGuide` | `{orientation, position}` | 单条参考线 |
+| `view.newGuideLayout` | 布局参数 | **批量建栅格参考线**，做列网格用这个 |
+| `document.inspect` / `doc.inspect` | — | 读层树与 bounds，布局前必须先读现状 |
+
+`layer.moveTo` 是层序（父子/上下），不是几何坐标；改几何用 `layer.translate` / `edit.transform`。
+**但 `moveTo` 的 `into` 也是唯一能把层放进组的命令**——新建层不会自动进组，见「设计制作规范模式」第 4 步。
+
+### 流程
+
+1. **定栅格**。向用户确认：画布尺寸、列数、margin、gutter、间距刻度（推荐 8pt 体系 4/8/12/16/24/32/40/48/64）。未指定时按 8pt 体系给建议值，不得写死——spec 来自用户。
+   先 `view.newGuideLayout {columns, width, gutter, margin, clearExisting:true}` 铺参考线。
+   **`width` 是单列宽，不是画布宽**。传画布宽会报 "count, size and gutter must fit inside the target margins"。
+   返回 `{"horizontal":n,"vertical":n}`。参考线**不出现在 `doc.inspect`，也不出现在 `doc.render`**，headless 下无法用渲染验收，只能信返回的条数。
+2. **读现状**。`doc.inspect` 拿每层的 bounds，**格式是 `[x, y, w, h]`**（嵌套在 `children`）。没有 bounds 就没有布局，先确认字段存在。
+3. **算坐标**。**必须跑 `scripts/layout-design.py calc`**，不要手推公式。列宽要让**步距 `(colW+gutter)` 是 8 的倍数**；只做向下取整会在 1440/120/24/12 这类配置上产出 120/222/324 的参差列起点，`check` 会判不合格且报错不指向根因。
+   公式（脚本已实现，此处仅作说明）：
+   - `columnWidth = (frameWidth - margin*2 - gutter*(columnCount-1)) / columnCount`
+   - 第 i 列 `x = margin + (columnWidth + gutter) * i`
+   - **元素宽度只能取「跨 n 列」的值**：`width = columnWidth*n + gutter*(n-1)`。`calc` 会列出全部合法宽度。宽度不符时 x 仍可能对齐，但右边界会越出列线。
+   - gutter 不是 8 的倍数时脚本会反向补偿列宽让步距合规（1200/80/20/12 → 列宽 68、步距 88）。步距实在无法合规时脚本会警告，此时应把 gutter 改成 8 的倍数。
+4. **写回**。`layer.translate {layer, dx: 目标x-当前x, dy: 目标y-当前y}`；要改尺寸或精确摆四角时用 `edit.transform {rect/quad/matrix}`。语义相关的元素先打组再摆，别散着移动。
+5. **选区与对齐兜底**。`layer.align.*` / `layer.distribute.*` 作用于**图层选区**：用 `layer.select {layer:id}` 起选、`mode:"add"` 逐个累加（参数名是 `layer` 单数，传 `layers` 数组报 missing `layer`）。算完后用 `{to:"canvas"\|"layers"\|"selection"}` 校正残余误差——算法算的是理论值，对齐命令过的是实际 bounds。操作前先 `select.deselect` 清掉像素选区（`edit.fill` 后选区会残留；`select.none` 不存在，正确命令是 `select.deselect`），残留选区会让几何命令行为异常。
+6. **验收**。每批改动后 `doc.inspect` 复核 bounds 与目标一致；关键布局做渲染前后像素差探针（`doc.render {maxSide:0, path}` 落盘后交 `scripts/psd-compare.py`）。**属性回显≠生效**：蒙版、混合模式、智能对象会让几何改动看起来生效实际没落，必须 inspect 复核。
+
+完成标准：每层 bounds 与目标值误差为 0（或已对齐命令校正），spec 全对，原稿 hash 未变。
+
+### 尺度与限制
+
+- **布局是静态结果，不是活容器**。PhotoCraft 没有 Figma 的 HUG/FILL、没有响应式约束、没有 `layer.setBounds` 这类直接写 bounds 的命令——坐标只能靠 `translate` 的相对量或 `transform` 的变换推算。改了内容尺寸，布局不会自动重排，得重算重摆。
+- **没有 z-index 数值体系**。层级就是层树顺序，改层级用 `layer.moveTo {target, position:"above"|"below"|"into"}`，只能用相对位置表达顺序。
+- `layer.align.*` 与 `layer.distribute.*` 作用于**当前图层选区**，摆位前先确认选中的是要摆的那些层。
+- 批量布局超过 256 步要分批（批量步数上限 256）。
+
 ## Common Rationalizations
 
 - "file.save 报错说明安装坏了" — 这是设计行为；能力域方法（app.save/doc.save）才是正道。
@@ -113,6 +199,19 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 - "工具名对上了就是对的后端" — 后端身份靠 `ui.inspect`/`session.list` 与实测状态判定，工具名不作数。
 - "视觉一致就说明 PSD 没问题" — 像素一致只证明输出一致；层树可能仍然不可维护，规范化必须同时过结构审计。
 - "原稿太乱，直接在原稿上改" — 原稿只读，另存规范稿；否则无法对照和回退。
+- "`photocraft-cli` 敲不出就是没装" — 默认不在 PATH，不是没装；先按「环境定位」找安装目录。
+- "PhotoCraft 没有 Auto Layout 所以做不了栅格" — 容器自动重排确实没有，但 `layer.translate` + `edit.transform` 能精确写坐标，`layer.align.*`/`layer.distribute.*` 能对齐分布，几何基元是齐的。
+- "布局摆完就完事" — 静态结果不等于活容器；内容尺寸一变就得重算重摆，别承诺响应式。
+- "对齐完了不用复核" — 蒙版、混合模式、智能对象能让几何改动静默失效，必须 `document.inspect` 复核 bounds。
+- "规范是通用真理，照抄就行" — 默认值来源多为行业通行做法，不是官方标准；项目 spec 优先。
+- "列宽向下取整就够了" — 不够；要让**步距**(colW+gutter) 是 8 的倍数，否则列起点参差不齐。
+- "结构审计过了就不用查布局" — 审计查层树，布局要查 bounds 是否落在栅格列上，两码事。
+- "布局摆完就是成品" — 还得过结构审计、视觉比对、交付归档，缺一项不算完成。
+- "选中组再建层，层就进组了" — 不会；归属和插入位置是两回事，必须 `moveTo into`。
+- "按节点树把所有层级都建上更保险" — 空组是 HIGH，未用到的层级不建。
+- "`layout-design.py check` 过了就行" — 它读 inspect JSON，`psd-audit.py` 读 PSD 文件，维度不同；两者都要过。
+- "x 对齐了就是对齐了" — 还要看宽度；宽度不合法时右边界越线，视觉上照样没对齐。
+- "改尺寸用 transform 微调更省事" — quad 有插值误差（会冒出 329/330）；尺寸要求精确时重画更可靠。
 
 ## Red Flags
 
@@ -136,9 +235,12 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 4. 修改 `scripts/photocraft-bridge.py` 或怀疑本机环境异常时，跑 `scripts/test-bridge.py`（运行它，自带 fake control server，无需 PhotoCraft）；全绿再继续，任何失败先看 stderr 与对应用例。
 5. 改过 CLI 用法后做小画布往返自检：`run --new` 起小图执行目标命令 → `convert` 出 PNG → `info` 核对（子命令与 flags 以 `photocraft-cli --help` 为准，不凭记忆拼）。
 6. 改过 `scripts/psd-compare.py` 后用 `run --new` 造一对相同稿、一对改动稿自检：相同对报 `identical` 且退出码 0，改动对报 `differs`、出 `diffImage` 且退出码 1。
-7. 交付目录自检：每份分层稿有同名 `.md`，`fonts/` 覆盖稿内全部字体家族且 SHA256 与来源记录一致；不能证明允许再分发的字体不复制并在描述文件写明；描述文件里的 MD5 与验证数据可复跑。
-8. 规范化/复刻后：`scripts/psd-audit.py audit --strict` 规范稿无 CRITICAL/HIGH/MEDIUM，LOW 已逐条解释；`compare --strict` 记录原稿→规范稿的前后指标；`psd-compare.py` 原稿渲染与规范稿渲染 `identical`，或差异已解释；交付含 audit-before/after、visual-diff 与规范化记录，原稿 SHA256 未变。
-9. 切图/资产导出：dimensions/命名/alpha/格式符合 spec；100% 看边缘无白边/halo；bbox/padding 正确；`sourceHasAlpha`/`sourceTransparentRatio` 或真实蒙版证明是抠图，`contentTransparentRatio` 为 0 属正常；`assets-manifest.json` 的 `failures` 为空、哈希/bbox 与实际文件对账；原稿/母版 SHA 未变。
+7. 改过 `scripts/layout-design.py` 后自检：`calc --width 1440 --margin 120 --gutter 24 --columns 12` 必须输出列宽 72、步距 96、列起点全落在 8pt（该配置若向下取整成 78，步距 102，列起点会参差不齐）；`calc --width 1200 --margin 80 --gutter 20 --columns 12` 需输出步距 88 的补偿结果或明确警告。`check` 对三份样本分别给出：只有 LOW 问题 → 退出码 0、根组命名不合规 → 默认退出码 0（MEDIUM 不算失败）、`--strict` 退出码 1、空文档 → CRITICAL 且退出码 1。跨父级同名层不得误报。
+8. 改过 `scripts/psd-audit.py` 后自检：对成品 PSD 跑 `--strict --json` 应 `strictOk: true`；`--max-depth 1 --json` 应报 `DEPTH_EXCEEDED`，不传 `--max-depth` 不应报；`POSSIBLE_RASTERIZED_TEXT` 对「组件内像素层命名带 `文字_`」样本必须触发。
+9. 改过契约（`psd_contract.py` / 两脚本的层级判定）后跑 `python scripts/test-contract.py`（在技能目录下运行它）：18/18 通过才继续；有 FAIL 先修契约判定。
+10. 交付目录自检：每份分层稿有同名 `.md`，`fonts/` 覆盖稿内全部字体家族且 SHA256 与来源记录一致；不能证明允许再分发的字体不复制并在描述文件写明；描述文件里的 MD5 与验证数据可复跑。
+11. 规范化/复刻后：`scripts/psd-audit.py audit --strict` 规范稿无 CRITICAL/HIGH/MEDIUM，LOW 已逐条解释；`compare --strict` 记录原稿→规范稿的前后指标；`psd-compare.py` 原稿渲染与规范稿渲染 `identical`，或差异已解释；交付含 audit-before/after、visual-diff 与规范化记录，原稿 SHA256 未变。
+12. 切图/资产导出：dimensions/命名/alpha/格式符合 spec；100% 看边缘无白边/halo；bbox/padding 正确；`sourceHasAlpha`/`sourceTransparentRatio` 或真实蒙版证明是抠图，`contentTransparentRatio` 为 0 属正常；`assets-manifest.json` 的 `failures` 为空、哈希/bbox 与实际文件对账；原稿/母版 SHA 未变。
 
 ## Hard Rules
 
@@ -152,7 +254,7 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 - 批量步数上限 256；headless 预览边长上限 2048px。
 - 规范化时原稿只读，规范稿另存为 `<稿名>_规范.psd`；不覆盖、不删除原稿，结束重算原稿 SHA256。
 - 像素一致不等于结构规范；规范化稿必须过 `scripts/psd-audit.py --strict`，CRITICAL/HIGH/MEDIUM 为 0。
-- 文字组只放文字层；平图/合并层按“复刻自平图”记录，不冒充原始层。
+- 节点树下元素用类型前缀命名（`文字_`/`图标_`/`背景_` 等）；平图/合并层按”复刻自平图”记录，不冒充原始层。
 - `type.replaceAllMissingFonts` 禁用；要换字体逐层写 `text.font` 并让用户确认。
 - 字体安装前先 `fontctl status`；已由系统安装、但不在 fontctl 状态里的字体不要重复 `install`，先核对注册表/`type.fonts`。
 - 切图/裁边不得切到主体、印章、签名、文字或产品轮廓；padding、尺寸、倍率、格式、命名都按用户 spec，不写死。16-bit/浮点源先转 8-bit，不允许静默截断。
@@ -220,10 +322,39 @@ GUI 桥接端口与 headless 会话是两个方法集不同的世界；文件读
 | 字体表记录的字重与本机已装不一致 | 描述文件写明实际可用字重与回落行为，不只写家族名 |
 | 视觉一致就认为 PSD 规范 | 像素一致只证明渲染；结构要过 `psd-audit.py`，HIGH/CRITICAL 为 0 |
 | 直接在原稿上重建 | 原稿只读，另存规范稿；保留原稿 hash 与参考组 |
-| 文字组里放像素层/智能对象 | 可能已栅格化；优先重打，不能重打就移出文字组并在描述文件注明 |
+| 组件组里元素类型混杂 | 节点树下正常（组件内可以有文字/图标/背景）；只在元素层命名前缀体现类型 |
 | 平图/合并层想恢复原层 | 恢复不了；按视觉复刻并记录“复刻自平图” |
 | 补字体只装系统不回写 | 还要逐层写 `text.font` 并回 `type.fonts` 确认；缺字体未确认不交付 |
 | `psd-audit` 报 FONT_NOT_INSTALLED 但应用里能看到 | 脚本读 PSD 字体表；安装状态以 `type.fonts`/`type.resolveMissingFonts` 为准。`--installed-fonts` 清单需含 PostScript 或 PSD 家族名，传普通家族名会误报 |
+| `photocraft-cli: command not found` | 不在 PATH，不是没装；按「环境定位」找 `C:\Program Files\PhotoCraft\photocraft-cli.exe` 或用绝对路径调用 |
+| `layer.moveTo` 挪不动位置 | 它改的是层序（父子/上下），不是几何坐标；改位置用 `layer.translate` 或 `edit.transform` |
+| 想直接写 `layer.bounds`/`layer.setBounds` | 没有这两个命令；坐标靠 `layer.translate` 的相对量或 `edit.transform` 的 `rect`/`quad`/`matrix` 推算 |
+| `layer.align.*` 对齐结果不对 | 它作用于当前选区；先确认选中的是要摆的层，`to:"canvas"` 才对齐画布 |
+| 栅格摆完元素位置差几像素 | 算法算的是理论值；用 `layer.align.*` / `layer.distribute.*` 按实际 bounds 校正残余误差 |
+| 改了内容尺寸布局乱了 | 没有活容器，布局是静态结果；改尺寸后必须重算重摆 |
+| `layer.select {layers:[…]}` 报 missing `layer` | 参数是单数 `layer:id`；多选用 `mode:"add"` 逐个累加 |
+| `select.none` 报 unknown command | 不存在；取消选区用 `select.deselect` |
+| `layer.align.*` 返回 `{"moved":0}` | 多半是没选中层（或残留像素选区）；先 `select.deselect` 再 `layer.select` |
+| 建完参考线 `doc.inspect` 里找不到 | guides 不回显在 inspect，也不出现在 render；只信 `view.newGuideLayout` 返回的条数 |
+| 按 8pt 就近吸附后所有列挤在一起 | 列宽可能是小数；先整数化列宽（向下取整）再算列起点，不要逐值吸附 |
+| headless 没有 `document.inspect` | 引擎命令要用 `engine.execute {command:"document.inspect"}` 包一层；headless 还有 `doc.inspect` 直接方法 |
+| headless 调 `document.new`/`document.save` | 这两个不是引擎命令；headless 用 `doc.new` / `doc.save`，无 GUI 窗口 |
+| `layout-design.py calc` 报 allOn8pt 为 false | gutter 不是 8 的倍数，步距无法合规；改 gutter 或接受提示 |
+| `layout-design.py check` 判 pass 但报了 MEDIUM | MEDIUM 不算失败，但 MEDIUM 问题（如根组命名不合规）仍需修复后再交付 |
+| 列起点参差不齐（120/222/324） | 列宽没取 8 的倍数；用 `layout-design.py calc` 重算，别手改 |
+| 不知道画布该多大 | 查 `references/design-spec.md` 第 1 节的尺寸表；项目 spec 优先 |
+| 交付引擎后混合模式效果丢失 | 引擎 UI 材质不支持叠加/滤色；交付前和底图一起烘焙合并成单图 |
+| 新建的层不在组里，跑到组外面成了平级层 | 新建层不会自动进组；每层建完补 `layer.moveTo {layer, target:组id, position:"into"}` |
+| 先 `layer.select` 选中组再建层，层还是跑出去了 | 选组只影响"建在哪一层"，不影响归属；仍要 `moveTo into` |
+| `psd-audit` 报 EMPTY_GROUP | 空组要删；未使用的类别不建。`layout-design.py check` 同判 HIGH |
+| `check` 报「x=0 不在栅格列上」但那是铺底图层 | spec.json 缺 `height`；补上后铺满画布的层会自动豁免 |
+| 建六个根组后审计全是空组 HIGH | 只用实际要用的组；空组一律不建 |
+| `type.create` 摆位差几像素 | 它的 x/y 是基线锚点不是 bounds 左上角；以 `doc.inspect` 的 bounds 为准，再 `translate` 补差 |
+| `check` 报「y=240 不在间距刻度上（最近 240）」 | 刻度判定应为 8 的倍数，不是命中推荐值枚举表；240 合法 |
+| 元素 x 对齐了但视觉上还是没对齐 | 宽度不是合法跨列值，右边界越出列线；宽度只能取 `colW*n+gutter*(n-1)`，跑 `calc` 看 `legalColumnSpans` |
+| `edit.transform` 传 `rect` 报 "pass `quad` …, `matrix`, or `scaleX`…" | `rect` 只是源框，必须配 `quad`/`matrix`/`scaleX` 指定目标 |
+| 用 `quad` 缩放后出现 329/330、偏移 1px | quad 有插值误差；尺寸要求精确时重画（删层→`select.rect`→`edit.fill`），比变换可靠 |
+| 删层后再操作，后面的步骤全错位 | 删层会让层 id 变化/后续命令落到别的层；删完立即 `doc.inspect` 重新确认 id 与 active 层 |
 
 ## Output
 
