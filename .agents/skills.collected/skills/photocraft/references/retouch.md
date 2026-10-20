@@ -1,0 +1,86 @@
+# 修图与合成
+
+> 核对版本：photocraft-cli 0.10.0 (8407d9ccb)。
+
+## 1. 顺序
+
+- 修复稿（老照片、损伤稿）按 修结构（去尘、划痕、撕痕、扫描边框）→ 恢复对比度与色调 → 上色和增强 的顺序走，上色不放在修复之前。
+- 调整从全局到局部：方向、裁剪、拉直 → 白平衡 → 曝光与黑白点 → 曲线 → 全局色 → 局部蒙版 → 修补 → 输出锐化。
+- 去噪在最终锐化之前；只锐化重要边缘，不锐化色度噪声和压缩块；提亮阴影后再补一次降噪。
+- 每一步只改一件事，复杂编辑拆成多轮。
+
+## 2. 动手前
+
+- 先出诊断清单（曝光、色偏、细节、构图、损伤分项），写清能修什么、不能改什么。
+- 硬锚不动：人脸身份、解剖结构、文字、logo、产品设计、地标。软锚可动：光照、裁剪、背景杂物、非关键色。修补只在软锚区域做；硬锚确实要改，先出方案让用户定。
+- 缺失区域的重建、考证不了的上色，交付时声明「推断补全」。
+
+## 3. 非破坏做法
+
+| 做法 | 命令 | 要点 |
+| --- | --- | --- |
+| 滤镜可回改 | `filter.convertForSmartFilters`，或 `layer.smartObjects.convertToSmartObject` 后再跑滤镜 | 转换后图层 id 会变；参数用 `layer.smartFilter.setParams {index, params}` 改 |
+| 副本兜底 | `layer.duplicate` | 做不了智能滤镜时在副本上做 |
+| 高反差锐化 | 复制层 → `filter.other.highPass {radius}` → `layer.setProps {"blend":"Overlay","opacity":0.7}` | 锐化单独成层，可关可调 |
+| 减淡与加深 | `layer.new.layer {"name":"效果_减淡加深","mode":"Overlay","fillNeutral":true}` 建 50% 灰中性层，在它上面画 `paint.dodge` / `paint.burn` | 实测：中性层建好时合成不变，减淡处变亮、加深处变暗，隐藏这层后像素完全还原 |
+| 蒙版代替擦除 | `layer.layerMask.revealSelection` | 会用掉选区 |
+| 选区 | 先 `select.modify.expand` / `select.modify.contract` 改形状，最后 `select.modify.feather` | 危险编辑前把选区存成通道或蒙版 |
+| 版本 | 每轮另存 `_v2`、`_v3` | 不在旧版本文件上续改 |
+
+不要在 `layer.stampVisible` 生成的盖印层上做减淡加深。盖印层是全部可见层合并出的整图副本，它可见时，关掉下面的柔肤、修补层，合成完全不变（实测最大差 16，平均 0.70，只是 JPEG 噪声）。「每步独立成层、可单独关掉」只在没有盖印层压在上面时成立。
+
+## 4. 笔刷参数单位
+
+| 命令 | hardness | opacity | flow | spacing |
+| --- | --- | --- | --- | --- |
+| `paint.stroke` | 0..1 | 0..1 | 0..1 | 0..10 |
+| `paint.pencil` | 不支持 | 0..1 | 不支持 | 不支持 |
+| `paint.backgroundEraser` | 0..1 | — | — | — |
+| `paint.spotHealing`、`paint.healingBrush`、`paint.cloneStamp`、`paint.patternStamp`、`paint.dodge`、`paint.burn`、`paint.sponge`、`paint.blur`、`paint.sharpen`、`paint.smudge`、`paint.historyBrush`、`paint.remove` | 0..100 | 1..100 | 1..100 | 1..1000（笔刷直径的 %） |
+| `paint.mixerBrush` | — | — | 0..100（另有 `wet`/`load`/`mix` 0..100） | — |
+
+超出范围不报错，静默截断：`paint.stroke {opacity:50}` 画出不透明的实色，`paint.dodge {opacity:0.5}` 几乎看不出效果。`paint.pencil` 传 hardness/flow/spacing 也不报错，直接忽略。图层不透明度（`layer.new.layer`、`layer.setProps`）是 0..1。
+
+## 5. 修补
+
+- `paint.spotHealing {points, size, type, sampleAllLayers}`：`points` 是**一笔**连续笔画（折线）。把几个斑点的坐标一次传进去，会连成一条带子，把别处的颜色拖过整片皮肤。一个斑点调用一次，每次只给这个点或一小段笔画。`type:"contentAware"` 从周围取样，实测把衣服的颜色带到了脸颊上，修完必须看结果。
+- `paint.healingBrush {points, source | offset}`：带取样点的修复，适合有纹理的区域；`paint.cloneStamp {points, source | offset, aligned}`：原样复制。
+- 修补画在新建的空层上，原图层不动：`paint.spotHealing {sampleAllLayers:true}` 已实测可用；`paint.healingBrush` / `paint.cloneStamp` 用 `sampleLayer:"all"` 也可跨层取样（已在 GUI 会话实测）。
+- `edit.contentAwareFill` 要先有选区（否则报 `make a selection around what to remove`），填完同样要看结果。
+- 大面积细尘用 `filter.noise.dustAndScratches {radius, threshold}`，用 `threshold` 保住细节；划痕用 `paint.spotHealing` 沿划痕画一笔。
+- 红眼：`paint.redEye {x, y, pupilSize, darken}`，会把附近偏红的皮肤也压暗，用后检查。
+
+## 6. 拉直、裁剪与尺寸
+
+- 拉直：`image.crop {x, y, width, height, angle}` 的 `angle` 与倾斜时 `image.rotation.arbitrary {angle, direction:"cw"}` 的角度**同号**。照片顺时针歪了 3°，用 `angle:3` 拉回；写成 `-3` 会再多转 3°。验收看四个角都没有空白楔形，不要只看一个角。
+- 旋转或扩展裁剪露出的空白可以用 `image.crop {contentAware:true}` 补（注册表说明，未实测）。
+- `image.canvasSize`（改画布，不重采样）和 `image.imageSize`（重采样）分开用，缩放保持宽高比。
+- 构图：给出几种备选（原比例修正、主体放大、表达性画幅、留负空间），保留原构图时说明理由；不切关节、指尖、文字、产品轮廓。
+
+## 7. 人像与上色
+
+- 只修临时瑕疵（红眼、油光、短期痘斑），保留毛孔、细纹、不对称和疤痣。优先用减淡加深和色调均匀，不大面积磨皮。
+- 上色克制：低到中饱和；肤色分区变化，不平涂；白、黑、金属、石材、纸张默认不上色。
+- 默认保留颗粒与年代痕迹，用户明确要「现代翻新」才去掉。
+
+## 8. 合成
+
+- 抠图、去边、导出见 cutout-export.md。
+- 合成目标用空间方位描述（「左上角的桌子」），并说明哪些区域保持不变。
+- 光影一致：先定视线落点和阴影深度，不要全局平提亮；肤色不偏灰、橙、品红、绿。混合光源先校主体白平衡，背景可以留一点冷暖。
+- 让主体融进场景：在主体上方建调整层，`layer.createClippingMask` 剪贴到主体。新建调整层会把当前选区当蒙版，建之前先确认有没有选区。
+
+## 9. 验收
+
+- 双尺度看图：适合窗口看构图与色彩，100% 看修补伪影（重复的克隆纹理、halo、蜡皮、死黑、剪白、色带）。
+- 用像素证明效果：属性回显和历史记录增加都不算数（在灰图上调色相也会多一条历史）。取改动区域的像素：`document.pixel` 读合成结果（会忽略 `sampleLayer`），`document.sampleColor {sampleLayer:"current"}` 读单层；或者改动层隐藏前后各渲染一次，交给 `psd_compare.py`（执行，用法见 psd-workflow.md）。
+- 探针改了文档状态要复原，复原不了要报出来。
+- 每项改动的结论只有三种：有效、无效、测不到。「测不到」单独列出，不算通过。
+- 批量修复逐张列结果（成功、失败、没有变化）；静默跳过的文件当作失败处理。
+
+## 10. 导出与交付
+
+- 合并、拼合只在最后一步、在副本上做；先存分层母版（PSD/PSB/.pcraft）。
+- 默认交付平图（PNG/JPEG）加可编辑母版，用户明确只要其一时例外。
+- 单层导出要铺回整幅画布才能保持对齐；`doc.exportLayers` 的输出本来就是画布尺寸（见 cutout-export.md）。
+- 图层按 id 寻址；PSD 存盘再打开后 id 会重排，重开后重新 inspect 解析；重名层用 `layer.select {name, occurrence}`。

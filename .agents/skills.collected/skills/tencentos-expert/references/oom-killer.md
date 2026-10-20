@@ -1,4 +1,4 @@
-﻿---
+---
 name: oom-killer
 description: 排查 Linux 主机 OOM（Out of Memory）Killer 事件，通过分析系统日志定位内存不足根因。支持分析本机日志或指定日志文件，提取被杀进程、内存快照、cgroup 信息等关键字段，输出结构化诊断报告。
 description_zh: OOM Killer 事件诊断（内核日志解析 + 根因分类 + 处置建议）
@@ -74,7 +74,7 @@ oom-killer/
 调用 `scripts/parse_oom_events.py` 解析日志，提取结构化 OOM 事件：
 
 ```bash
-python3 skills/oom-killer/scripts/parse_oom_events.py \
+python3 <SKILL_DIR>/scripts/parse_oom_events.py \
   --log-file /path/to/messages \
   --output /tmp/oom_events.json --pretty
 ```

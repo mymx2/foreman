@@ -1,0 +1,15 @@
+{
+  "name": "电商主图：纯白底 2000x2000 sRGB",
+  "steps": [
+    ["image.adjustments.levels", {"eyedropper": {"point": "white", "at": [24, 24], "size": 31}}],
+    ["layer.removeBackground", {"refine": true}],
+    ["image.trim", {"basedOn": "transparent"}],
+    ["file.automate.fitImage", {"width": 1800, "height": 1800, "dontEnlarge": false, "resample": "automatic"}],
+    ["image.canvasSize", {"width": 2000, "height": 2000, "anchor": "center", "extensionColor": "transparent"}],
+    ["layer.newFillLayer.solidColor", {"color": "#ffffff"}],
+    ["layer.arrange.sendToBack", {}],
+    ["layer.flattenImage", {}],
+    ["filter.sharpen.unsharpMask", {"amount": 60, "radius": 1, "threshold": 2}],
+    ["edit.convertToProfile", {"profile": "srgb", "intent": "perceptual"}]
+  ]
+}

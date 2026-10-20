@@ -1,16 +1,44 @@
-﻿---
+---
 name: tencentos-expert
-description: "TencentOS Server 全栈运维诊断，根据用户的自然语言描述，自动识别需要的能力接口，查询能力实现，使用具体能力解决客户问题。覆盖磁盘空间/分区/文件系统/LVM/健康检测、网络连通性/丢包/延迟排查、CPU火焰图/系统调用热点/调度延迟/中断均衡/文件IO延迟/进程IO追踪分析、内存泄漏/OOM诊断、系统日志/服务管理/时间同步/软件包/软件源管理、kdump配置与故障排查、等保三级安全基线检查与加固、CVE漏洞查询、产品文档实时查询。共24项能力，渐进式按需加载。触发词：磁盘满、磁盘空间、分区、格式化、挂载、fstab、LVM、扩容、SMART、坏块、ping不通、端口不通、DNS、丢包、延迟、网络慢、RTT、火焰图、CPU热点、perf、系统调用、调度延迟、中断不均衡、软中断、文件IO慢、fsync慢、page cache、IO延迟、进程IO、iotop、内存泄漏、OOM、进程被杀、内存不足、日志、journalctl、dmesg、服务启动失败、systemctl、时间不对、NTP、chrony、时区、yum源、dnf、pip源、npm源、软件包版本、安全更新、CVE、kdump、vmcore、crashkernel、等保、安全加固、安全基线、TencentOS文档、版本信息、CentOS迁移。"
+description: |
+  TencentOS Server 全栈运维诊断：根据自然语言描述识别能力接口，查询能力实现并解决客户问题。
+  覆盖磁盘空间/分区/文件系统/LVM/健康检测，网络连通性/丢包/延迟，CPU 火焰图/系统调用热点/调度延迟/
+  中断均衡/文件 IO 延迟/进程 IO 追踪，内存泄漏/OOM，系统日志/服务管理/时间同步/软件包/软件源，
+  kdump 配置与故障排查，等保三级安全基线检查与加固，CVE 漏洞查询，产品文档实时查询。共 24 项能力，渐进式按需加载。
+  当用户报告服务器异常或要求 Linux 运维诊断时使用：磁盘满、挂载失败、LVM 扩容、SMART 告警、
+  ping 不通、端口不通、DNS 异常、丢包、延迟高、CPU 热点、进程卡顿、IO 慢、内存泄漏、OOM、
+  日志报错、服务起不来、时间不同步、换源、软件版本、CVE 漏洞、kdump/vmcore、等保加固、CentOS 迁移。
+  不适用于：应用层代码调试、容器编排/Kubernetes 排障、非 TencentOS/OpenCloudOS 发行版的专属配置。
 description_zh: "TencentOS 服务器运维诊断助手，排查磁盘/网络/CPU/内存/安全问题"
 description_en: "TencentOS Server ops assistant for disk, network, CPU, memory & security diagnostics"
 version: 2.0.0
+when_to_use: >
+  TencentOS, OpenCloudOS, TencentOS Server, 全栈运维诊断, 服务器运维, 磁盘满, 磁盘空间不足, 分区, 格式化, 挂载, fstab, LVM, 扩容, SMART, 坏块, 磁盘健康,
+  ping不通, 端口不通, DNS, 丢包, 延迟高, 网络慢, RTT, 重传, 网络抖动, 连通性, 路由, 防火墙,
+  CPU热点, 火焰图, perf, perf-prof, 系统调用, strace, 调度延迟, 中断不均衡, 软中断, irqbalance,
+  文件IO慢, fsync慢, page cache, IO延迟, iowait, 进程IO, iotop, fd泄漏,
+  内存泄漏, RSS增长, OOM, oom-killer, 进程被杀, 内存不足, 内核slab泄漏,
+  系统日志, journalctl, dmesg, 服务启动失败, systemctl, 开机自启, 时间同步, NTP, chrony, 时区,
+  yum源, dnf源, pip源, npm源, 换源, 镜像源, 软件包版本, 安全更新, rpm,
+  CVE, 漏洞查询, TSSA, OCSA, 安全公告, 等保, 等保三级, 安全加固, 安全基线, SELinux加固, SSH加固,
+  kdump, vmcore, crashkernel, panic, crash, TencentOS文档, 版本信息, 维护周期, CentOS迁移
 ---
 
 # TencentOS Server 全栈运维诊断
 
 覆盖 24 项运维能力，按需加载，不撑爆上下文。
 
+## Outcome Contract
+
+- **Outcome**: 从用户现象描述定位到对应能力模块，执行诊断命令并给出可操作的根因结论与处置建议。
+- **Done when**: 匹配模块的 `references/<module-id>.md` 已读取，诊断命令已执行，结论包含根因判定与下一步建议（含需用户手动执行的数据变更操作）。
+- **Evidence**: 命令输出原文（`df`/`ss`/`dmesg`/perf 报告/采集脚本产物等）与模块文档的诊断判据逐条对应；涉及脚本时给出 `<SKILL_DIR>` 解析后的实际调用与退出码。
+- **Authorization**: 只执行只读诊断命令（查看、采集、分析）。格式化、删除、重启服务、修改配置等破坏性操作只提供参考命令，由用户自行确认执行。
+- **不适用**: 应用层代码调试、容器编排/Kubernetes 排障、非 TencentOS/OpenCloudOS 发行版的专属配置。
+
 ## 工作流程
+
+按 Step 0~4 顺序执行：装依赖 → 理解意图 → 加载模块文档 → 执行诊断 → 输出结论。
 
 ### Step 0: 安装依赖工具（首次执行）
 
@@ -96,6 +124,8 @@ df -h | head -10
 ---
 
 ## 能力索引（24 项）
+
+按大类分组；匹配到模块后只加载对应文档，不要全量读取。
 
 ### 磁盘与存储（5 项）
 

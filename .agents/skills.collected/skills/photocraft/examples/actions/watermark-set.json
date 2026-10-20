@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "actions": [
+    {
+      "name": "Fit 2048",
+      "steps": [
+        ["file.automate.fitImage", {"width": 2048, "height": 2048, "dontEnlarge": true}]
+      ]
+    },
+    {
+      "name": "Logo watermark",
+      "steps": [
+        ["actions.play", {"action": "Fit 2048"}],
+        ["file.placeEmbedded", {"path": "logo.png", "scale": 100, "fit": false}],
+        ["layer.align.rightEdges", {"to": "canvas"}],
+        ["layer.align.bottomEdges", {"to": "canvas"}],
+        ["layer.translate", {"dx": -32, "dy": -32}],
+        ["layer.setProps", {"opacity": 0.75, "name": "Watermark"}]
+      ]
+    },
+    {
+      "name": "Text watermark",
+      "steps": [
+        ["actions.play", {"action": "Fit 2048"}],
+        ["type.create", {"x": 0, "y": 40, "text": "© Studio North", "size": 28, "color": "#ffffff", "name": "Watermark"}],
+        ["layer.layerStyle.dropShadow", {"color": "#000000", "opacity": 60, "distance": 2, "size": 6}],
+        ["layer.align.rightEdges", {"to": "canvas"}],
+        ["layer.align.bottomEdges", {"to": "canvas"}],
+        ["layer.translate", {"dx": -28, "dy": -24}],
+        ["layer.setProps", {"opacity": 0.85}]
+      ]
+    }
+  ]
+}

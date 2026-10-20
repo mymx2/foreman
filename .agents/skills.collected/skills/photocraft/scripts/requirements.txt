@@ -1,0 +1,4 @@
+# 可选依赖。核心脚本用标准库，只有下面这些脚本需要额外包；缺失时脚本会打印一行说明并退出 2。
+#   pip install -r scripts/requirements.txt
+Pillow>=10.0        # psd_compare.py, trim_export.py, test_workflow.py（渲染对比、裁边、像素断言）；fetch_asset.py 可选（只用于缩图）
+psd-tools>=1.10     # psd_audit.py, test_workflow.py（读 PSD 层树与字体表）

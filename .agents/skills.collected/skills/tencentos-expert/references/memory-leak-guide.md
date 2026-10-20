@@ -1,4 +1,4 @@
-﻿# memory-leak 使用手册
+# memory-leak 使用手册
 
 Linux 用户态内存泄漏诊断工具，通过对进程内存多次采样，计算 RSS/PSS 增长速率，判定是否存在内存泄漏，并预测 OOM 触发时间.
 
@@ -10,13 +10,13 @@ Linux 用户态内存泄漏诊断工具，通过对进程内存多次采样，�
 
 ```bash
 # 全局扫描：找出哪个进程在泄漏
-bash scripts/collect_memory_leak.sh
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh
 
 # 监控指定进程名
-bash scripts/collect_memory_leak.sh -n java
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh -n java
 
 # 监控指定 PID，加长采样时间（更准确）
-bash scripts/collect_memory_leak.sh -p 1234 -c 10 -i 30
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh -p 1234 -c 10 -i 30
 
 # 查看结果
 cat /tmp/memory-leak-<timestamp>/summary.json
@@ -146,16 +146,16 @@ eBPF 调用栈示例输出：
 
 ```bash
 # 场景 1：不知道哪个进程在泄漏，全局扫一遍
-bash scripts/collect_memory_leak.sh -o /tmp/result
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh -o /tmp/result
 
 # 场景 2：Java 服务内存一直在涨，监控 5 分钟
-bash scripts/collect_memory_leak.sh -n java -c 10 -i 30 -o /tmp/java_leak
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh -n java -c 10 -i 30 -o /tmp/java_leak
 
 # 场景 3：已知 PID，快速确认（30s）
-bash scripts/collect_memory_leak.sh -p 12345 -c 4 -i 10
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh -p 12345 -c 4 -i 10
 
 # 场景 4：定时任务周期采样，输出到固定目录
-bash scripts/collect_memory_leak.sh -n myapp \
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh -n myapp \
   -c 6 -i 10 \
   -o /var/log/memleak/$(date +%Y%m%d_%H%M) \
   -j "cron_$(date +%Y%m%d_%H%M)"

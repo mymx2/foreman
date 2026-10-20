@@ -1,0 +1,4 @@
+set,name,title,dept,vip,photo
+zhang-wei,张伟,高级设计师,品牌部,true,portrait.jpg
+li-na,Li Na,Staff Engineer,Platform,false,landscape.jpg
+chen-jing,陈静,产品经理,增长部,true,portrait.jpg

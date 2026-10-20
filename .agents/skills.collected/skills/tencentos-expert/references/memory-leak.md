@@ -1,4 +1,4 @@
-﻿---
+---
 name: memory-leak
 description: 诊断 Linux 用户态内存泄漏问题. 通过对进程 RSS/PSS 进行多次采样，计算内存增长速率，判定是否存在内存泄漏，并预测 OOM 触发时间. 支持指定进程名/PID 单进程监控，也支持全局扫描找出内存增长最快的进程.
 description_zh: 内存泄漏诊断（用户态进程 RSS/PSS 多次采样分析）
@@ -242,7 +242,7 @@ oom_eta_minutes = MemAvailable / growth_rate_kb_per_min
 增加采样次数或间隔：
 
 ```bash
-bash scripts/collect_memory_leak.sh -n java -c 10 -i 30
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh -n java -c 10 -i 30
 ```
 
 ### 进程在监控期间退出
@@ -293,7 +293,7 @@ jstat -gcutil <pid> 5000 10
 
 ```bash
 # 至少采样 3 次，每次间隔 20 秒（总时长 60s）
-bash scripts/collect_memory_leak.sh -n java -c 3 -i 20
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh -n java -c 3 -i 20
 ```
 
 ### 内存波动和真实泄漏怎么区分？
@@ -323,8 +323,8 @@ bash scripts/collect_memory_leak.sh -n java -c 3 -i 20
 建议逐一切换为单进程模式确认：
 ```bash
 # 对全局扫描中增长最快的进程逐一确认
-bash scripts/collect_memory_leak.sh -p <pid1> -c 6
-bash scripts/collect_memory_leak.sh -p <pid2> -c 6
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh -p <pid1> -c 6
+bash <SKILL_DIR>/scripts/collect_memory_leak.sh -p <pid2> -c 6
 ```
 
 ---
