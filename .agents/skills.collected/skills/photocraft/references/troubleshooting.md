@@ -1,6 +1,6 @@
 # 报错速查
 
-> 核对版本：photocraft-cli 0.10.0 (8407d9ccb)。按报错原文找原因和做法；跨任务的静默失败在 `SKILL.md` 的 Gotchas 表里，这里只收报错和域内问题。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。按报错原文找原因和做法；跨任务的静默失败在 `SKILL.md` 的 Gotchas 表里，这里只收报错和域内问题。
 
 ## 按报错文本查
 
@@ -39,7 +39,7 @@
 | `has no Photoshop equivalent; pass "skipUnsupported": true` | `actions.save` 遇到 Photoshop 没有对应事件的步骤 | 传 `skipUnsupported:true`，看返回的 `skipped` |
 | `no action named \`X\`` | droplet / batch 里 `actions.play` 找不到被调动作 | 用 `createDroplet` 生成（会写 `calledActions`），或给 `file.automate.batch` 传 `calledActions` |
 | `not a PhotoCraft droplet` | 手写 `.pcdroplet` 缺 `photocraftDroplet` 键 | 用 `file.automate.createDroplet` 生成 |
-| `import-only` / `cannot be written in this build` / `unknown file format` | 只读格式（KRA、PDN、Affinity、DDS、Cineon、SVG、HEIC）不能写回 | 另存 PSD / `.pcraft`（KRA 可存 `.ora`）；AVIF 取决于构建特性 |
+| `import-only` / `cannot be written in this build` / `unknown file format` | 只读格式（KRA、PDN、Affinity、Cineon、SVG、HEIC）不能写回；DDS 从 0.12.0 起可写 | 另存 PSD / `.pcraft`（KRA 可存 `.ora`）；AVIF 取决于构建特性 |
 | `Bitmap needs a Grayscale image` | 位图模式要求先转灰度 | 先 `image.mode.grayscale` |
 | `Color Table needs an Indexed image` | 颜色表要求索引色 | 先 `image.mode.indexedColor` |
 | `Duotone needs a Grayscale image` | 双色调要求灰度 | 先灰度再双色调；双色调只有 `.pcraft` 保留 |

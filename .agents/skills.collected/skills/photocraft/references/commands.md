@@ -1,10 +1,10 @@
 # 命令速查
 
-> 核对版本：photocraft-cli 0.10.0 (8407d9ccb)。参数以运行时注册表为准。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。参数以运行时注册表为准。
 
 ## 怎么查
 
-- 注册表是唯一的权威：0.10.0 有 918 条命令，CLI、serve、MCP、桌面控制通道共用同一份。本文只列常用的，参数以已安装版本的注册表为准。
+- 注册表是唯一的权威：0.12.0 有 924 条命令，CLI、serve、MCP、桌面控制通道共用同一份。本文只列常用的，参数以已安装版本的注册表为准。
 - 查参数：（执行）`python <skill-dir>/scripts/params.py --exact <id>`；不知道 id 时传关键词（`curves`、`blur`）；也可以 `photocraft-cli commands --json --filter <关键词>`。参数文本的读法、哪些命令校验未知键、拼错的枚举会怎样，见 cli.md。
 - 同一条命令在各入口的写法：`run --cmd <id> --params '<json>'`；serve `engine.execute {"command":"<id>","params":{…}}`；MCP `command_run {"id":"<id>","params":{…}}`；动作步骤 `["<id>", {…}]`。哪个入口能用哪些命令见 automation.md。
 - "案例"列是 `examples/` 里的脚本编号；32–39 是新增场景。
@@ -94,6 +94,29 @@
 | `layer.linkLayers` / `layer.selectLinkedLayers` | — | `linkLayers` 是开关，选中层已是一组时取消链接 | — |
 | `layer.copyToDocument` | `document` `layers` `center` `at` `offset` | 复制到另一个已打开的文档 | — |
 | `layer.pickAt` / `select.findLayers` | `x` `y` `list`；`name`（不分大小写的子串） | 按位置或名字找层 | — |
+
+### 栅格化
+
+把可编辑载体烘成像素，不可回改。先留底：`layer.duplicate {document:"new"}` 复制到新文档，或 serve 里存快照。
+
+| 命令 | 作用对象 | 回执 | 报错原文 |
+|---|---|---|---|
+| `layer.rasterize.layer` | 文字、形状、填充、智能对象 | `{layer, layers:[…]}` | 像素层、组：`the layer has nothing to rasterize` |
+| `layer.rasterize.allLayers` | 所有可栅格化层，含组内 | `{rasterized:N}` | 不报错；全像素的文档回 `{"rasterized":0}` |
+| `layer.rasterize.type` / `type.rasterize` / `type.rasterizeTypeLayer` | 文字层 | 前者 `{layer, layers:[…]}`，后两者 `{layer}` | 三条各不相同：`the layer is not a type layer` / `layer N is not a type layer` / `… the active layer is not a type layer` |
+| `layer.rasterize.shape` / `shape.rasterize` | 形状层 | 两者都回 `{layer}` | `shape.rasterize` 对文字层：`layer N is not a shape layer` |
+| `layer.rasterize.fillContent` | 填充层 | `{layer, layers:[…]}` | `the layer is not a fill layer` |
+| `layer.rasterize.smartObject` / `layer.smartObjects.rasterize` | 智能对象 | `{layer, layers:[…]}`，id 会变 | `the layer is not a smart layer` |
+| `layer.rasterize.layerStyle` | 有图层效果的层：文字、形状、填充、像素、智能对象 | `{layer, layers:[…]}` | 组：`no selected layer has layer effects to rasterize`（组的效果会渲染，但烘不了） |
+| `layer.rasterize.vectorMask` | 带矢量蒙版的层 | 成功路径未验证 | `layer has no vector mask` |
+| `layer.rasterize.video` / `layer.videoLayers.rasterize` | 视频层 | `{}` | — |
+
+- 智能对象栅格化会换 id（实测 7→6，内容文档消失后整层重排），后续按旧 id 的步骤会打空；重新 `document.inspect` 或按名字寻址。
+- 组不能整组栅格化（`layer.rasterize.layer` 对组报 `the layer has nothing to rasterize`）；`allLayers` 会进组处理子层，组结构保留。组上的图层效果会渲染，但 `layerStyle` 同样拒绝组。
+- `layer.rasterize.layer` 与 `fillContent` 保留图层蒙版（栅格化后 `hasMask` 仍为 true）；`layerStyle` 把效果、填充不透明度和蒙版一起烘进像素。
+- 形状层的路径就是它的矢量蒙版：`layer.vectorMask.revealAll` 对它报 `a shape layer's path is already its vector mask`。转像素用 `shape.rasterize` 或 `layer.rasterize.layer`，不要用 `rasterize.vectorMask`。
+- 单层命令遇到不适用的对象是硬错误，整条 `run` 的后续步骤和 `--out` 都不执行；批量一律用 `allLayers`。
+- 验收：`info --compact` 里该层 `kind` 变成 `Pixel`；`allLayers` 看 `rasterized` 计数，重复执行回 0。
 
 ## 蒙版、调整图层、填充图层
 
@@ -324,7 +347,7 @@
 
 | 命令 | 语义 |
 |---|---|
-| `path.addAnchor` / `path.deleteAnchor` / `path.moveAnchors` / `path.moveHandle` / `path.bendSegment` / `path.convertPoint` | 锚点级编辑：在 `{subpath,knot,t}` 处加点；删点；`{anchors:[[subpath,knot]],move:[dx,dy]}` 平移；`{handle:"in"|"out",to:[x,y]}`；弯曲线段；转平滑点 |
+| `path.addAnchor` / `path.deleteAnchor` / `path.moveAnchors` / `path.moveHandle` / `path.bendSegment` / `path.convertPoint` | 锚点级编辑：在 `{subpath,knot,t}` 处加点；删点；`{anchors:[[subpath,knot]],move:[dx,dy]}` 平移；`{handle:"in\|"out",to:[x,y]}`；弯曲线段；转平滑点 |
 | `path.style.copyFill` / `pasteFill` / `copyStroke` / `pasteStroke` | 在形状层之间复制填充/描边；复制命令回 `null` |
 | `path.clippingPath.clear` | 清除剪贴路径 |
 | `shape.rasterize` / `shape.presets.list` | 形状转像素；列出预设形状组 |

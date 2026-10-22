@@ -108,6 +108,35 @@ def deselect_without_selection_fails_run():
 
 
 @probe
+def rasterize_single_layer_fails_on_plain_pixel():
+    """单层栅格化碰到纯像素层是硬错误：后续步骤与 --out 都不执行；allLayers 回计数且可重复"""
+    p = pc_run([("layer.rasterize.layer", {"layer": "Background"}), ("layer.flattenImage", {})],
+               new={"width": 8, "height": 8}, out="raster-abort.png")
+    assert p.returncode == 1, p.returncode
+    assert "nothing to rasterize" in p.stderr.lower(), p.stderr[-400:]
+    assert not (TMP / "raster-abort.png").exists(), "run wrote --out after a failed step"
+    p = pc_run([("type.create", {"x": 2, "y": 10, "text": "A", "size": 8}),
+                ("layer.rasterize.allLayers", {}), ("layer.rasterize.allLayers", {})],
+               new={"width": 40, "height": 20})
+    assert_ok(p, "run")
+    counts = [row["result"].get("rasterized") for row in json_lines(p)[1:]]
+    assert counts == [1, 0], counts
+
+
+@probe
+def rasterize_layer_style_refuses_groups():
+    """组上的图层效果能渲染，但 layer.rasterize.layerStyle 报无效果可栅格化"""
+    p = pc_run([("type.create", {"x": 4, "y": 20, "text": "A", "size": 10, "name": "T"}),
+                ("layer.groupLayers", {"layer": "T", "name": "G"}),
+                ("layer.layerStyle.dropShadow",
+                 {"layer": "G", "color": "#000000", "opacity": 50, "distance": 3, "size": 3}),
+                ("layer.rasterize.layerStyle", {"layer": "G"})],
+               new={"width": 60, "height": 40})
+    assert p.returncode == 1, p.returncode
+    assert "no selected layer has layer effects to rasterize" in p.stderr.lower(), p.stderr[-400:]
+
+
+@probe
 def selected_is_not_success():
     """select.sky 失败时 changed=false、message 有值；selected 只表示存在选区"""
     p = pc_run([("select.sky", {})], new={"width": 64, "height": 64, "background": "#404040"})

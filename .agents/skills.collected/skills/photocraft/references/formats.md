@@ -1,6 +1,6 @@
 # 格式与色彩
 
-> 核对版本：photocraft-cli 0.10.0 (8407d9ccb)。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。
 
 打开时按文件内容识别格式，保存时按输出扩展名选编码器（CLI 可用 `--format` 覆盖）。导出损失了什么，CLI 写在 stderr 的 `warning:` 里，serve/MCP 写在回复的 `warnings` 里；下文引号里的都是原文。quality 刻度见 cli.md。
 
@@ -26,6 +26,7 @@
 | TIFF（默认扁平） | 8 / 16 / 32 浮点 | 是 | 支持 CMYK、Lab。扁平 TIFF 丢掉额外的 Alpha 通道时不警告 |
 | TGA | 8 | 是 | 有透明时写 32 位（带 Alpha），否则 24 位；`--tga-bits` / `tgaBits` 指定。PhotoCraft 自己重新打开 TGA 时不读 Alpha，得到不透明的 Background（其他软件读同一文件 Alpha 正常） |
 | DPX | 8 / 10 / 12 / 16 | 是 | 8 位文档写 8，其余写 16；`--dpx-bits` / `dpxBits` 指定 |
+| DDS | 8（bc1/bc2/bc3 有损） | 是 | 0.12.0 起可写，默认不压缩（RGBA8）：`--dds-compression none\|bc1\|bc2\|bc3` 选 DXT1/DXT3/DXT5，`--dds-mipmaps` 写完整 mip 链；读取未验证 |
 | OpenEXR | 16 / 32 浮点 | 是 | HDR 母版，`file.automate.mergeToHdrPro {"mode":"32"}` 之后直接存 `.exr` |
 | Radiance HDR | 32 浮点 | 否 | RGBE 编码，提示 `lossy compression` |
 | BMP、QOI、PNM（PPM/PGM/PBM/PAM/PFM）、FITS | 视格式 | BMP、QOI 是 | 都不存 DPI |
@@ -43,7 +44,6 @@
 | `.kra` `.krz`（Krita） | 是 | `unsupported: Krita files are import-only; save as .ora to open the layers in Krita, or .pcraft to keep everything` |
 | `.pdn`（Paint.NET） | 是 | `unsupported: PDN is import-only; save as .pcraft to preserve all layers and blend modes` |
 | `.af` `.afdesign` `.afphoto` `.afpub`（Affinity） | 是，不支持的部分列在 warning 里 | `unsupported: Affinity export is not implemented; save a new PSD, PNG or .pcraft copy` |
-| `.dds` | 是 | `unsupported: DDS cannot be written in this build` |
 | `.cin`（Cineon） | 是 | `unsupported: Cineon cannot be written in this build` |
 | `.heic` `.heif` | 是（官方构建带解码器） | `unsupported: HEIF cannot be written in this build` |
 | `.svg` | 是：打开为形状图层，置入为矢量智能对象 | `unknown file format: svg` |
@@ -51,7 +51,7 @@
 | `.jxl` `.jp2` | 否 | `unknown file format: jxl` |
 | `.pdf` | 否：`codec: unrecognized image format` | 可写，见上表 |
 
-（未验证：KRA、PDN、Affinity、DDS、Cineon、HEIC 和相机 RAW 的读取没有真实样本可测，读支持来自发行版文档与写入报错的措辞。）
+（未验证：KRA、PDN、Affinity、Cineon、HEIC 和相机 RAW 的读取没有真实样本可测，读支持来自发行版文档与写入报错的措辞。）
 
 只读格式打开后，文档仍记着原路径（`session.list` 里能看到），但不带 path 的保存会被拒绝，见下一节。另存为 `.pcraft`（KRA 也可以存 `.ora`）。
 

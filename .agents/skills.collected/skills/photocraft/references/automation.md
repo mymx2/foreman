@@ -1,6 +1,6 @@
 # 自动化入口：serve、MCP、桌面控制通道
 
-> 核对版本：photocraft-cli 0.10.0 (8407d9ccb)。CLI 子命令、标志和退出码见 `cli.md`；动作、批处理、Droplet、变量数据组见 `actions-batch.md`。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。CLI 子命令、标志和退出码见 `cli.md`；动作、批处理、Droplet、变量数据组见 `actions-batch.md`。
 
 ## 选哪个入口
 
@@ -46,7 +46,7 @@
 | `plugin.install {path}`、`plugin.reload` | 可用 | 拒；`plugin.install {data}` 可用 | 同左 |
 | `doc.*`、`session.list`、`batch`、`methods` | — | serve 方法（MCP 对应 `doc_*`、`session_list`、`command_batch`） | ``unknown method `doc.open` `` |
 | `ui.*`、`app.*` | — | serve 回 ``unknown method `ui.inspect` (try `methods`)``；MCP 的 `ui_*`、`control_call` 回 `isError`，提示开 bridge | 桌面方法（MCP 的 `ui_*`、`control_call`） |
-| `engine.execute`、`engine.commands`、`jobs.list`、`jobs.cancel` | — | 有；`engine.commands {filter}` 可过滤 | 有；`engine.commands` 忽略 `filter`，总回全部 918 条 |
+| `engine.execute`、`engine.commands`、`jobs.list`、`jobs.cancel` | — | 有；`engine.commands {filter}` 可过滤 | 有；`engine.commands` 忽略 `filter`，总回全部 924 条 |
 
 拒绝规则的全貌（serve、MCP、桌面共用，动作回放里的每一步也逐条判定）：
 
@@ -93,7 +93,7 @@
 
 读写根是两个目录时：`doc.open` 从读根读；不带 `path` 的 `doc.save` 把文档记下的相对路径按写根解析，写到写根下的同名文件，读根里的原件不变（实测）。桌面 `app.save` 用同一套代码（未实测）。要写回原件就让两个根是同一个目录，或者显式传 `path`。
 
-数据组的像素替换图片是个缺口：serve/MCP 里只认绝对路径，而且读取时不检查根目录，读根之外的图片照样被读进导出结果（实测）。只把可信的 CSV 和数据组交给会话。规则细节见 `actions-batch.md`。
+数据组的像素替换图片是个缺口：serve/MCP 里只认绝对路径，而且读取时不检查根目录，读根之外的图片照样被读进导出结果（实测）——任何绝对路径只要进程读得到，就能被写进导出图。只把可信的 CSV 和数据组交给会话。规则细节见 `actions-batch.md`。
 
 ## serve
 
@@ -312,7 +312,7 @@ serve `--port`、`mcp --bridge` 和桌面用同一套规则：
 | 方法 | 用途 |
 |---|---|
 | `engine.execute {command, params?, wait?}` | 跑引擎命令，不弹对话框 |
-| `engine.commands` | 注册表全量（918 条），忽略 `filter`，与 `photocraft-cli commands --json` 是同一份 |
+| `engine.commands` | 注册表全量（924 条），忽略 `filter`，与 `photocraft-cli commands --json` 是同一份 |
 | `jobs.list`、`jobs.cancel {job?}` | 后台任务 |
 | `ui.inspect` | 完整界面状态：工具、面板、视图、`dialogs`、窗口、`jobs`、`notices`；不含菜单树 |
 | `ui.menu.list`、`ui.menu.invoke {id, params?, wait?}` | 菜单树；像点菜单一样执行，不带 params 时可能弹对话框 |

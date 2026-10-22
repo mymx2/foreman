@@ -1,6 +1,6 @@
 # photocraft-cli 参考
 
-> 核对版本：photocraft-cli 0.10.0 (8407d9ccb)。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。
 
 任何子命令加 `--help` 都打印同一份总帮助。serve、MCP、桌面控制通道见 automation.md；动作文件的写法、`file.automate.batch`、变量数据组见 actions-batch.md；各格式的读写与警告见 formats.md。
 
@@ -16,16 +16,16 @@
 
 （执行）`python <skill-dir>/scripts/find_cli.py --check` 按这个顺序查找，并跑 `--version` 和一次注册表查询；`--json` 列出查过的每个位置。
 
-安装检查就是用绝对路径跑 `--version`，输出 `photocraft-cli 0.10.0 (8407d9ccb, 2026-10-18)` 这样一行即可，不要求 CLI 在 PATH 上。找不到时请用户给出路径，不要猜。
+安装检查就是用绝对路径跑 `--version`，输出 `photocraft-cli 0.12.0 (6a2d027ee, 2026-10-21)` 这样一行即可，不要求 CLI 在 PATH 上。找不到时请用户给出路径，不要猜。
 
 ## 子命令与参数
 
 | 子命令 | 位置参数 | 取值 flag | 开关 flag | 用途 |
 |---|---|---|---|---|
-| `convert` | `<in> <out>` | `--format` `--quality` `--tga-bits` `--dpx-bits` | `--tiff-layers` | 打开一个文件，按输出扩展名导出 |
+| `convert` | `<in> <out>` | `--format` `--quality` `--tga-bits` `--dpx-bits` `--dds-compression` | `--tiff-layers` `--dds-mipmaps` | 打开一个文件，按输出扩展名导出 |
 | `info` | `<file>` | — | `--compact` | 打印文档 JSON |
-| `run` | `<file>` 或 `--new <json>` | `--new` `--cmd` `--params` `--out` `--format` `--quality` `--tga-bits` `--dpx-bits` | `--tiff-layers` | 打开或新建文档，按顺序执行引擎命令，给了 `--out` 才保存 |
-| `batch` | — | `--actions` `--action` `--in` `--out` `--format` `--quality` `--tga-bits` `--dpx-bits` | `--in-place` `--tiff-layers` | 目录里每个文件跑同一组步骤 |
+| `run` | `<file>` 或 `--new <json>` | `--new` `--cmd` `--params` `--out` `--format` `--quality` `--tga-bits` `--dpx-bits` `--dds-compression` | `--tiff-layers` `--dds-mipmaps` | 打开或新建文档，按顺序执行引擎命令，给了 `--out` 才保存 |
+| `batch` | — | `--actions` `--action` `--in` `--out` `--format` `--quality` `--tga-bits` `--dpx-bits` `--dds-compression` | `--in-place` `--tiff-layers` `--dds-mipmaps` | 目录里每个文件跑同一组步骤 |
 | `droplet` | `<file.pcdroplet> <文件或目录>…` | `--out` | — | 运行 Droplet |
 | `commands` | — | `--filter` | `--json` | 列出命令注册表 |
 | `serve` | — | `--port` `--control-token` `--control-token-file` `--automation-read-root` `--automation-write-root` | — | 常驻 JSON-lines 会话 |
@@ -33,7 +33,7 @@
 
 - `--format <ext>` 覆盖输出扩展名推断的格式，`--format .jpg` 与 `--format jpg` 等价。
 - `--quality <1-100>` 只作用于 JPEG 和 WebP，刻度见下文"quality 刻度"。
-- `--tga-bits 24|32`、`--dpx-bits 8|10|12|16` 设定位数；TIFF 默认扁平，`--tiff-layers` 才写图层。
+- `--tga-bits 24|32`、`--dpx-bits 8|10|12|16` 设定位数；`--dds-compression none|bc1|bc2|bc3` 设 DDS 压缩（DXT1/DXT3/DXT5），`--dds-mipmaps` 写完整 mip 链；TIFF 默认扁平，`--tiff-layers` 才写图层。
 - 取值 flag 写成 `--quality 80` 或 `--quality=80` 都行；开关 flag 带值（`--tiff-layers=1`）是用法错误。
 - `run` 里每个 `--params` 属于它前面那个 `--cmd`；不需要参数时省略。`--params` 和 `--new` 都只收 JSON 对象，不支持 `@文件` 写法。
 
@@ -109,7 +109,7 @@ photocraft-cli droplet <file.pcdroplet> <文件或目录>… [--out <目录>]
 
 注册表也有不全的地方：`file.export.renderVideo` 写着 `{} → {}`，实际接受 `dir` 和 `format`（`png`/`gif`）。
 
-未知键的处理因命令而异。对全部 918 条命令各传一次 `{"bogusKey":1}` 的扫描结果：36 条报 `unknown parameter`（下表，含全部 36 条），336 条静默忽略并按默认值执行，323 条先因前置条件失败（没有文字层、没有选区等）而没测出未知键的处理，其余 223 条因缺少必填参数等其它原因报错。换一份测试文档重扫，后三类的数字会变；报错的那 36 条是命令自身的校验，不随文档变。
+未知键的处理因命令而异。0.10.0 时对当时全部 918 条命令各传一次 `{"bogusKey":1}` 的扫描结果（0.12.0 新增或变更的条目未重扫）：36 条报 `unknown parameter`（下表，含全部 36 条），336 条静默忽略并按默认值执行，323 条先因前置条件失败（没有文字层、没有选区等）而没测出未知键的处理，其余 223 条因缺少必填参数等其它原因报错。换一份测试文档重扫，后三类的数字会变；报错的那 36 条是命令自身的校验，不随文档变。
 
 | 报 `unknown parameter \`bogusKey\`` 的命令 | 范围 |
 |---|---|

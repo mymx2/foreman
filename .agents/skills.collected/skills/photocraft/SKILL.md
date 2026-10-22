@@ -10,7 +10,7 @@ when_to_use: photocraft, photocraft-cli, PSD 自动化, 批量修图, 图片批�
 
 ## Overview
 
-PhotoCraft 的绝大多数菜单动作、工具和对话框都对应注册表里的一条命令（0.10.0 共 918 条；少数桌面菜单项不在注册表里）。CLI、`serve`、MCP、桌面控制通道调用的是同一份注册表，差别在文件权限和可用的方法。本技能负责：选对入口、查准参数、在副本上执行、逐项核对产出。`examples/` 里的 Python 场景脚本在 0.10.0 上实跑通过（案例 31 需要真实窗口，默认跳过），可以照着改；PSD 工程类任务另有审计、比对、切图脚本。
+PhotoCraft 的绝大多数菜单动作、工具和对话框都对应注册表里的一条命令（0.12.0 共 924 条；少数桌面菜单项不在注册表里）。CLI、`serve`、MCP、桌面控制通道调用的是同一份注册表，差别在文件权限和可用的方法。本技能负责：选对入口、查准参数、在副本上执行、逐项核对产出。`examples/` 里的 Python 场景脚本在 0.12.0 上实跑通过（38 个通过，案例 31 需要真实窗口，默认跳过），可以照着改；PSD 工程类任务另有审计、比对、切图脚本。
 
 ## Outcome Contract
 
@@ -120,17 +120,18 @@ CLI 细节见 `references/cli.md`；serve、MCP、桌面控制通道见 `referen
 - 启动桌面窗口前征得同意，用 `--new-instance` 加临时 `PHOTOCRAFT_CONFIG_DIR`，不碰用户已打开的实例和设置；用完关闭这个实例。
 - 缺字体阻止交付：先列候选、由用户确认再替换；不用 `type.replaceAllMissingFonts`（它把所有缺失字体无提示地换成 Inter）。
 - 字体和素材按授权使用：免费商用不等于允许随稿再分发；占位图只用于测试。
-- 变量数据组的像素替换会绕过读根目录限制去读图片，只用可信的数据文件。
+- 变量数据组的像素替换会绕过读根目录限制去读图片（读根之外的绝对路径也能读进导出结果），只用可信的数据文件。
 
 ## Gotchas
 
-以下都在 0.10.0 上实测过。按报错文本查问题见 `references/troubleshooting.md`。
+以下关键条目在 0.12.0 上复验过（`scripts/probe_gotchas.py` 逐条复跑 21 项），其余沿用 0.10.0 的实测记录。按报错文本查问题见 `references/troubleshooting.md`。
 
 | 现象 | 做法 |
 |---|---|
 | `image.imageSize {"widht":600}` 退出码 0，尺寸没变 | 多数命令静默忽略未知键（`file.new`、`ui.set`、`ui.screenshot` 等少数才报错）；拼错的枚举值（如 `align:"centre"`）也静默回落到默认值。看返回值 |
 | 引擎导出命令传 `quality:80` 和传 12 结果一样 | `file.automate.batch`、`imageProcessor`、`saveACopy`、`createDroplet`、各类 `file.export.*` 的 `quality` 是 0..12，超出静默截到 12；`file.export.saveForWebLegacy` 是 0..100；CLI `--quality` 和 serve `doc.save` 是 1..100 |
 | 无选区时 `select.deselect` 让整条 `run` 失败 | 当前状态不可用的命令直接报错，`run` 后面的步骤和 `--out` 都不执行；`layer.layerMask.revealSelection` 会用掉选区 |
+| 单层栅格化遇到不适用的对象，整条 `run` 失败 | `layer.rasterize.layer` 对像素层和组报 `the layer has nothing to rasterize`，后续步骤和 `--out` 都不执行；批量改用 `layer.rasterize.allLayers`（回 `{rasterized:N}`，重复执行回 0），细节见 `commands.md` 的「栅格化」 |
 | `select.subject` / `select.sky` 回 `selected:true` 却没选中 | `selected` 只表示"现在有选区"；成败看 `changed`、`coverage`、`message` |
 | `document.pixel {sampleLayer:"current"}` 读到的是合成色 | `document.pixel` 只读合成结果、忽略 `sampleLayer`；单个图层用 `document.sampleColor {sampleLayer:"current"}` |
 | 结果里的图层 id 存盘再打开就变了 | id 只在当前会话有效：serve 里关掉再打开同一 PSD 会重新编号，CLI 每次新进程也从 1 数起。`layer` 参数也接受图层名，跨进程按名字寻址 |

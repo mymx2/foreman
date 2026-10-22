@@ -1,6 +1,6 @@
 # PSD 规范化、复刻与交付
 
-> 核对版本：photocraft-cli 0.10.0 (8407d9ccb)。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。
 
 规范稿要同时过两道验收：渲染一致（`psd_compare.py`，执行，第 4 节）和结构可维护（`psd_audit.py --strict`，执行，第 3 节）。像素一致只证明输出一样，层树照样可能没法维护。
 
@@ -83,14 +83,15 @@
 1. **审计原稿（只读）**。记原稿 SHA256。跑 `psd_audit.py audit <原稿> --json > audit-before.json`；在 PhotoCraft 打开原稿，用 `document.inspect` 和 `type.resolveMissingFonts {}` 核对层树、文字和应用侧真实缺字。先出问题清单和重建计划，确认后再动手。
    - 输入是 Affinity（`.af/.afdesign/.afphoto/.afpub`）、Krita `.kra` 或 Paint.NET `.pdn`：PhotoCraft 只能导入，psd-tools 读不了。先导入，另存 `<稿名>_原稿.psd` 当只读基线再审计；导入警告里列出的不支持项记进问题清单。
 2. **冻结视觉基线**。同一引擎把原稿渲染成 PNG（`photocraft-cli convert`，或 serve `doc.render {maxSide:0, path}`，最长边超过 2048 只能用 `convert`），存为 `baseline.png` 并记 hash。后续对比都以它为准。
-3. **设计目标层树**。写旧层 → 新组的映射；标出要拆的合并层、要重打的文字、要转智能对象的素材、无法恢复的项。原稿是平图时注明「只能按视觉复刻」。
-4. **另存规范稿**。存成 `<稿名>_规范.psd`：serve 用 `doc.save {path}`，GUI 用 `app.save {path}`（保存语义见 automation.md）。PSD/PSB/.pcraft 另存会让文档指向新文件，平图格式只是副本。确认当前文档已指向规范稿，不要用不带 path 的保存回写原稿。
-5. **在副本上重建**。建组、改名（`layer.renameLayer {layer, name}`；`layer.rename` 不存在）、移层、转智能对象（`layer.smartObjects.convertToSmartObject` 会换新 id）、补蒙版和调整层；每批改动后 inspect 复核。PSD 存盘再打开后图层 id 会重排，重开后按名字或重新 inspect 定位。
-6. **补字体**。`type.resolveMissingFonts` → 出候选 → 用户确认 → 安装 → 在规范稿上写回 `text.font` → `type.fonts` 复核。获取、安装与授权见 fonts.md。不要调用 `type.replaceAllMissingFonts`：它会把所有缺失字体静默换成 `Inter`。
-7. **文字规范化**。逐层核对字体、字号、字距、行距、颜色、对齐、文本框；记录替换字体的理由和视觉差。
-8. **视觉验收**。`psd_compare.py <原稿或 baseline.png> <规范稿> --out psd-compare-out > visual-diff.json`，目标 `identical`；有差异就逐像素定位修复；跨工具来源才给 `--fuzz`，并写明原因。再做适合窗口与 100% 双尺度目检。
-9. **结构验收**。`psd_audit.py audit <规范稿> --strict --json > audit-after.json` 要求 CRITICAL/HIGH/MEDIUM 全为 0，LOW 逐条有结论；`psd_audit.py compare <原稿> <规范稿> --strict --json > audit-compare.json` 记录前后指标。
-10. **交付**（第 5 节）。原稿与规范稿分开保存，原稿 SHA256 未变。
+3. **排查怪稿（审计的盲区）**。第 1 步的审计和栅格检查只能查命名、层级、字体、落列——「画面正常但定义怪异」的稿件会全部漏过：渲染两遍都一样，检查器却看不见层里藏了什么。按第 2.5 节逐类过一遍，重点是 inspect 逐层读 `bounds`/`kind`/`hasMask`/`hasVectorMask`/`clipped`/`blend`/`opacity`，再把关键层**单独渲染**出来看（CLI 用 `layer.exportAs {path}` / `layer.quickExportAsPng {path}`；serve 的 `doc.exportLayers` 只出顶层，嵌套层先隐藏兄弟层）。发现的怪异点全部登记进问题清单，和结构问题一起排进重建计划。
+4. **设计目标层树**。写旧层 → 新组的映射；标出要拆的合并层、要重打的文字、要转智能对象的素材、无法恢复的项。原稿是平图时注明「只能按视觉复刻」。
+5. **另存规范稿**。存成 `<稿名>_规范.psd`：serve 用 `doc.save {path}`，GUI 用 `app.save {path}`（保存语义见 automation.md）。PSD/PSB/.pcraft 另存会让文档指向新文件，平图格式只是副本。确认当前文档已指向规范稿，不要用不带 path 的保存回写原稿。
+6. **在副本上重建**。建组、改名（`layer.renameLayer {layer, name}`；`layer.rename` 不存在）、移层、转智能对象（`layer.smartObjects.convertToSmartObject` 会换新 id）、补蒙版和调整层；每批改动后 inspect 复核。PSD 存盘再打开后图层 id 会重排，重开后按名字或重新 inspect 定位。
+7. **补字体**。`type.resolveMissingFonts` → 出候选 → 用户确认 → 安装 → 在规范稿上写回 `text.font` → `type.fonts` 复核。获取、安装与授权见 fonts.md。不要调用 `type.replaceAllMissingFonts`：它会把所有缺失字体静默换成 `Inter`。
+8. **文字规范化**。逐层核对字体、字号、字距、行距、颜色、对齐、文本框；记录替换字体的理由和视觉差。
+9. **视觉验收**。`psd_compare.py <原稿或 baseline.png> <规范稿> --out psd-compare-out > visual-diff.json`，目标 `identical`；有差异就逐像素定位修复；跨工具来源才给 `--fuzz`，并写明原因。再做适合窗口与 100% 双尺度目检。
+10. **结构验收**。`psd_audit.py audit <规范稿> --strict --json > audit-after.json` 要求 CRITICAL/HIGH/MEDIUM 全为 0，LOW 逐条有结论；`psd_audit.py compare <原稿> <规范稿> --strict --json > audit-compare.json` 记录前后指标。第 3 步登记的怪异点逐项复核：修掉的写进规范化记录，修不掉的进「未解决项」。
+11. **交付**（第 5 节）。原稿与规范稿分开保存，原稿 SHA256 未变。
 
 | 情况 | 处理 |
 | --- | --- |
@@ -100,6 +101,88 @@
 | 缺精确字体 | 出候选让用户定；记录替换后的家族、样式、授权和视觉差，不自动换近似字体 |
 | 不支持的智能滤镜或效果 | 在副本上烘焙，原效果的隐藏副本放进参考组，注明不可回改 |
 | 多页面或多版本 | 用页面或版本组包装，内部仍按节点树组织，不把多页平铺成一层 |
+
+## 2.5 怪稿排查：画面正常但定义怪异
+
+> 核对版本：photocraft-cli 0.12.0 (6a2d027ee)。字段来自 `photocraft-cli info --compact` / `document.inspect` 逐层实测。
+
+「规范」有两层：结构规范（第 1 节，检查器可查）和**定义规范**——层里记录的几何、载体和编辑状态应该和视觉一致，能改参数而不是只能挪像素。后者没有检查器：渲染前后一致证明不了定义正常（`psd_compare` 恰好会放过所有这类问题），要靠第 2 节第 3 步的人工排查。先看清两类信号的区别：
+
+- **机器能查的**（读 inspect JSON 就能判定）：bounds、kind、hasMask、hasVectorMask、clipped、blend、opacity、visible、调整层 params。`layout_design.py check` 的 `ZERO_SIZE` 顺带覆盖「整层出界」。
+- **机器查不到的**：智能对象的源尺寸和缩放比例、形状层的定义几何与实际渲染的偏差、蒙版内部的像素分布、非等比自由变换、点文字被压扁——inspect 不暴露定义侧数据，只能把层**单独渲染出来人工看**。
+
+下面按怪异类别列出识别信号和规范化动作。「信号」是 inspect JSON 里可见的线索，「确认」是要补的人工动作。修复动作全部在副本（规范稿）上做，修完走第 9 步渲染比对证明视觉未变。
+
+### A. 定义几何 ≠ 视觉几何（机器查不到，必须人工）
+
+典型：视觉上是正方形，PSD 里其实是长方形素材被拉扁/蒙版裁切/变换压方。画面看不出来，换个引擎或改字重立刻变形。
+
+| 怪异 | 识别信号（inspect） | 确认（人工） | 规范化动作 |
+| --- | --- | --- | --- |
+| 非等比变换：素材被拉成另一比例 | 无信号（inspect 只有 bounds） | 单层渲染出来量比例，或对智能对象 `layer.smartObjects.editContents` 打开内容文档看原始比例 | 有源文件就回到源里改，重放进规范稿；没有源就接受现状，描述文件登记「定义比例 ≠ 视觉比例，不可恢复」 |
+| 蒙版/剪贴路径做视觉裁切：定义的形状大于看到的内容 | `hasMask:true` 或 `hasVectorMask:true`，bounds 比同组件其他元素异常大 | 单层渲染看裁切边界，蒙版用 `select.loadSelection {channel:"mask", layer}` 载入选区看范围 | 属于「用蒙版伪造几何」：能重画形状就用 `shape.create` 重建（同色同位），蒙版只留给真正的语义抠图 |
+| 形状层定义矩形，视觉是圆角/带描边 | `kind:"Shape"`，bounds 与视觉不符 | `shape.info {layer:<id>}` 读 `live`（`radii`、`stroke`）核对；只认数字 id，传图层名会被静默忽略（0.12.0 实测），先 `layer.select` 再不带参数调用也行 | 按视觉重建：`shape.create {kind:"roundedRect", radii, rect, stroke}`；圆角、描边进定义，不靠效果凑 |
+| 智能对象重复变形：内容文档里还嵌着变换 | `kind:"Smart Object"` + 上游有变换痕迹 | `editContents` 打开看内容文档的画布与变换 | 展平内容里的多余变换，重放为一次变换；能等比就等比 |
+| 像素层模仿几何：纯色块用画笔画出来的 | `kind:"Pixel"` + 在组件里承担形状角色（图片/图标/形状前缀） | 单层渲染 + 取样确认是纯色几何 | 用 `shape.create` / `layer.newFillLayer.solidColor` 重建为形状或填充层，位置尺寸按 bounds |
+| 点文字被变换压扁/拉宽 | `kind:"Type"` + 墨迹框异常 | `type.info` 的 `transform` 与字号核对（text-layout.md） | 重打文字：`type.create` 同内容同字体，删掉被压扁的旧层 |
+| 全图非等比拉伸进画布 | 画布比例与视觉内容比例不符 | 无 | 记录为「按视觉复刻」类：重建时按视觉比例画，不复制错误定义 |
+
+### B. 定义载体不对（可半机器识别）
+
+「视觉上是形状，载体却是像素」这类。检查器已覆盖一部分（`POSSIBLE_RASTERIZED_TEXT`），其余靠 kind 与语义角色核对：
+
+| 怪异 | 识别信号 | 规范化动作 |
+| --- | --- | --- |
+| 形状前缀层是像素（`形状_x` 但 `kind:"Pixel"`） | kind ≠ Shape/Fill 但名字有形状前缀 | 按视觉重建为形状层；确实是位图内容（纹理、手绘边框）就改用图片前缀 |
+| 图标层是普通像素层 | `icon` 角色 + `kind:"Pixel"` | 有源就重放矢量；没有就留像素，描述文件注明 |
+| 文字用图片承载 | `POSSIBLE_RASTERIZED_TEXT`（检查器已查，见第 3 节） | 第 1 节规则：能重打就重打 |
+| 纯色块用像素层或带内容的图承载 | 单层渲染 + `document.sampleColor` 多点取样纯色 | 重建为 `layer.newFillLayer.solidColor` 或形状层 |
+| 背景是位图却命名成 `背景_纯色` 之类 | 名字与取样结果矛盾 | 按实际载体改名（图片前缀）或重建为填充层 |
+
+### C. 定义数量不对（可机器识别）
+
+| 怪异 | 识别信号 | 规范化动作 |
+| --- | --- | --- |
+| 同一视觉元素由多层拼成（对不齐的接缝、半透明叠两层同色） | 同级同类 `SAME_KIND_OVERLAP`（`layout_design.py check`，版式稿） | 合并（`layer.mergeLayers`）或重画为单层；合并前留快照 |
+| 复制层改一忘一：两份近似内容，一份已过时 | 同名或近名兄弟层、bounds 高度重叠 | 和用户确认哪份是最新，过时的进参考组或删除 |
+| 视觉一个按钮 = 图层+样式层+蒙版层三件套拆开 | 剪贴链 `clipped:true` 串起的多层 | 属于正常做法时保留；拆散的补剪贴（`layer.createClippingMask`），修掉跨组件误伤的 |
+
+### D. 定义空间不对（可机器识别）
+
+| 怪异 | 识别信号 | 规范化动作 |
+| --- | --- | --- |
+| 内容大部分在画布外，只露一角 | bounds 触到画布边缘（0 或 width/height）且单层渲染发现内容被裁 | 有意出血就保留并登记；无意就把内容移回画布（`layer.translate`），画布外部分截掉 |
+| 坐标原点漂移：整稿所有层统一偏了半像素/几像素 | 全部层 bounds 的 x/y 有共同余数（如都是 .5） | 版式稿按 `layout_design.py` 重算重摆；照片稿接受现状并记录 |
+| 画布内藏着完全看不见的层（透明度 0、不可见、或被上层完全盖住） | `opacity:0`、`visible:false`、或单层渲染 vs 合成渲染比对 | 死层删除；要留底的进参考组（第 1 节规则） |
+| 图层堆叠序与视觉层级相反（装饰压着文字却排更上） | inspect 层序 vs 渲染视觉 | 按视觉重排（`layer.moveTo`）；本来就是叠放效果的（叠印、蒙版）除外 |
+
+### E. 导出口径不对（渲染看不见，必须单独查）
+
+切片、参考线、图层复合不进渲染，`psd_compare` 和目检都发现不了，但会决定「切片导出」的范围，换版后最容易残留旧几何。
+
+| 怪异 | 识别信号 | 规范化动作 |
+| --- | --- | --- |
+| 切片边界停在旧版画布上：删章或改高后没重切 | `slice.list` 里 `origin:"user"` 的切片，矩形起点与章节或内容对不上；末片只剩几十像素 | 没有切片导出需求就 `slice.delete {slices:[id…]}` 全删（`origin:"auto"` 的整画布切片保留）；要做切片导出就用 `slice.fromGuides` 按当前参考线重切，边界落在章节间隙 |
+| 参考线与版面不符 | 之前用 `view.newGuideLayout` 铺过，后续版式又改了 | 按 `layout_design.py` 的 `guideLayoutParams` 重铺 |
+| 图层复合记着旧版本 | `document.inspect` 的 `layerComps` 与当前可见性组合不一致 | 逐个复核，过时的删掉 |
+
+实测例子：原稿 11 条切片铺满 11480 高的画布，删章后画布变 9298，前 9 条边界原样保留，最后一条被截成 19px。渲染完全正常，只有 `slice.list` 能看出来。
+
+### 方法的三个限制
+
+- **组没有 bounds**：`document.inspect` 和 `info` 的组层 `bounds:null`。算章节范围要按叶子层算，别对组取 bounds。
+- **剪切层的 bounds 是未裁切范围**：`clipped:true` 的层报整个内容框（实测 790×1644），可见区只有下面的框（370×360）。按 bounds 算章节范围会把相邻章节算成重叠，属假阳性；要按可见框算。
+- **智能对象要核源比例，但别只看比例**：`layer.smartObjects.exportContents {layer, path}` 拿到源图，比对源图宽高比与图层框宽高比。比例不一致只说明「缩放或裁切」，不能直接判变形：取消剪切后单独渲染（`layer.setProps {clipped:false}` 再 `layer.exportAs`），整幅源内容都在框里、比例又不对，才是拉/压；只出现局部就是裁切。实测两个方向：详情 4 张 3368×5000 塞进 790×1644，整幅可见，纵向拉 1.40 倍；主图 468×468 的方图放进 249×468，是裁掉左右留白，不是变形。
+
+### 排查顺序与登记
+
+排查按「先机器后人工」：
+
+1. 跑 `psd_audit.py` + `layout_design.py check`（版式稿）拿结构/几何问题——这些是「定义错误」的子集；再跑 `slice.list` 看切片、参考线、图层复合是否还对着当前版面。
+2. 写个一次性脚本（或手工）扫 inspect JSON：B/C/D 三类信号全部可编程判定。A 类机器查不到，逐层单渲核对。
+3. 每个怪异点登记：路径、信号、人工确认结果、处置（修复/接受/待用户决定）。处置为「接受」的项写进描述文件「未解决项」。
+
+修这些不改变视觉：全部动作做完后走第 9 步 `psd_compare` 应得 `identical`——如果变了，说明修复改动了视觉，先修回归再交付。
 
 ## 3. psd_audit.py（执行）
 
@@ -222,6 +305,7 @@ for layer in PSDImage.open("<稿名>.psd").descendants():
 | 规范稿审计 | audit-after.json 摘要 |
 | 命名 profile | zh / en / 项目 profile 文件，例外项说明 |
 | 旧层 → 新组 | 映射表或映射文件路径 |
+| 怪稿排查 | 逐条：路径、信号、人工确认结果、处置（修复/接受/待用户决定）；「接受」项同时写进未解决项 |
 | 字体替换 | 原字体 → 实际字体、理由、授权、视觉差 |
 | 视觉对比 | psd_compare 结果、diff 图、fuzz 与原因 |
 | 未解决项 | 无法恢复的层、已知差异、待用户决定的事 |

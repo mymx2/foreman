@@ -1,6 +1,6 @@
 # 字体：查缺失、选替代、安装、授权
 
-> 核对版本：photocraft-cli 0.10.0 (8407d9ccb)。文字排版本身见 `text-layout.md`；随稿交付字体副本的规则见 `psd-workflow.md`。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。文字排版本身见 `text-layout.md`；随稿交付字体副本的规则见 `psd-workflow.md`。
 
 ## 查现状
 

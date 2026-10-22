@@ -1,6 +1,6 @@
 # 动作、批处理、Droplet、变量数据组
 
-> 核对版本：photocraft-cli 0.10.0 (8407d9ccb)。CLI 子命令的标志和退出码见 `cli.md`；serve、MCP 的传输和方法见 `automation.md`。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。CLI 子命令的标志和退出码见 `cli.md`；serve、MCP 的传输和方法见 `automation.md`。
 
 ## 步骤形状
 
