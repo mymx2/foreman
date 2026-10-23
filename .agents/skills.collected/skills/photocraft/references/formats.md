@@ -1,6 +1,6 @@
 # 格式与色彩
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 (ff4738810) 复核；行为描述写于 0.14.0。RAW 见 `raw.md`；打印/PDF 见 `printing.md`；只读格式与 XCF 的详细限制见 book 的 formats 文档。
 
 打开时按文件内容识别格式，保存时按输出扩展名选编码器（CLI 可用 `--format` 覆盖）。导出损失了什么，CLI 写在 stderr 的 `warning:` 里，serve/MCP 写在回复的 `warnings` 里；下文引号里的都是原文。quality 刻度见 cli.md。
 
@@ -8,10 +8,11 @@
 
 | 格式 | 读 | 写 | 保留什么 | 实测要点 |
 |---|---|---|---|---|
-| `.psd` / `.psb` | 是 | 是 | 图层、组、蒙版、矢量蒙版、调整与填充层、智能对象、图层样式、文字、形状、路径与剪贴路径、Alpha 通道、笔记、图层复合 | 宽或高超过 30000 px 时，扩展名写 `.psd` 也会存成 PSB：`document exceeds 30000 px; written as PSB`。路径文字存成点文字，没有警告。双色调存成灰度。变量定义和数据组不保存 |
-| `.pcraft` | 是 | 是 | 文档模型的全部字段（单个 ZIP 文件） | 唯一保留双色调、变量与数据组、路径文字的格式；重新打开后图层 id 不变。适合做 PhotoCraft 内部母版 |
-| `.tif` 加 `--tiff-layers`（引擎命令里是 `tiffLayers:true`） | 是 | 是 | Photoshop 图层数据，文字和形状层仍可编辑，路径与剪贴路径 | 文档只有背景层时不写路径和剪贴路径，先 `layer.new.layerFromBackground`。只写一个透明通道，多余的 Alpha 通道丢弃：`2 alpha channel(s) are not written to TIFF (one transparency channel only)` |
-| `.ora`（OpenRaster） | 是 | 是 | 像素层、组、混合模式、不透明度（与 Krita、GIMP、MyPaint 互通） | 丢失项逐条警告：`adjustment layers cannot be saved to OpenRaster and were left out (the merged image keeps their look)`、`layer styles are not saved to OpenRaster`、`OpenRaster has no clipping masks; these layers were saved unclipped`、`layer masks were applied to the layer pixels`、`alpha channels are not saved to OpenRaster`、`metadata (XMP, EXIF, text) is not saved to OpenRaster`；文字和形状写成像素（`type layers are saved to OpenRaster as pixels ("T")`）。CMYK、Lab 拒绝：`unsupported: OpenRaster holds RGB layers; convert the document to RGB or Grayscale first`。灰度存成 RGB：`grayscale layers are saved as RGB` |
+| `.psd` / `.psb` | 是 | 是 | 图层、组、蒙版、矢量蒙版、调整与填充层、智能对象、图层样式、文字、形状、路径与剪贴路径、Alpha 通道、笔记、图层复合、图层 XMP | 宽或高超过 30000 px 时，扩展名写 `.psd` 也会存成 PSB：`document exceeds 30000 px; written as PSB`；估算编码超过 2 GB 时也会自动写 PSB。双色调 0.14 实测重开仍是 `Duotone`；完全可编辑母版优先 `.pcraft`。路径文字存成点文字，没有警告。变量定义和数据组不保存 |
+| `.pcraft` | 是 | 是 | 文档模型的全部字段（单个 ZIP 或目录 bundle） | 保留双色调、变量与数据组、路径文字等全部字段；重新打开后图层 id 不变。完全可编辑母版优先用它 |
+| `.tif` 加 `--tiff-layers`（引擎命令里是 `tiffLayers:true`） | 是 | 是 | Photoshop 图层数据，文字和形状层仍可编辑，路径与剪贴路径 | 文档只有背景层时不写路径和剪贴路径，先 `layer.new.layerFromBackground`。只写一个透明通道，多余的 Alpha 通道丢弃：`2 alpha channel(s) are not written to TIFF (one transparency channel only)`。`--tiff-compression none\|lzw\|zip` 控制压缩 |
+| `.ora`（OpenRaster） | 是 | 是 | 像素层、组、混合模式、不透明度（与 Krita、GIMP、MyPaint 互通） | 丢失项逐条警告：`adjustment layers cannot be saved to OpenRaster and were left out (the merged image keeps their look)`、`layer styles are not saved to OpenRaster`、`OpenRaster has no clipping masks; these layers were saved unclipped`、`layer masks were applied to the layer pixels`、`alpha channels are not saved to OpenRaster`、`metadata (XMP, EXIF, text) is not saved to OpenRaster`；文字和形状写成像素（`type layers are saved to OpenRaster as pixels ("T")`）。CMYK、Lab 拒绝：`unsupported: OpenRaster holds RGB layers; convert the document to RGB or Grayscale first`。灰度存成 RGB：`grayscale layers are saved as RGB`；32 位降到 16 位 |
+| `.xcf` / `.xcf.gz`（GIMP） | 是 | 否 | 图层、组、蒙版、混合模式、Alpha 通道、保存的选区、8/16-bit；32-bit int→16、float→32；文字/矢量按像素 | 只读：写报 `unsupported: XCF is GIMP's own format...`。打开后通常没有可写回的源路径，别依赖不带 path 的保存；GIMP 的线性光/Clip to backdrop 默认会让合成略有差异（文字边缘最多约 73/255） |
 
 ## 扁平格式
 
@@ -20,18 +21,19 @@
 | 格式 | 位深 | 透明 | 要点 |
 |---|---|---|---|
 | PNG | 8 / 16 | 是 | 无损，写入 ICC、XMP、DPI。32 位文档写成 16 位：`32-bit float will be reduced to 16-bit`。调色板 PNG 重新打开是 Indexed |
-| JPEG | 8 | 否 | 透明区域合到白底：`transparency composited over white for Jpeg`；高位深降到 8 位：`16-bit will be reduced to 8-bit`；每次都提示 `lossy compression`。CMYK 文档写成 CMYK JPEG |
+| JPEG | 8 | 否 | 透明区域合到白底：`transparency composited over white for Jpeg`；高位深降到 8 位：`16-bit will be reduced to 8-bit`；每次都提示 `lossy compression`。CMYK 文档写成 CMYK JPEG。`--jpeg-format baseline\|optimized\|progressive` 或 `jpegFormat` 设扫描方式；optimized 只对 Gray/CMYK 缩表，RGB 仍是 4:2:0 标准表 |
 | WebP | 8 | 是 | 不带 quality 无损，带了有损；不存 DPI：`resolution (DPI) not supported; it will be dropped`；32 位文档：`32-bit float will be reduced to 8-bit`。有损 WebP 的 Alpha 按每像素 1 字节不压缩存储，带透明的图有损反而更大，用无损 WebP 或 PNG |
 | GIF | 8，256 色调色板 | 1 位 | `colours will be quantized to a 256-colour palette`；`alpha will be reduced to on/off transparency`。重新打开是 RGB。动图用 `file.export.renderVideo {"dir":…,"format":"gif"}` |
 | TIFF（默认扁平） | 8 / 16 / 32 浮点 | 是 | 支持 CMYK、Lab。扁平 TIFF 丢掉额外的 Alpha 通道时不警告 |
-| TGA | 8 | 是 | 有透明时写 32 位（带 Alpha），否则 24 位；`--tga-bits` / `tgaBits` 指定。PhotoCraft 自己重新打开 TGA 时不读 Alpha，得到不透明的 Background（其他软件读同一文件 Alpha 正常） |
+| TGA | 8 | 是 | 有透明时写 32 位（带 Alpha），否则 24 位；`--tga-bits` / `tgaBits` 指定。PhotoCraft 自己重新打开 TGA 时，Alpha 会变成 “Alpha 1” 通道而不是图层透明；要透明需自己从通道转蒙版/选区（其他软件读同一文件 Alpha 正常） |
 | DPX | 8 / 10 / 12 / 16 | 是 | 8 位文档写 8，其余写 16；`--dpx-bits` / `dpxBits` 指定 |
-| DDS | 8（bc1/bc2/bc3 有损） | 是 | 0.12.0 起可写，默认不压缩（RGBA8）：`--dds-compression none\|bc1\|bc2\|bc3` 选 DXT1/DXT3/DXT5，`--dds-mipmaps` 写完整 mip 链；读取未验证 |
+| Cineon `.cin` | 10-bit log | 否 | 0.14 可写：10-bit log 灰度/RGB，读回 16 位；无 Alpha/ICC/DPI（`resolution (DPI) not supported; it will be dropped`） |
+| DDS | 8（bc1/bc2/bc3 有损） | 是 | 可读 2D 纹理顶层 mip：无压缩 RGB/RGBA/亮度、BC1–BC3（DXT1/3/5）；可写未压缩或 `--dds-compression none\|bc1\|bc2\|bc3`，`--dds-mipmaps` 写完整 mip 链。cubemap/array/volume/BC4–BC7 拒绝 |
 | OpenEXR | 16 / 32 浮点 | 是 | HDR 母版，`file.automate.mergeToHdrPro {"mode":"32"}` 之后直接存 `.exr` |
 | Radiance HDR | 32 浮点 | 否 | RGBE 编码，提示 `lossy compression` |
 | BMP、QOI、PNM（PPM/PGM/PBM/PAM/PFM）、FITS | 视格式 | BMP、QOI 是 | 都不存 DPI |
 | ICO | 8 | 是 | 最大 256×256，超过报 `unsupported: image exceeds the format maximum of 256x256` |
-| PDF | — | 否 | 只写：单页、扁平，`PDF was saved flattened: layers, masks-as-editable and transparency are not preserved (#3401)`。`convert`、`run --out`、`file.saveACopy`、`doc.save` 都能写；画板逐页用 `file.export.artboardsToPdf` |
+| PDF | — | 否 | 只写：单页、扁平，`PDF was saved flattened: layers, masks-as-editable and transparency are not preserved (#3401)`。`convert`、`run --out`、`file.saveACopy`、`doc.save` 都能写；画板逐页用 `file.export.artboardsToPdf`。带纸张/标记/出血的打印 PDF 用 `file.print {"output":…}`（只在 CLI），见 `printing.md` |
 
 读多帧文件（动图 GIF、APNG）只导入第一帧：`only the first of 3 frames was imported`。
 
@@ -42,18 +44,20 @@
 | 扩展名 | 读 | 写入报错 |
 |---|---|---|
 | `.kra` `.krz`（Krita） | 是 | `unsupported: Krita files are import-only; save as .ora to open the layers in Krita, or .pcraft to keep everything` |
+| `.xcf` `.xcf.gz`（GIMP） | 是 | `unsupported: XCF is GIMP's own format...`；只读；不要依赖不带 path 的回写 |
 | `.pdn`（Paint.NET） | 是 | `unsupported: PDN is import-only; save as .pcraft to preserve all layers and blend modes` |
-| `.af` `.afdesign` `.afphoto` `.afpub`（Affinity） | 是，不支持的部分列在 warning 里 | `unsupported: Affinity export is not implemented; save a new PSD, PNG or .pcraft copy` |
-| `.cin`（Cineon） | 是 | `unsupported: Cineon cannot be written in this build` |
-| `.heic` `.heif` | 是（官方构建带解码器） | `unsupported: HEIF cannot be written in this build` |
+| `.af` `.afdesign` `.afphoto` `.afpub`（Affinity） | 是，不支持的部分列在 warning 里 | `unsupported: Affinity export is not implemented; save a new PSD, PNG or .pcraft copy`；明确“no source save path” |
+| `.dcm`（DICOM） | 是，灰度/RGB，未压缩语法 | 不能写；含患者/检查信息，分享前处理 |
+| `.iff` `.ilbm`（Amiga IFF） | 是，1–8 plane，只读 | 不能写 |
+| `.heic` `.heif` | 是（官方构建带解码器，8/16 位） | `unsupported: HEIF cannot be written in this build` |
 | `.svg` | 是：打开为形状图层，置入为矢量智能对象 | `unknown file format: svg` |
 | `.avif` | 否：`codec: Avif: decoding is not available for this format` | `unsupported: AVIF cannot be written in this build` |
 | `.jxl` `.jp2` | 否 | `unknown file format: jxl` |
 | `.pdf` | 否：`codec: unrecognized image format` | 可写，见上表 |
 
-（未验证：KRA、PDN、Affinity、Cineon、HEIC 和相机 RAW 的读取没有真实样本可测，读支持来自发行版文档与写入报错的措辞。）
+只读格式打开后不一定记着可写回的源路径：Affinity 明确没有源保存路径，KRA 实测 `path` 为 `null`；XCF/PDN 也不要假设。不要依赖“不带 path 的保存”能回写；先看 `info`/`session.list` 的 `path`。另存为 `.pcraft`（KRA 也可存 `.ora`）。Cineon 在 0.14 已可写，不在只读表里。
 
-只读格式打开后，文档仍记着原路径（`session.list` 里能看到），但不带 path 的保存会被拒绝，见下一节。另存为 `.pcraft`（KRA 也可以存 `.ora`）。
+（0.14 已实测 Cineon 写入、DDS 读写、TGA Alpha 导入；KRA/PDN/Affinity/HEIC 的读取支持来自格式文档与上游测试，未用真实样本复测；相机 RAW 见 `raw.md`。）
 
 ## 保存身份与写回
 
@@ -79,7 +83,7 @@
 | `image.mode.colorTable` | 索引色 | `Color Table needs an Indexed Color image (the document is Rgb)` |
 | `image.trap` | CMYK | `Trap needs a CMYK document (Image › Mode › CMYK Color)` |
 
-- 双色调只有 `.pcraft` 能保留：存 PSD 警告 `Duotone document written as Grayscale`，存扁平格式警告 `Duotone (2 inks) written as RGB`。
+- 双色调：0.14 实测存 PSD 后重开仍是 `mode:Duotone`；`.pcraft` 仍是最稳的完全可编辑母版。存扁平格式警告 `Duotone (2 inks) written as RGB`。
 - GIF 重新打开是 RGB，`image.mode.colorTable` 在上面会报错；要读调色板，在导出 GIF 之前对索引色文档调用不带参数的 `image.mode.colorTable`。调色板 PNG 重新打开仍是 Indexed。
 - 32 位文档存 PNG 写成 16 位，存 JPEG/WebP 降到 8 位，都有警告；TIFF 保留 32 位浮点，OpenEXR 保留浮点。
 - 大幅调色和修复前先 `image.mode.bits16`，交付前再 `image.mode.bits8`，减少断层。抽查过的 10 个常用命令（油画、马赛克、高斯模糊、色阶、滤镜库、选择主体、索引色、污点修复、内容识别缩放、HDR 色调）在 16 位和 32 位下都能运行，其余命令没有逐条验证。
@@ -103,6 +107,11 @@
 - 对外分享要去掉相机和位置信息，用 `file.export.saveForWebLegacy {"path":…,"metadata":"none"}`：EXIF 和 XMP 都去掉。默认的 `copyright` 只留一小段含版权的 XMP；`all` 保留 XMP，但 EXIF 照样丢掉。
 - `file.export.saveForWebLegacy` 给 `path` 输出整张图；给 `dir` 按切片输出到 `images/` 下；只有 `html:true` 才写 HTML 页面。
 
+## RAW 与打印
+
+- 相机 RAW：DNG、CR2、NEF/NRW、ARW/SR2/SRF、PEF、RW2、ORF、RAF 等；打开为 16 位 ProPhoto 兼容 RGB，CR3/压缩 RAF/部分 NEF 变体回退内嵌预览。详见 `raw.md`。
+- 打印：`file.print` 可在 CLI 出带纸张/标记/出血的 PDF 或送印；serve/MCP/桌面拒绝。详见 `printing.md`。
+
 ## 导出选择
 
 | 目的 | 格式 |
@@ -114,7 +123,9 @@
 | 印刷，保留图层 | PSD / PSB，或分层 TIFF |
 | 印刷，扁平 | CMYK TIFF（8 或 16 位） |
 | 合成、VFX、HDR | OpenEXR（16/32 位浮点）或 PSD |
-| 只要一个 PDF | `convert x.psd x.pdf`（单页扁平）；每个画板一页用 `file.export.artboardsToPdf` |
+| 只要一个 PDF | `convert x.psd x.pdf`（单页扁平）；每个画板一页用 `file.export.artboardsToPdf`；要纸张/标记/出血用 `file.print {"output":…,"dryRun":true}`（仅 CLI） |
+| 打印预览/打样 PDF | `file.print {"output":"proof.pdf","dryRun":true}`；见 `printing.md` |
 | 逐层、逐数据组导出 | PNG 或 JPEG |
 | 去掉元数据外发 | `file.export.saveForWebLegacy {"metadata":"none"}` |
+| XCF/DICOM/Amiga IFF | 只读导入；另存 PSD/`.pcraft`，不要写回 |
 | JPEG XL、JPEG 2000、AVIF、HEIC | 写不了，换上面的格式 |

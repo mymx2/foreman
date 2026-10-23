@@ -1,12 +1,16 @@
 # 报错速查
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。按报错原文找原因和做法；跨任务的静默失败在 `SKILL.md` 的 Gotchas 表里，这里只收报错和域内问题。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 (ff4738810) 复核；行为描述写于 0.14.0。按报错原文找原因和做法；跨任务的静默失败在 `SKILL.md` 的 Gotchas 表里，这里只收报错和域内问题。
 
 ## 按报错文本查
 
 | 报错片段（原文） | 原因 | 做法 |
 |---|---|---|
-| `uses ambient filesystem paths and is disabled` | 在 serve / MCP / 桌面通道里调了带路径的 `file.*`、`layer.exportAs`、带 path 的 `actions.save/load` 等。按命令名整类拒绝 | 改用 `doc.*` / `app.*`，或回到 CLI `run`；完整清单见 `automation.md` |
+| `uses ambient filesystem paths and is disabled` | 在 serve / MCP / 桌面通道里调了带路径的 `file.*`、`layer.exportAs`、带 path 的 `actions.save/load`、`file.print*` 等。按命令名/参数拒绝 | 改用 `doc.*` / `app.*`，或回到 CLI `run`；完整清单见 `automation.md` |
+| `quality` must be a whole number from 1 to 100 | `doc.save` / MCP `doc_save` 的 quality 严格 1..100；0/101/500 都报错。引擎导出命令才是 0..12 截断 | 用 1..100 或改用引擎导出命令；桌面 `app.save` 用 0..12 |
+| `bridge mode saves with the app's current settings; ... need headless mode` | 在 `mcp --bridge` 里给 `doc_save` 传了 `format/quality/tiffLayers/dpxBits/index` | 改用 headless serve/mcp 或 CLI；bridge 只透传 `path/tgaBits/dds*` |
+| `file.print` 报 ambient | 打印只在 CLI 可用 | 用 `photocraft-cli run ... --cmd file.print`；默认 `output` PDF + `dryRun` |
+| `image.applyDataSet` / `doc.exportDataSets` 报 ambient | 0.14 起像素替换路径按 ambient 规则判定，serve/MCP 里连绝对路径也拒 | 在 CLI 里做像素替换导出，或只用文字/可见性数据组 |
 | `automation filesystem access is not granted: read authority is absent` / `write authority is absent` | 启动 serve/mcp 时没给 `--automation-read-root` / `--automation-write-root`（serve/mcp 不读环境变量） | 显式传根目录参数 |
 | `automation path rejected: parent traversal is not allowed` | 路径里有 `..` | 用根目录内的相对路径 |
 | `automation path rejected: absolute paths must be inside the automation root` | 绝对路径在根目录之外 | 把文件放进根目录，或换根目录启动 |
@@ -39,10 +43,10 @@
 | `has no Photoshop equivalent; pass "skipUnsupported": true` | `actions.save` 遇到 Photoshop 没有对应事件的步骤 | 传 `skipUnsupported:true`，看返回的 `skipped` |
 | `no action named \`X\`` | droplet / batch 里 `actions.play` 找不到被调动作 | 用 `createDroplet` 生成（会写 `calledActions`），或给 `file.automate.batch` 传 `calledActions` |
 | `not a PhotoCraft droplet` | 手写 `.pcdroplet` 缺 `photocraftDroplet` 键 | 用 `file.automate.createDroplet` 生成 |
-| `import-only` / `cannot be written in this build` / `unknown file format` | 只读格式（KRA、PDN、Affinity、Cineon、SVG、HEIC）不能写回；DDS 从 0.12.0 起可写 | 另存 PSD / `.pcraft`（KRA 可存 `.ora`）；AVIF 取决于构建特性 |
+| `import-only` / `cannot be written in this build` / `unknown file format` | 只读格式（KRA、XCF、PDN、Affinity、HEIC、SVG）不能写回；Cineon 在 0.14 可写，DDS 可写 | 另存 PSD / `.pcraft`（KRA 可存 `.ora`）；AVIF 取决于构建特性 |
 | `Bitmap needs a Grayscale image` | 位图模式要求先转灰度 | 先 `image.mode.grayscale` |
 | `Color Table needs an Indexed image` | 颜色表要求索引色 | 先 `image.mode.indexedColor` |
-| `Duotone needs a Grayscale image` | 双色调要求灰度 | 先灰度再双色调；双色调只有 `.pcraft` 保留 |
+| `Duotone needs a Grayscale image` | 双色调要求灰度 | 先灰度再双色调；0.14 实测 PSD 重开仍为 Duotone，`.pcraft` 保留最全 |
 | `Trap needs a CMYK document` | 陷印只对 CMYK 文档 | 先转 CMYK |
 | `count, size and gutter must fit inside the target margins` | `view.newGuideLayout` 的 `width` 是单列宽，不是画布宽 | 先 `layout_design.py calc` 拿单列宽 |
 | `pass \`quad\` …, \`matrix\`, or \`scaleX\`…` | `edit.transform` 只给了 `rect`（它只是源框） | 加 `quad` / `matrix` / `scaleX` 之一 |

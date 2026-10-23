@@ -1,13 +1,14 @@
 # 命令速查
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。参数以运行时注册表为准。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 (ff4738810) 复核；行为描述写于 0.14.0。参数以运行时注册表为准。
 
 ## 怎么查
 
-- 注册表是唯一的权威：0.12.0 有 924 条命令，CLI、serve、MCP、桌面控制通道共用同一份。本文只列常用的，参数以已安装版本的注册表为准。
+- 注册表是唯一的权威：0.14.0 有 935 条命令，CLI、serve、MCP、桌面控制通道共用同一份。本文只列常用的，参数以已安装版本的注册表为准。
 - 查参数：（执行）`python <skill-dir>/scripts/params.py --exact <id>`；不知道 id 时传关键词（`curves`、`blur`）；也可以 `photocraft-cli commands --json --filter <关键词>`。参数文本的读法、哪些命令校验未知键、拼错的枚举会怎样，见 cli.md。
 - 同一条命令在各入口的写法：`run --cmd <id> --params '<json>'`；serve `engine.execute {"command":"<id>","params":{…}}`；MCP `command_run {"id":"<id>","params":{…}}`；动作步骤 `["<id>", {…}]`。哪个入口能用哪些命令见 automation.md。
-- "案例"列是 `examples/` 里的脚本编号；32–39 是新增场景。
+- "案例"列是 `examples/` 里的脚本编号；32–41 是新增场景。
+- 0.14 新增/变更：`layer.layerStyle.contours.*`、`layer.xmpMetadata`、`file.print*`、`channel.options`、`document.activate {offset}`、`layer.translate {selection}`、`file.new {profile}`、`file.saveACopy` 的 `jpegFormat`/`tiffCompression`/DDS 选项。汇总见 `whats-new.md`。
 
 ## 回执形状
 
@@ -23,7 +24,7 @@
 
 - `inspect` / `info` / `layer.list` 的 `bounds` 是像素实际覆盖的范围（文字层是字形墨迹，比文字框小），并且裁在画布之内：完全移出画布的层报 `[0,0,0,0]`，空像素层在 `layer.list` 里是 `null`。文字框本身的位置从 `type.info` 读，见 text-layout.md。
 - `paint.*` 的 `damage` 不裁到画布，可能有负数。
-- 回 `null` 的命令：`image.adjustments.*`、`select.rect` / `select.all` / `select.deselect`、`edit.stroke`、`layer.setProps`、`layer.renameLayer`、`document.activate`、`view.newGuide`、`path.fill`、`layer.matting.*`、`filter.render.clouds` / `filter.render.differenceClouds`、`image.applyImage`、`tools.swapColors` / `tools.defaultColors`、`layer.arrange.reverse`。`edit.undo` / `edit.redo` / `edit.toggleLastState` 回 `true`。`null` 既不代表失败也不代表生效，用 `document.inspect` 或像素取样核对。
+- 回 `null` 的命令：`image.adjustments.*`、`select.rect` / `select.all` / `select.deselect`、`edit.stroke`、`layer.setProps`、`layer.renameLayer`、`view.newGuide`、`path.fill`、`layer.matting.*`、`filter.render.clouds` / `filter.render.differenceClouds`、`image.applyImage`、`tools.swapColors` / `tools.defaultColors`、`layer.arrange.reverse`。`edit.undo` / `edit.redo` / `edit.toggleLastState` 回 `true`。`document.activate` 0.14 回 `{document}`。`null` 既不代表失败也不代表生效，用 `document.inspect` 或像素取样核对。
 - 多数滤镜回 `{filter:{filter:<名字>, …参数}, layer}`；`filter.liquify`、`filter.cameraRaw`、`filter.lensCorrection` 各有自己的形状（见下文滤镜表）。新建图层类命令回 `{layer:<新 id>}`，新建文档类命令回 `{document:<索引>}`。
 
 ## 单位
@@ -44,10 +45,10 @@
 
 | 命令 | 关键参数 | 回执 / 注意 | 案例 |
 |---|---|---|---|
-| `file.new` | `width` `height` `mode`（`rgb`/`gray`/`cmyk`/`lab`）`depth` `background`（`white`/`transparent`/`#rrggbb`…）`resolution` `name` | `{document}`，新文档成为活动文档；未知键报错；`run --new` 就是它 | 13 16 39 |
+| `file.new` | `width` `height` `mode`（`rgb`/`gray`/`cmyk`/`lab`）`depth` `background`（`white`/`transparent`/`#rrggbb`…）`resolution` `name` `profile`（内置 ICC id、`working` 或 `.icc` 路径） | `{document}`，新文档成为活动文档；未知键报错；`run --new` 就是它。自动化里 `profile` 路径按 ambient 规则拒绝，用内置 id/`working` | 13 16 39 |
 | `file.close` | `document` | 不提示，直接丢弃未保存的修改；不给 `document` 关活动文档 | — |
 | `image.duplicate` | `name` `mergedOnly` | `{document}`，副本成为活动文档 | 18 |
-| `document.activate` | `document`（索引；写成 `index` 报 `missing \`document\``） | `null` | 19 20 27 |
+| `document.activate` | `document`（索引）或 `offset`（相对当前标签的偏移） | 回 `{document}`；`document` 与 `offset` 不能同时给；越界报错、不回绕 | 19 20 27 |
 | `document.inspect` / `layer.list` | `document`；`layer.list {flat:true}` | inspect 含 `history` `hasSelection` `selectionBounds` `snapshots`；`flat` 时每层一行，带 `depth` `parent` | 01 13 16 |
 | `session.inspect` | — | `{active, documents}`，所有打开的文档 | — |
 | `document.pixel` | `x` `y` | 合成后的 `[r,g,b,a]`（0..1），没有 `sampleLayer` 参数 | 07 08 10 |
@@ -85,7 +86,7 @@
 | `layer.new.layerFromBackground` / `layer.new.backgroundFromLayer` | `ifPresent` `select`；`layer` | 背景层转普通层（加蒙版、写带路径的分层 TIFF 之前要做）；反过来要求文档里还没有 Background | 17 23 |
 | `layer.moveTo` | `layer` 或 `layers` `target` `position`（`above`/`below`/`into`）`copy` | 改层序和父级，不改坐标；`into` 放到已有组的最上面 | 34 |
 | `layer.groupLayers` / `layer.new.groupFromLayers` | `layer` `name` | `{layer}`，把选中层包进一个新组 | 13 16 34 |
-| `layer.translate` | `layer` `dx` `dy` `units`（`px`/`pt`）`target` | 只有相对位移，没有 `x`、`y`；不给 `layer` 时移动所有选中层 | 14 33 |
+| `layer.translate` | `layer` `dx` `dy` `units`（`px`/`pt`）`target` `selection`（是否同移选区） | 只有相对位移，没有 `x`、`y`；不给 `layer` 时移动所有选中层；`selection:true` 在同一历史步移动选区 | 14 33 |
 | `layer.arrange.bringToFront` / `sendToBack` / `bringForward` / `sendBackward` / `reverse` | `layer` | 有 Background 时 `sendToBack` 报 `layer can't move further`；`reverse` 要选中两层以上 | 03 17 |
 | `layer.align.leftEdges` / `horizontalCenters` / `rightEdges` / `topEdges` / `verticalCenters` / `bottomEdges` | `to`（`auto`/`layers`/`selection`/`canvas`） | `{moved}`，作用于选中层；`auto` 有选区时对齐选区，没有时单层对齐画布、多层对齐它们的合并范围 | 13 14 32 38 |
 | `layer.distribute.leftEdges` / `horizontalCenters` / `horizontally` / `verticalCenters` …（共 8 个） | — | 要选中三层以上 | 33 |
@@ -144,6 +145,7 @@
 | `layer.layerStyle.blendingOptions` | `blend` `opacity` `fillOpacity` `blendIf` `knockout` | | — |
 | `layer.layerStyle.clear` | `layer` `effect` | 清空后 `effects` 键整个消失 | — |
 | `style.presets.apply` / `style.presets.new` | `preset` `layers` `add`；`name` `layer` `includeEffects` | 套样式预设（`Neon Pink`、`Gold`、`Drop Shadow`…），`info` 里看到的是展开后的各个效果；没有 `style.presets.save` | 13 |
+| `layer.layerStyle.contours.list` / `new` / `delete` / `load` / `save` | `contour`（名字或点集）`name`；`path`/`data`（`.shc`）；`mode`（`append`/`replace`） | 用户轮廓库；`load`/`save` 的 `path` 在自动化里被拒，用 base64 `data`；`list` 回 `{count, contours}` | — |
 | `shape.presets.place` | `preset`（`Burst`、`Arrow Left`、`Heart`…）`rect` `fill` `stroke` | 回 shape.info | 13 28 |
 
 ## 智能对象、画板、复合、动画
@@ -154,6 +156,8 @@
 | `layer.smartObjects.convertToLayers` | `layer` | 展开内容，智能滤镜丢弃 | — |
 | `layer.smartObjects.editContents` → `layer.smartObjects.saveContents` | `layer` | `editContents` 把内容打开成新文档并激活（`{document, parentLayer}`），之后的命令都落在内容文档上；`saveContents` 写回父文档（`{updated:true}`），再 `document.activate` 回去 | 19 |
 | `layer.smartFilter.setParams` / `layer.smartFilter.setVisible` | `layer` `index` `params`（合并）；`visible` | 对智能对象执行的滤镜自动成为智能滤镜，`info` 里列在 `smartFilters` | 19 |
+| `layer.smartFilter.disableSmartFilters` / `disableFilterMask` / `deleteFilterMask` / `clearSmartFilters` | `layer` `enabled?`；`layer`；`layer`；`layer` | 开关整套智能滤镜/滤镜蒙版、删蒙版、清空 | 19 |
+| `layer.smartFilter.blendingOptions` / `delete` / `move` / `transfer` | `layer` `index` `blend` `opacity`；`index`；`index` `to`；`from` `to` `filter` `copy` | 智能滤镜的混合/顺序/转移；index 0 = 最底层 | 19 |
 | `layer.smartObjects.stackMode.median` / `mean` / `maximum` / `minimum` … | `layer` | 堆栈模式 | 21 |
 | `file.placeEmbedded` / `file.placeLinked` | `path` `scale` `fit` `smartObject` `center` | `{layer, scale, bounds, smartObject}`；默认是否建智能对象、是否缩放看首选项 | 12 14 36 39 |
 | `layer.new.artboard` | `rect` 或 `x` `y` `width` `height`，`preset`（`iPhone 14` → 390×844）`name` `background` | `{layer, rect}`；之后新建的图层不会自动进画板 | 24 |
@@ -219,6 +223,7 @@
 | `channel.split` | `closeOriginal`（默认 `true`） | `{documents}`：名为 `<文档>_R` / `_G` / `_B` 的灰度文档，最后一个活动 | 27 |
 | `channel.merge` | `mode`（`rgb`/`cmyk`/`lab`）`documents` `name` | `{document}` | 27 |
 | `channel.new` / `channel.newSpot` | `name` `fill`（`black`/`white`/`selection`）`color` `opacity`；`color` `solidity` `fromSelection` | 专色通道列在 `channel.list` 的 `alpha` 里 | — |
+| `channel.target` / `channel.options` | target：`composite`/`mask`/`vectorMask`/颜色/索引/名字；options：`channel`（索引/名字/`quickMask`/`mask`）`name` `indicates` `color` `opacity` `solidity` | `channel.options {channel:"mask"}` 是 Layer Mask Display Options（rubylith 颜色/不透明度），存首选项、不产生历史步，回 `layerMaskOverlay` | 17 27 |
 | `image.calculations` | `source1` `source2` `blending` `opacity` `result`（`newChannel`/`newDocument`/`selection`） | | 27 |
 | `image.applyImage` | `source:{document, layer, channel, invert}` `blending` `opacity` `mask` | | 27 |
 
@@ -299,7 +304,7 @@
 
 | 命令 | 关键参数 | 回执 / 注意 | 案例 |
 |---|---|---|---|
-| `file.saveACopy` | `path` `quality` `layers` `tiffLayers` `tgaBits` `dpxBits` | `{path, warnings}`；没有 `overwrite` 参数，同名文件直接覆盖 | 20 29 |
+| `file.saveACopy` | `path` `quality` `layers` `overwrite` `jpegFormat` `tiffLayers` `tiffCompression` `tgaBits` `dpxBits` `ddsCompression` `ddsMipmaps` | `{path, warnings}`；`overwrite` 只控制**替换文档自己的文件**，其他同名文件本来就静默覆盖；quality 是 0..12 | 20 29 |
 | `file.automate.batch` | `steps` `input` `output` `includeSubfolders` `format` `quality` `naming` `startingSerial` | `{files, errors}`；见 actions-batch.md | 03 |
 | `file.scripts.imageProcessor` | `input` `output` `format` `quality` `width` `height`（只缩不放）`convertToSrgb` | `{files, errors}` | 05 |
 | `file.automate.contactSheetII` | `input` `units`（`pixels`…）`width` `height` `columns` `rows` `caption` `flatten` | 新建文档 | 05 18 |
@@ -325,6 +330,23 @@
 | `measurementLog.export` | `path` `rows` | 不给 `path` 时回 `{csv, rows}` | — |
 | `plugin.install` / `plugin.run` / `plugin.list` | `path` 或 `data`（base64 的 `.wasm`）`replace`；`id` `params` | 装好的插件只在当前进程里有效 | — |
 | `edit.autoAlignLayers` / `edit.autoBlendLayers` | `projection` `reference`；`method`（`panorama`/`stack`） | | — |
+
+## 图层 XMP
+
+| 命令 | 关键参数 | 回执 / 注意 | 案例 |
+|---|---|---|---|
+| `layer.xmpMetadata` | `layer`（不给用活动层）`rawData`（完整 XMP XML；省略=读，`null`=删） | `{layer, rawData, changed}`；`inspect` 的 `hasXmp` 可验证；最大 4 MiB，必须是 `x:xmpmeta`/`rdf:RDF` 根、无 DTD/NUL。写入/删除可能覆盖第三方数据，先确认并留备份 | — |
+
+## 打印
+
+打印只在 CLI 可用；serve/MCP/桌面按 `file.*` 规则拒绝。完整参数与路由见 `printing.md`。
+
+| 命令 | 关键参数 | 回执 / 注意 | 案例 |
+|---|---|---|---|
+| `file.print` | `printer` `copies` `paper` `orientation` `center` `top` `left` `scale` `scaleToFit` `printable` `colorHandling` `printerProfile` `intent` `bpc` `cornerCropMarks` `centerCropMarks` `registrationMarks` `bleed` `description` `labels` `emulsionDown` `output` `send` `printServer` `dryRun` | `{pdf, imageRect, command, sent, spooler, backend}`；`output` 出 PDF，`dryRun` 不 spool；`send` 才真的送印 | 40 |
+| `file.printOneCopy` | 任意 Print 参数（覆盖上一次设置） | 用上一次 Print 设置打印一份 | — |
+| `file.printers` / `file.print.printers` | — | 列打印队列；`file.printers` 回 `{printers, default}`，`file.print.printers` 回 `{supported, printers}` | — |
+| `file.print.page` | `printer` `printerSettings` `orientation` | Windows：纸张/可打印区/DPI；可转方向 | — |
 
 ## 深水命令索引
 
@@ -363,7 +385,7 @@
 | `layer.ungroupLayers` / `layer.new.layerViaCopy` | 解组；用选区在当前层上复制出新层 |
 | `layer.new.frame` / `layer.new.frameFromLayers` | 建空帧 / 用选中层建帧；`frame` 是 `[x,y,w,h]` |
 | `layer.artboard.set` | 改画板位置与尺寸；`addBeside` 默认在原画板右侧 100 px |
-| `layerComp.new` / `apply` / `list` / `duplicate` / `update` / `delete` / `restoreLastDocumentState` | 图层复合完整生命周期；`restoreLastDocumentState` 回 `null` |
+| `layerComp.new` / `apply` / `list` / `duplicate` / `update` / `delete` / `reorder` / `restoreLastDocumentState` | 图层复合完整生命周期；`reorder` 调整顺序；`restoreLastDocumentState` 回 `null` |
 | `channel.new` / `duplicate` / `newSpot` / `options` / `setVisible` / `mergeSpot` | Alpha 与专色通道；专色 `newSpot {color,solidity,fromSelection}`；`mergeSpot` 合并进图像 |
 | `history.newSnapshot` / `selectSnapshot` / `renameSnapshot` / `deleteSnapshot` / `selectState` / `deleteState` / `newDocument` | 快照与历史状态；状态索引 0 = 最早，删除会丢掉该状态之后的历史 |
 | `image.revealAll` / `image.applyImage` / `image.calculations` | 画布扩到包住像素；应用图像/计算通道，`calculations` 的 `result` 可为 `newChannel`/`newDocument`/`selection` |
@@ -389,6 +411,7 @@
 | `brush.presets.save` / `setCurrent` / `list` / `delete` | 画笔预设生命周期 |
 | `brush.texturePattern` | 设置画笔纹理 `{pattern,scale,enabled}` |
 | `tools.setBrush` / `tools.swapColors` / `tools.defaultColors` | 设置画笔；交换/恢复前景背景色 |
+| `tools.firstBrush` / `lastBrush` / `nextBrush` / `previousBrush` | 在最近使用的画笔之间切换；回执见注册表 |
 | `filter.gallery.<effect>` | 滤镜库单项（`watercolor` `posterEdges` `glowingEdges` 等）；也可用 `filter.filterGallery {effects:[…]}` 叠加 |
 | `filter.blurGallery.fieldBlur` / `irisBlur` / `pathBlur` / `spinBlur` | 模糊画廊；参数按注册表 |
 | `filter.adaptiveWideAngle` / `filter.lensCorrection` | 广角/镜头校正；`lensCorrection` 同时接受 `distortion`/`vignetteAmount` 与 `correctDistortion`/`correctVignette`/`correctCA` 两种写法 |

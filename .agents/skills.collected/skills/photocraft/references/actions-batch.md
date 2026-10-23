@@ -1,6 +1,17 @@
 # 动作、批处理、Droplet、变量数据组
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.12.0 (6a2d027ee) 复核；行为描述写于 0.10.0 (8407d9ccb)。CLI 子命令的标志和退出码见 `cli.md`；serve、MCP 的传输和方法见 `automation.md`。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 (ff4738810) 复核；行为描述写于 0.14.0。CLI 子命令的标志和退出码见 `cli.md`；serve、MCP 的传输和方法见 `automation.md`；入口选择见 `entrypoints.md`。
+
+## 先选对自动化形态
+
+| 需求 | 用 | 关键点 |
+|---|---|---|
+| 同一个会话里重复一组步骤，或把动作交给 Photoshop 同事 | 动作 / `.atn` | `actions.record`/`play`；`.atn` 无对应步骤要 `skipUnsupported` 或 `actions.toggle` 跳过 |
+| 双击分发到同事机器 | Droplet | 先用 `file.automate.createDroplet` 生成；嵌套 action 会写入 `calledActions` |
+| 一个目录顶层、同一组步骤、CI | CLI `batch` | 不递归、无命名模板；部分失败退出码 1 |
+| 递归、命名模板、序号、显式路径数组 | `file.automate.batch` | 在 CLI `run` 里调；失败进 `errors[]`，整条 `run` 仍退出 0 |
+| 已经在 serve 里打开文档，要逐步试 | serve `batch` | 只能经 `engine.execute` 和会话方法；`failed` 看 `result.failed` |
+| 单文件一次性执行 | `run` | 每步一个 `--cmd`；能合并就别开新进程 |
 
 ## 步骤形状
 
@@ -115,7 +126,7 @@ photocraft-cli run --new '{"width":1,"height":1}' --cmd file.automate.batch --pa
 | `quality` | 0..12，超出静默截到 12（传 80 等于传 12） |
 | `includeSubfolders` | 见对比表 |
 | `naming`、`startingSerial` | 见下 |
-| `tiffLayers`、`tgaBits`、`dpxBits` | 格式选项 |
+| `tiffLayers`、`tiffCompression`、`jpegFormat`、`tgaBits`、`dpxBits`、`ddsCompression`、`ddsMipmaps` | 格式选项；JPEG 扫描、TIFF 压缩、DDS 压缩/mip 链都在这里传 |
 | `calledActions` | `[{name, steps}…]`：`steps` 里 `actions.play` 调用的动作；默认用会话里的动作 |
 
 - 回复 `{files, errors}`。单个输入失败进 `errors:[{file, error}]`，整条 `run` 退出码仍是 0，要检查 `errors`。
@@ -180,8 +191,8 @@ CSV 规则：
 像素替换：
 
 - 加 `clip:true` 才会把图片裁在图层原来的框里；默认 `clip:false` 时 `method:"fill"` 的图片会溢出画框，盖住旁边的文字。
-- 路径解析：CLI 里相对路径相对"已保存文档所在的目录"，文档没存过就报 `the image <路径> is not opened: the path is relative and the document has not been saved`。serve、MCP 里相对路径一律报这句，文档是从根目录打开的或刚存过盘也一样，只能用绝对路径。
-- 绝对路径读取时不检查读根目录：实测 serve 把读根之外的图片读进了导出结果。只用可信的数据组和 CSV。
-- serve、MCP、桌面里 `image.applyDataSet` 应用含像素替换的数据组会被按命令名拒绝，像素替换只能经 `doc.exportDataSets` 生效；只含文字、可见性的数据组可以单独 apply。CLI 里都可以。
+- 路径解析：CLI 里相对路径相对"已保存文档所在的目录"，文档没存过就报 `the image <路径> is not opened: the path is relative and the document has not been saved`。serve、MCP 里相对路径一律报这句，文档是从根目录打开的或刚存过盘也一样。
+- 0.14 起 `image.applyDataSet` 和 `doc.exportDataSets` 的像素路径按 ambient 规则判定：serve/MCP 里连绝对路径也会被拒，旧版“读根外图片”的缺口已关闭；像素替换导出要在 CLI 里跑，或先把图片放进可信工作流。CLI 仍是本地可信模式，不可信 CSV 仍可能让进程读到你给它的文件。
+- serve、MCP、桌面里 `image.applyDataSet` 应用含像素替换的数据组会被按命令名/参数拒绝；只有文字、可见性的数据组可以单独 apply。CLI 里都可以。
 
 保存：`.pcraft` 保存变量定义和数据组；PSD 不保存，重开后 `variables.list` 为空。
