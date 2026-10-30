@@ -1,11 +1,12 @@
 ---
 name: wechatide-skill
-version: 0.3.10
+version: 0.3.14
 description: >-
   微信开发者工具（wechatide）工作流根入口：小程序/小游戏的创建与导入、编译预览上传、
   登录与项目管理、页面自动化、调试取证、云开发，以及开发者工具的下载安装更新。
   当当前项目明确是微信小程序或小游戏时使用；用户提到微信开发者工具、小程序/小游戏模拟器、
   新建项目、预览上传、自动化点击、console/network、云函数/云数据库、下载安装开发者工具时也使用。
+  不适用于通用编码辅助、与小程序小游戏无关的桌面自动化，或任意 shell / 未注册工具调用。
 metadata:
   short-description: 微信开发者工具 skill 包
 related-skills:
@@ -27,6 +28,15 @@ related-skills:
 
 # wechatide-skill
 
+微信开发者工具工作流根入口，统一调度小程序/小游戏的编译、预览、自动化与云开发。
+
+## Outcome Contract
+
+- **Outcome**: 完成微信小程序/小游戏的工具链操作——创建导入、编译预览上传、登录与项目管理、页面自动化、调试取证、云开发，或开发者工具的安装更新。
+- **Done when**: 目标操作返回成功（编译无错误、预览二维码/上传成功、自动化步骤全部执行、取证数据已获取），且结果经过核验而非仅凭命令返回码。
+- **Evidence**: `wechatide` 工具的实际输出；编译错误列表；预览/上传返回的标识；截图或 console/network 记录。
+- **Authorization**: 上传、发布等对外可见的操作需用户明确授权；安装/更新开发者工具前先告知并征得同意。
+
 ## 用途
 
 面向微信开发者工具工作流的根入口。**小程序与小游戏同等适用**（除非某工具参数或说明明确限定类型）。当前项目已明确是微信小程序或小游戏时，也应使用本 skill。
@@ -41,7 +51,7 @@ related-skills:
 
 下列任一成立时，**先**完成安装诊断，再调任何业务 `wechatide` 工具：本 skill **首次安装 / 首次导入到 agent**；用户说「安装 skill / 配置 wechatide-skill」；任意时刻 `wechatide` 调用不了。
 
-命令、返回分支与软链处理 → [运行前检查 · Skill 安装时检查](references/environment-readiness.md#skill-安装时检查)；下载/更新流程 → `skills/installer/SKILL.md`。
+命令、返回分支与软链处理 → [运行前检查 · Skill 安装时检查](references/environment-readiness.md#skill-安装时检查)；下载/更新流程 → `installer` 子技能。
 
 ## 运行前门禁（必须）
 
@@ -54,7 +64,7 @@ related-skills:
    `wechatide -c <clientName> check_wechatide_status --skill-version <本文件 frontmatter 的 version>`
    → 按运行前检查处理返回。**可继续业务**仅当：`versionRelation` 为 `equal` / `agent_ahead`，且 `loginExpired: false`（再按第 3 步处理 token）
 2. 若上一步（或任意 `wechatide` 调用）命令不存在 / 无法执行 → 安装诊断；命令可用时不要主动跑
-3. `tokenRequired: true` → 复用已记 token，否则问用户（「设置 → 安全」）；禁止猜 / 翻本地
+3. 分入口处理 Token：`wechatide -c` / skill-call 走可选 CLI 令牌，未配置则不验；仅当 `cliTokenRequired` / 兼容字段 `tokenRequired` 为 true 或返回 `cli_token_required` 时才带 CLI 令牌（复用已记 token，否则问用户）。`wechatide mcp` / Inspector 才需要独立 MCP Token（`mcpTokenRequired: true`）；缺 Token / `mcp_token_required` → 请用户到「设置 → 安全」**重新复制 MCP 配置**，不要把 CLI 可选令牌当成 MCP Token。禁止猜 / 翻本地
 
 跳过：`installer`、`project-config`。用户要下载/安装/更新可直接进 `installer`。
 
@@ -71,7 +81,7 @@ related-skills:
 wechatide -c <clientName> <toolName> [flags...] [--token <cliAccessToken>]
 ```
 
-- `-c`：当前 agent 产品简称（如 `CodeBuddy`、 `Cursor`），须与授权弹窗一致，同一会话内不变
+- `-c`：当前 agent 产品简称（如 `Cursor`、`Claude Code`），须与授权弹窗一致，同一会话内不变
 - `<toolName>`：下划线工具名；勿编造，先查 [tool-index](references/tool-index.md) 或 `wechatide <toolName> -h`
 - `--token` / clientName 细则 → [运行前检查](references/environment-readiness.md)
 - `--project` 等需要路径的参数，使用本地绝对路径；
@@ -93,16 +103,17 @@ wechatide -c <clientName> <toolName> [flags...] [--token <cliAccessToken>]
 
 | 用户意图 | Scene |
 |----------|--------|
-| 下载、安装或更新微信开发者工具；本 skill 首次安装/导入后的安装诊断；`wechatide` 调用不了经诊断需安装/更新；`agent_ahead` 后遇到明确版本兼容 blocker；macOS DMG 需补 `wechatide` 软链 | `skills/installer/SKILL.md` |
+| 下载、安装或更新微信开发者工具；本 skill 首次安装/导入后的安装诊断；`wechatide` 调用不了经诊断需安装/更新；`agent_ahead` 后遇到明确版本兼容 blocker；macOS DMG 需补 `wechatide` 软链 | `installer` 子技能 |
 | 从零创建小程序/小游戏项目（目录 + 配置 + 导入列表；**非**独立 scene） | `wechatide-tools/references/create-project-guide.md` |
-| 打开/关闭项目窗口、登录、AppID、运行时上下文 | `skills/initializer/SKILL.md` |
-| 项目列表查询 / 导入 / 从列表删除、代码片段分享 / 导入（不开窗口） | `skills/project-manager/SKILL.md` |
-| 改 `project.config.json`（修改基础库版本、域名校验、热重载、编译开关等，不调 MCP） | `skills/project-config/SKILL.md` |
-| 编译页面、单文件编译、构建 npm、刷新模拟器 | `skills/compiler/SKILL.md` |
-| 预览、二维码、上传体验版（预览优先 `auto_preview`；可不打开窗口） | `skills/previewer/SKILL.md` |
-| 点击、输入、滚动、页面断言、自动化脚本 | `skills/automator/SKILL.md` |
-| console / network / 截图取证 / 状态诊断 | `skills/debugger/SKILL.md` |
-| 云环境、云函数、云数据库、云存储、消息推送 | `skills/cloudbase-operator/SKILL.md` |
+| 打开/关闭项目窗口、登录、AppID、运行时上下文 | `initializer` 子技能 |
+| 项目列表查询 / 导入 / 从列表删除、代码片段分享 / 导入（不开窗口） | `project-manager` 子技能 |
+| 改 `project.config.json`（修改基础库版本、域名校验、热重载、编译开关等，不调 MCP） | `project-config` 子技能 |
+| 编译页面、单文件编译、构建 npm、刷新模拟器 | `compiler` 子技能 |
+| 模拟器工具栏：查询/切换机型、暗黑模式、弹出模拟器 | `simulator` 子技能 |
+| 预览、二维码、上传体验版（预览优先 `auto_preview`；可不打开窗口） | `previewer` 子技能 |
+| 点击、输入、滚动、页面断言、自动化脚本 | `automator` 子技能 |
+| console / network / 截图取证 / 状态诊断 | `debugger` 子技能 |
+| 云环境、云函数、云数据库、云存储、消息推送 | `cloudbase-operator` 子技能 |
 | 小程序地图组件 / 腾讯位置服务 API | 外部 skill：`tencentmap-miniprogram-skill`（前端）/ `tencentmap-webservice-skill`（后端）——本包不处理，需触发主动下载；详见 [map-skill-index](references/map-skill-index.md) |
 
 选择原则：按**当前主目标**进一个 scene；不要跨 scene 混用原子工具。多目标时先完成 blocker，再移交。

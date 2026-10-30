@@ -45,6 +45,7 @@ const GROUPS: SkillGroup[] = [
       "storyset",
       "ardot",
       "photocraft",
+      "ai-visual-design",
     ],
   },
   {
@@ -160,6 +161,7 @@ const GROUPS: SkillGroup[] = [
     outputFile: "misc-SKILL.local.md",
     title: "# 其他技能清单",
     skills: [
+      "office-pro",
       "tencentos-expert",
       "sql-parser-cst",
       "webgpu-threejs-tsl",

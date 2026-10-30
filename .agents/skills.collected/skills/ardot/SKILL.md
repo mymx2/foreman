@@ -12,7 +12,7 @@ description: |
 metadata:
   version: "0.1.2"
   author: rbz-one
-  modules: [grid, showcase, layout-adapt]
+  modules: [grid, showcase, layout-adapt, design-to-code, ui-design]
 ---
 
 # Ardot 伞技能
@@ -44,6 +44,8 @@ metadata:
 | `modules/grid` | 给选中 Frame 加 0.1px 像素对齐网格 | `modules/grid/SKILL.md` |
 | `modules/showcase` | 把多张画板自动编排成可交付的衍生展示区 | `modules/showcase/SKILL.md` |
 | `modules/layout-adapt` | 响应式 / 多语言下修复文本溢出与塌陷 | `modules/layout-adapt/SKILL.md` |
+| `modules/design-to-code` | 设计稿转前端代码，或从网站反向提取设计规范与 token | `modules/design-to-code/SKILL.md` |
+| `modules/ui-design` | 按交付类型（Web/移动/落地页/表格）加载 UI 领域设计规范 | `modules/ui-design/SKILL.md` |
 
 **模块边界**：每个模块只解决自己那一类问题，互不调用。组合任务由
 本 SKILL.md 路由层调度（先 layout-adapt 修溢出，再 showcase 编排）。
@@ -57,6 +59,8 @@ metadata:
 | 加网格 / 对齐参考线 / pixel grid | `modules/grid/SKILL.md` |
 | 自动编排 / 评审展示 / 多状态对照 / 衍生展示区 / showcase | `modules/showcase/SKILL.md` |
 | 布局适配 / 文本适配 / 翻译适配 / 国际化适配 / 防溢出 / 响应式 | `modules/layout-adapt/SKILL.md` |
+| 设计稿转代码 / 转前端代码 / 生成 HTML / 提取 design token / 网站风格提取 | `modules/design-to-code/SKILL.md` |
+| 设计页面 / 创建界面 / 做落地页 / 设计后台 / 设计 App / 设计系统 | `modules/ui-design/SKILL.md` |
 | 以上都不是，但跟 Ardot 有关 | 先问清楚用户要做什么，再决定 |
 | 跨模块组合（先适配后排版） | 按依赖顺序串行调用多个模块 |
 
@@ -130,6 +134,8 @@ Ardot MCP 工具可能暴露在多个命名空间（`mcp__ardot__*` /
 | grid | `modules/grid/SKILL.md` | `modules/grid/references/advanced-grids.md` |
 | showcase | `modules/showcase/SKILL.md` | 10 个 references + `assets/preset-config.json` |
 | layout-adapt | `modules/layout-adapt/SKILL.md` | `modules/layout-adapt/scripts/layout-adaptation.js` + `modules/layout-adapt/scripts/ardot-client.js` |
+| design-to-code | `modules/design-to-code/SKILL.md` | 4 个 references（workflow ×2 + code/tailwind 规则） |
+| ui-design | `modules/ui-design/SKILL.md` | 4 个 references（web-app / landing-page / mobile-app / table 规范） |
 
 ## 出错时
 

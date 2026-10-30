@@ -1,0 +1,22 @@
+<view class="page">
+    <view class="result-card">
+        <view class="result-icon {{status === 'success' ? 'result-icon-success' : 'result-icon-fail'}}">
+            <view class="icon-check" wx:if="{{status === 'success'}}">
+                <view class="icon-check-short"></view>
+                <view class="icon-check-long"></view>
+            </view>
+            <view class="icon-close" wx:else>
+                <view class="icon-close-line"></view>
+                <view class="icon-close-line icon-close-line-alt"></view>
+            </view>
+        </view>
+
+        <text class="result-title">{{title}}</text>
+        <text class="result-description">{{description}}</text>
+
+        <view class="action-group">
+            <button class="action-button action-primary" bindtap="goHome">返回首页</button>
+            <button class="action-button" bindtap="continueSubmit">继续提交</button>
+        </view>
+    </view>
+</view>

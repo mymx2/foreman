@@ -30,6 +30,8 @@ PhotoCraft 的绝大多数菜单动作、工具和对话框都对应注册表里
 - 让 agent 连续编辑：serve 长会话、MCP 工具、驱动桌面窗口。
 - 不适用：生成式填充或 AI 绘图（PhotoCraft 没有；`select.subject` 一类是经典算法，不是学习型模型）；RAW 图库/XMP sidecar 管理（单张 RAW 显影是支持的）；网页样式与 Figma 稿评审；Web/WASM 版没有自动化入口。
 
+**从零设计视觉方案**：本技能负责落地与处理，不负责方案设计。需要先定视觉方向、系列一致性、电商详情页叙事时，先用 `ai-visual-design` 出方案与参考图，再回来在这里做成可编辑分层稿。
+
 ## Process
 
 1. **定位 CLI**：执行 `python <skill-dir>/scripts/find_cli.py --check`。它依次看 `PHOTOCRAFT_CLI`、`PATH`、安装目录（Windows MSI 装在 `C:\Program Files\PhotoCraft\`，不进 PATH）。完成标准：有可执行路径和 `--version` 输出；找不到就请用户提供路径，不要猜。

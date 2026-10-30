@@ -65,7 +65,7 @@ Titlebar 三段顺序固定为：**产品 / 主题 / 日期**。日期永远放�
 正确：
 
 ```text
-desktop · WorkBuddy 中调用网盘链路
+desktop · 客户端内调用网盘链路
 web · 官网购买页流程
 mobile + desktop · 登录链路设计稿
 ```
@@ -73,7 +73,7 @@ mobile + desktop · 登录链路设计稿
 错误：
 
 ```text
-desktop · 3 屏对照（WorkBuddy 中调用网盘链路）
+desktop · 3 屏对照（客户端内调用网盘链路）
 screens · 3 屏对照
 web · 官网流程总览（官网流程总览）
 ```

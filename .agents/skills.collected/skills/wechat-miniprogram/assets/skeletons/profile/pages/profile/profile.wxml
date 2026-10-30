@@ -1,0 +1,22 @@
+<view class="page">
+    <view class="hero">
+        <text class="eyebrow">PROFILE</text>
+        <text class="title">{{title}}</text>
+        <text class="subtitle">{{subtitle}}</text>
+    </view>
+
+    <view class="profile-card">
+        <view class="avatar">{{avatarText}}</view>
+        <view class="profile-main">
+            <text class="nickname">{{displayNickname}}</text>
+            <text class="intro">{{displayIntro}}</text>
+        </view>
+    </view>
+
+    <view class="menu-card" wx:for="{{menuGroups}}" wx:for-item="group" wx:for-index="groupIndex" wx:key="key">
+        <view class="menu-item" wx:for="{{group.items}}" wx:for-item="menuItem" wx:for-index="itemIndex" wx:key="key" data-group="{{groupIndex}}" data-index="{{itemIndex}}" bindtap="handleMenuTap">
+            <text class="menu-text">{{menuItem.text}}</text>
+            <text class="menu-arrow">›</text>
+        </view>
+    </view>
+</view>

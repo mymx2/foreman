@@ -6,7 +6,7 @@
 
 | id | scene | 摘要 |
 |----|-------|------|
-| `check_wechatide_status` | initializer | 只读获取登录态（loginExpired）、当前用户（loginUser）、skill 版本关系（versionRelation）以及是否启用 CLI 令... |
+| `check_wechatide_status` | initializer | 只读获取登录态（loginExpired）、当前用户（loginUser）、skill 版本关系（versionRelation）、CLI 可选令牌（cliTokenRequired / 兼容字段 tokenRequired）以及 MCP 是否需要独立 Token（mcpTokenRequired，始终为 true）；不触发登录。wechatide -c / skill-call 走可选 CLI 令牌（未配置则不验，本工具还可跳过 CLI 令牌）；wechatide mcp / Inspector 等 MCP 入口始终需要独立 MCP Token。MCP 缺 Token 时应提示用户重新复制 MCP 配置；仅当 cliTokenRequired 为 true 时后续 CLI / skill-call 命令须带 CLI 令牌。 |
 | `close_project_window` | initializer | 关闭包含模拟器的项目窗口，不等于完全退出微信开发者工具 |
 | `open_project_window` | initializer | 打开包含模拟器的项目窗口。如果之前窗口已存在，则不打开新窗口，直接返回已打开的窗口 ID |
 | `quit` | initializer | 关闭 WechatIDE。 |
@@ -23,14 +23,18 @@
 | `upload` | previewer | 上传代码包(发布体验版)。仅在用户明确要求「上传代码」或者「发布体验版」时调用。 |
 | `simulator_open_page` | compiler | 触发项目窗口模拟器编译并打开指定页面。 |
 | `simulator_refresh` | compiler | 触发项目窗口模拟器重新编译/刷新当前页面；不返回编译结果 |
-| `get_simulator_console` | debugger | 对小程序 console 缓冲区执行 grep 过滤并返回命中行。command 是 grep 命令字符串（不含文件名），如 'grep -i error... |
-| `get_simulator_network` | debugger | 对小程序 network 缓冲区执行 grep 过滤并返回命中行。command 是 grep 命令字符串（不含文件名）。要获取全部请求记录请用 'gre... |
+| `simulator_get_device` | simulator | 查询当前模拟器机型和工具栏可选机型列表，不切换机型。返回项含 os，可用于区分 iOS 与 Android。 |
+| `simulator_set_device` | simulator | 设置模拟器机型，名称与工具栏机型菜单一致。查询列表用 simulator_get_device。未知机型返回 success=false 和 devices，不切换。 |
+| `simulator_set_darkmode` | simulator | 设置模拟器暗黑模式。dark 为暗黑，light 为浅色，会立刻作用到当前模拟器。 |
+| `simulator_popup` | simulator | 把模拟器弹出为独立窗口。窗口未开时先打开完整窗口再弹出。已打开的精简窗口无法改成完整窗口，弹出仍会失败。已弹出不重复拆窗。 |
+| `get_simulator_console` | debugger | 对小程序 console 缓冲区执行 grep 过滤并返回命中行。command 是 grep 命令字符串（不含文件名），如 'grep -i error'。要获取全部日志请用 'grep -n .'（匹配任意行）。返回空字符串代表没有匹配行，不代表 console 为空。 |
+| `get_simulator_network` | debugger | 对小程序 network 缓冲区执行 grep 过滤并返回命中行。command 是 grep 命令字符串（不含文件名）。要获取全部请求记录请用 'grep -n .'。 |
 | `simulator_screenshot` | debugger（主；亦可 automator） | 截图；返回 path + imageWidth/imageHeight；默认优化尺寸（长边 1280 JPEG） |
 | `get_user_appids` | initializer | 获取当前登录用户可管理的全部 AppID 列表。可通过 type 按小程序/小游戏过滤。 |
 | `compile_wxml` | compiler | 只读获取 WXML 模板的编译结果摘要，用于诊断模板编译产物；不是整页编译或预览。 |
 | `compile_wxss` | compiler | 只读获取 WXSS 样式的编译结果摘要，用于诊断样式编译产物；不是整页编译或预览。 |
-| `automation_element_action` | automator | 读取或操作 selector 命中的元素；交互 action 会真实触发点击、输入、滚动或触摸事件，支持操作前等待。 |
-| `automation_game_action` | automator | 小游戏画布触摸：tap / swipe / touch*；坐标默认画布空间，可用 coordinateSpace=image + imageWidth/H... |
+| `automation_element_action` | automator | 读取或操作页面元素；有 selector 时按元素操作；tap/touch*/longpress 可改传 x/y（视口 CSS 像素）直接坐标触控，二者勿同时传；支持操作前等待。 |
+| `automation_game_action` | automator | 小游戏画布触摸：tap / swipe / touch*；坐标默认画布空间，可用 coordinateSpace=image + imageWidth/Height 按截图像素换算；截图请用 simulator_screenshot。 |
 | `automation_evaluate` | automator | 在当前小程序或小游戏运行时执行一段 JS 函数字符串并返回结果。该工具会实际执行代码，不是只读查询 |
 | `automation_generate_script` | automator | 把已记录调用生成可用 node 运行的 automator 脚本；不传项目路径时使用录制时的路径。 |
 | `automation_navigate` | automator | 在当前小程序运行时执行页面导航，不负责页面断言；支持 waitForSelector / wait 在导航前等待。 |
@@ -56,5 +60,5 @@
 
 ## 已废弃（勿调用，且不出现在 `wechatide -h` 默认目录）
 
-- `project_setting_get`：【已废弃】请改用 skills/project-config：直接读取 project.config.json / project.private.config.json。调用仅返回废弃提示。
-- `project_setting_update`：【已废弃】请改用 skills/project-config：直接修改 project.config.json / project.private.config.json。调用仅返回废弃提示，不会写入。
+- `project_setting_get`：【已废弃】请改用 project-config 子技能：直接读取 project.config.json / project.private.config.json。调用仅返回废弃提示。
+- `project_setting_update`：【已废弃】请改用 project-config 子技能：直接修改 project.config.json / project.private.config.json。调用仅返回废弃提示，不会写入。

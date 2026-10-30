@@ -6,15 +6,19 @@ regression evidence, or an explanation of what appeared on the device. Use
 
 ## Keep the claims separate
 
-Report these as different evidence layers:
+Report these as different evidence layers. A higher layer never implies a lower
+one, and passing one layer is not proof of another:
 
-- **Captured**: the operation receipt succeeded and contains the artifact URI,
-  SHA-256 digest, media type, size, source, target, and revision.
-- **Visually inspected**: an image- or video-capable tool actually opened the
-  returned artifact and evaluated its visible content. A text reader is not an
-  image viewer; a digest is not inspection.
-- **Behavior verified**: a semantic `assert` or one exact native test
-  established the behavior. Pixels alone do not establish this layer.
+| Layer | 成立条件 | 不能说明什么 |
+|---|---|---|
+| **Build** | 选定的 project / target 编译成功 | 没证明装上了、没证明能跑 |
+| **Captured** | 操作回执成功，含 artifact URI、SHA-256、media type、size、source、target、revision | 没证明有人看过内容 |
+| **Visually inspected** | 真正用图像/视频工具打开了产物并评估可见内容（文本读取器不算图像查看器，摘要不等于检查） | 没证明行为正确 |
+| **Interactive** | 实时设备界面完成了语义化操作流程 | 没证明断言通过 |
+| **Native test** | 某个精确 selector 返回 `data.output.outcome == "passed"` | 没覆盖其他场景 |
+| **Repair** | 同一冻结契约在修复前失败、修复后通过 | 没证明其他契约也好了 |
+
+像素不能建立行为层；断言通过不能建立视觉层。声明结论时说清是哪一层，缺的层明确标为未验证。
 
 ## Artifact integrity
 

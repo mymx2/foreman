@@ -23,9 +23,9 @@ description: >-
 | 可用 AppID 列表 | `get_user_appids`（可选 `--type miniprogram\|minigame`） |
 | 当前页/系统信息 | `automation_runtime_info`（**主归属本 scene**） |
 
-项目设置读写 → `skills/project-config/SKILL.md`（勿调已废弃的 `project_setting_*`）。
+项目设置读写 → `project-config` 子技能（勿调已废弃的 `project_setting_*`）。
 
-构建 npm → `skills/compiler/SKILL.md` 的 `build_npm`。
+构建 npm → `compiler` 子技能 的 `build_npm`。
 
 带 `--project` 的配置/appid 错误 → [project-tool-error-guide.md](../../wechatide-tools/references/project-tool-error-guide.md)。
 

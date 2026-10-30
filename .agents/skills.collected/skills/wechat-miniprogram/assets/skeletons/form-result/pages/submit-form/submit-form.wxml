@@ -1,0 +1,33 @@
+<view class="page">
+    <view class="hero">
+        <text class="eyebrow">FORM RESULT</text>
+        <text class="title">{{title}}</text>
+        <text class="subtitle">{{subtitle}}</text>
+    </view>
+
+    <view class="form-card">
+        <view class="error-banner" wx:if="{{formError !== ''}}">
+            <text class="error-title">请先修正以下问题</text>
+            <text class="error-message">{{formError}}</text>
+        </view>
+
+        <view class="field-card {{fieldErrors.name !== '' ? 'field-card-error' : ''}}">
+            <text class="field-label">姓名 <text class="required">*</text></text>
+            <input class="field-input" placeholder="请输入姓名" value="{{name}}" data-field="name" bindinput="handleInput" maxlength="40" />
+            <text class="field-error" wx:if="{{fieldErrors.name !== ''}}">{{fieldErrors.name}}</text>
+        </view>
+
+        <view class="field-card {{fieldErrors.contact !== '' ? 'field-card-error' : ''}}">
+            <text class="field-label">联系方式 <text class="required">*</text></text>
+            <input class="field-input" placeholder="请输入手机号或邮箱" value="{{contact}}" data-field="contact" bindinput="handleInput" maxlength="80" />
+            <text class="field-error" wx:if="{{fieldErrors.contact !== ''}}">{{fieldErrors.contact}}</text>
+        </view>
+
+        <view class="field-card">
+            <text class="field-label">说明</text>
+            <textarea class="field-textarea" placeholder="可选，补充你的需求说明" value="{{description}}" data-field="description" bindinput="handleInput" maxlength="200" />
+        </view>
+
+        <button class="submit-button" bindtap="handleSubmit" loading="{{submitting}}" disabled="{{submitting}}">提交</button>
+    </view>
+</view>

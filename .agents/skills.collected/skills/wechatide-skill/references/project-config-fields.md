@@ -1,6 +1,6 @@
 # project.config 字段速查
 
-本 skill 内的字段说明与写入规则（含 `skills/project-config/SKILL.md`）优先于外部文档。
+本 skill 内的字段说明与写入规则（含 `project-config` 子技能）优先于外部文档。
 
 官方文档仅作补充：[项目配置文件](https://developers.weixin.qq.com/miniprogram/dev/devtools/projectconfig.html)。
 

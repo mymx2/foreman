@@ -7,31 +7,6 @@
 
 ---
 
-## 全局技能（-g 全局安装，所有项目可用）
-
-### 安装命令
-
-```bash
-# anthropics/claude-plugins-official
-vpx skills add https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management/skills --skill claude-md-improver -g -y
-
-# anthropics/skills
-vpx skills add anthropics/skills --skill skill-creator -g -y
-
-# openai/skills -- deprecated
-vpx skills add openai/skills --skill screenshot -g -y
-```
-
-### 技能索引
-
-| 技能 | 来源 | 一句话 |
-|------|------|--------|
-| `claude-md-improver` | anthropics/claude-plugins-official (claude-md-management) | CLAUDE.md 审计与优化 |
-| `skill-creator` | anthropics/skills | Agent Skill 创建与优化 |
-| `screenshot` | openai/skills | 桌面截图工具 |
-
----
-
 ## 项目技能（本仓自包含安装示例）
 
 > ⚠️ **仅作案例，不实际安装。** 演示如何把本仓 `.agents/skills/` 下的本地技能用 skills CLI 以本地路径方式安装。
@@ -111,8 +86,9 @@ vpx skills add slidevjs/slidev --skill slidev --agent openclaw -p -y
 | `arrow-js` | standardagents/arrow-js | 轻量响应式 UI 框架 |
 | `slidev` | slidevjs/slidev | Markdown 幻灯片 |
 | `storyset` | 个人创建 | Storyset 插画检索、下载、品牌换色与动画 SVG/GIF 导出 |
-| `ardot` | 本仓（repros 吸收） | Ardot 设计工具 MCP 伞技能：像素网格 / 衍生展示区 / 文本布局适配 |
+| `ardot` | 本仓（repros + 插件技能吸收） | Ardot 设计工具 MCP 伞技能：像素网格 / 衍生展示区 / 文本布局适配 / 设计稿转代码 / UI 领域规范 |
 | `photocraft` | mroxso/artcraft-skills | PhotoCraft 图像编辑自动化：CLI/serve/MCP/control，打印 PDF、RAW 显影、图层选区文字与批处理 |
+| `ai-visual-design` | 本地维护 | AI 视觉生成方法论：图像/品牌资产/系列一致性锚点链/电商详情图/视频镜头语言 + 交付质量门 |
 
 ---
 
@@ -223,16 +199,16 @@ vpx skills add wechat-miniprogram/skyline-skills \
 vpx skills add https://github.com/wechat-miniprogram/glass-easel/blob/master/glass-easel-skills/glass-easel --agent openclaw -p -y
 ```
 
-- `wechat-miniprogram` 和 `tdesign-miniprogram` 来自 CodeBuddy，无 skills.sh 安装命令。
+- `wechat-miniprogram` 和 `tdesign-miniprogram` 为手动收集，无 skills.sh 安装命令。
 - `wechatide-skill` 来自微信开发者工具。
 
 ### 技能索引
 
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
-| `wechat-miniprogram` | CodeBuddy | 微信小程序框架（模板、组件、API、云开发） |
+| `wechat-miniprogram` | 手动收集 | 微信小程序框架（模板、组件、API、云开发） |
 | `glass-easel` | wechat-miniprogram/glass-easel | 新一代组件运行框架 |
-| `tdesign-miniprogram` | CodeBuddy | TDesign 小程序组件库（60+ 组件） |
+| `tdesign-miniprogram` | 手动收集 | TDesign 小程序组件库（60+ 组件） |
 | `skyline-overview` | wechat-miniprogram/skyline-skills | Skyline 架构与迁移概览 |
 | `skyline-config` | wechat-miniprogram/skyline-skills | app.json / page.json 配置 |
 | `skyline-components` | wechat-miniprogram/skyline-skills | 高性能原生组件 |
@@ -403,6 +379,7 @@ vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
 | `webgpu-threejs-tsl` | dgreenheck/webgpu-claude-skill | Three.js WebGPU + TSL 着色器 |
+| `office-pro` | 本地维护 | Office 专业工具链：pdfkit 50+ 命令 PDF 处理 + 公文/财务/排版规范 + DOCX/XLSX/PDF 质检脚本 + PPTX 程序化校验流程 |
 | `tencentos-expert` | 手动收集 | TencentOS 服务器运维诊断 |
 | `sql-parser-cst` | 个人创建 | 解析 SQL 生成 CST 语法树，提取表结构与 SQL 元信息 |
 | `shadowbot-cli` | 个人创建 | 通过官方 CLI 操作本地影刀 RPA：运行应用、编辑流程指令、查任务日志 |

@@ -112,7 +112,7 @@ Title TEXT 默认：
 示例：
 
 ```text
-desktop · WorkBuddy 中调用网盘链路
+desktop · 客户端内调用网盘链路
 web · 官网购买页流程
 mobile + desktop · 登录链路设计稿
 ```

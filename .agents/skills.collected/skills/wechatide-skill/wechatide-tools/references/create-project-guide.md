@@ -30,7 +30,7 @@ wechatide -c <clientName> cloud_env_list --appid <appid>
 
 - 云环境需在公众平台预先开通
 - 一个 AppID 可有多个环境；`env` 不明确时禁止自动挑选
-- 后续云操作见 `skills/cloudbase-operator/SKILL.md`
+- 后续云操作见 `cloudbase-operator` 子技能
 
 ## 第三步：准备目录与 `project.config.json`
 
@@ -38,7 +38,7 @@ wechatide -c <clientName> cloud_env_list --appid <appid>
 2. 写入 / 补全 `project.config.json`（至少含有效 `appid`、`projectname`、`compileType`）。
    - 小程序：`compileType` 为 `miniprogram`
    - 小游戏：`compileType` 为 `game`
-3. **字段含义、private/common 写入规则、常见开关**：一律按 `skills/project-config/SKILL.md`（及 `references/project-config-fields.md`）处理，本指南不复述字段表。
+3. **字段含义、private/common 写入规则、常见开关**：一律按 `project-config` 子技能（及 `references/project-config-fields.md`）处理，本指南不复述字段表。
 4. 需要云函数目录时，在 common 配置中设置 `cloudfunctionRoot`（同上，走 project-config）。
 
 ## 第四步：导入项目列表
@@ -51,7 +51,7 @@ wechatide -c <clientName> project_import --project <project>
 
 - `<project>` 为项目本地绝对路径
 - 已在列表中时返回 `alreadyImported: true`，视为成功
-- 工具说明见 `skills/project-manager/SKILL.md`
+- 工具说明见 `project-manager` 子技能
 - 失败（`PROJECT_PATH_NOT_FOUND` / `PROJECT_CONFIG_JSON_ERROR` / `APPID_ERROR`）→ 按 [project-tool-error-guide.md](project-tool-error-guide.md) **后置**修复后重试；勿改成调用前预检
 
 ## 移交（导入成功后）

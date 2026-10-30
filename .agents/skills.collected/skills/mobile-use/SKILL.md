@@ -1,6 +1,6 @@
 ---
 name: mobile-use
-description: "Discover, operate, and verify Android, HarmonyOS, and iOS devices through the host toolchain (adb, hdc, simctl) — no vendor IDE plugin required. Use when you need device discovery, semantic UI interaction (tap/swipe/type), screenshots, screen recording, or native-test execution from the command line. Not for ordinary mobile source editing without runtime verification, nor for installing or provisioning SDKs, emulators, or devices."
+description: "Discover, operate, and verify Android, HarmonyOS, and iOS devices through the host toolchain (adb, hdc, simctl) — no vendor IDE plugin required. Use when you need device discovery, semantic UI interaction (tap/swipe/type), screenshots, screen recording, or native-test execution from the command line. Not for ordinary mobile source editing without runtime verification. 无可用设备时可进入 setup 阶段（references/provisioning.md）准备 SDK/AVD/模拟器，但仅在列举目标为空时。"
 ---
 
 # Mobile Use
@@ -14,7 +14,7 @@ the SDK is absent. Run `doctor` before concluding anything about the machine.
 - **Outcome**: a reachable device is discovered, driven through UI steps, and
   the requested evidence layer is captured and reported.
 - **Done when**: the exact device (`surfaceId`/`sessionId`) resolved uniquely
-  and the claimed evidence layer (interactive / native-test / repair) was
+  and the claimed evidence layer (see references/evidence.md 的六层分级) was
   actually produced, with artifact URI and SHA-256 digest preserved.
 - **Evidence**: structured CLI JSON envelopes; `data.output.outcome ==
   "passed"` for native tests; artifact digest for captured media.
@@ -34,12 +34,14 @@ the SDK is absent. Run `doctor` before concluding anything about the machine.
 
 1. Command schemas, flags, and the run-plan workflow: read
    [CLI](references/cli.md).
-2. Evidence layers (captured vs inspected vs verified) and artifact integrity:
+2. Evidence layers (Build / Captured / Visually inspected / Interactive / Native test / Repair) and artifact integrity:
    read [Evidence](references/evidence.md).
 3. Per-platform backend boundaries and capabilities: read
    [Platforms](references/platforms.md).
 4. Symptom routing and clean error recovery: read
    [Troubleshooting](references/troubleshooting.md).
+5. 没有可用设备、需要从零准备设备环境（Android SDK/AVD、鸿蒙 DevEco/HDC、iOS Xcode/Simulator）：
+   read [Provisioning](references/provisioning.md)。仅在供给阶段读，日常操控不读。
 
 ## Automation loop
 

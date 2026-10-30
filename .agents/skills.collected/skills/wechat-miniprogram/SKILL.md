@@ -1,6 +1,6 @@
 ---
 name: wechat-miniprogram
-description: "WeChat Mini Program (微信小程序) development framework. Use when building WeChat mini apps with WXML templates, WXSS styles, WXS scripting, component development, WeChat API integration, cloud development (云开发), and Mini Program lifecycle/performance optimization."
+description: "WeChat Mini Program (微信小程序) development framework. Use when building WeChat mini apps with WXML templates, WXSS styles, WXS scripting, component development, WeChat API integration, cloud development (云开发), and Mini Program lifecycle/performance optimization. 不适用于 Skyline 渲染引擎专项、glass-easel 组件框架或 TDesign 组件库问题（用对应专门技能）。"
 description_zh: "微信小程序开发框架（模板、组件、API、云开发）"
 description_en: "WeChat Mini Program framework (templates, components, APIs, cloud)"
 version: 1.0.0
@@ -11,6 +11,13 @@ allowed-tools: Read,Write,Bash
 # WeChat Mini Program Skill
 
 WeChat Mini Program (微信小程序) development framework skill, generated from official documentation.
+
+## Outcome Contract
+
+- **Outcome**: 完成微信小程序的页面/组件/API 开发、云开发接入或性能优化，产出可运行的原生工程代码。
+- **Done when**: 页面结构（wxml/wxss/js/json）齐全、在 `app.json` 注册、通过原生工程约束校验；骨架接入时三态（loading/empty/error）完整。
+- **Evidence**: `references/native-project.md` 约束逐项满足；骨架接入见 `references/skeletons.md` 步骤。
+- **Authorization**: 不强制改写已有工程布局与技术栈；已有同类页面优先修改而非新建。
 
 ## When to Use This Skill
 
@@ -25,6 +32,8 @@ This skill should be triggered when:
 - Optimizing Mini Program performance
 
 ## Quick Reference
+
+常用工程结构与代码模式速查。
 
 ### Project Structure
 
@@ -185,10 +194,32 @@ This skill includes comprehensive documentation in `references/`:
 - **api.md** - API reference
 - **cloud.md** - Cloud development (云开发)
 - **reference.md** - Configuration reference
+- **native-project.md** - 原生工程约束（JSON 严格性、WXML 表达式限制、lazyCodeLoading、路径与大小写规则）
+- **skeletons.md** - 页面骨架选用与接入步骤（list-crud / form-result / profile 三套生产级骨架）
 
 Use `view` to read specific reference files when detailed information is needed.
 
+## Page Skeletons
+
+生产级页面骨架位于 `assets/skeletons/`，平台无关、可直接复制到工程使用：
+
+- **list-crud** — 列表 + 新增/编辑/删除（待办、记账、打卡），含底部弹层表单与 loading/empty/error 三态，统一 `{data, error}` 数据层（`utils/item-store.js`）
+- **form-result** — 表单提交 + 结果页（报名、反馈、预约），含字段校验、提交中禁用、成功 redirectTo
+- **profile** — 个人中心（头像昵称 + 分组功能入口列表），含空态兜底与 menuGroups 驱动
+
+选用与接入步骤见 `references/skeletons.md`；工程约束见 `references/native-project.md`。骨架不含 `app.json`/`project.config.json`，接入时需自行注册页面路径。
+
+### 骨架接入流程
+
+1. 确认工程源码根目录，已有同名页面不覆盖。
+2. 把骨架的 `pages/<page>/` 复制到工程同名位置，`utils/` 文件复制到工程 `utils/`。
+3. 把新页面路径加入 `app.json` 的 `pages`，保留已有配置（含 `lazyCodeLoading`）。
+4. 按 `references/skeletons.md` 的"按需求替换"逐项改字段、文案、`storageKey`、目标路径。
+5. 按 `references/native-project.md` 校验 JSON 严格性、WXML 表达式、路径大小写，修复全部报告问题。
+
 ## Key Concepts
+
+小程序核心概念与生命周期。
 
 ### App Lifecycle
 
@@ -257,6 +288,8 @@ Page({
 ```
 
 ## Working with This Skill
+
+按熟悉程度与任务类型选择入口。
 
 ### For Beginners
 Start with the getting_started reference file for foundational concepts.
