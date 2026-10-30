@@ -24,7 +24,8 @@ the Engage SDK.
             "setter": "setSyncAcrossDevices(boolean)",
             "getter": "getSyncAcrossDevices()"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_RECOMMENDATION"
       },
       "PublishFeaturedClusterRequest": {
         "package": "com.google.android.engage.service.PublishFeaturedClusterRequest",
@@ -35,7 +36,8 @@ the Engage SDK.
             "setter": "setFeaturedCluster(FeaturedCluster)",
             "getter": "getFeaturedCluster()"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_FEATURED"
       },
       "DeleteClustersRequest": {
         "package": "com.google.android.engage.service.DeleteClustersRequest",
@@ -43,7 +45,8 @@ the Engage SDK.
           "clusterTypes": {
             "type": "List<@ClusterType int>",
             "requirement": "Optional",
-            "adder": "addClusterType(@ClusterType int)"
+            "adder": "addClusterType(@ClusterType int)",
+            "description": "The ClusterType enum values for the clusters being deleted. Use the 'associatedClusterType' from the respective publish request or cluster definition."
           },
           "deleteReason": {
             "type": "@DeleteReason int",
@@ -74,7 +77,8 @@ the Engage SDK.
             "setter": "setContinuationCluster(ContinuationCluster)",
             "getter": "getContinuationCluster()"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_CONTINUATION"
       },
       "PublishStatusRequest": {
         "package": "com.google.android.engage.service.PublishStatusRequest",
@@ -106,10 +110,12 @@ the Engage SDK.
             "type": "SubscriptionEntity",
             "getter": "getSubscription()"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_SUBSCRIPTION"
       },
       "PublishUserAccountManagementRequest": {
         "package": "com.google.android.engage.service.PublishUserAccountManagementRequest",
+        "associatedClusterType": "ClusterType.TYPE_ENGAGEMENT",
         "fields": {
           "actionUri": {
             "type": "Uri",
@@ -136,7 +142,8 @@ the Engage SDK.
             "type": "ShoppingCart",
             "getter": "getShoppingCart()"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_SHOPPING_CART"
       },
       "PublishShoppingListsRequest": {
         "package": "com.google.android.engage.shopping.service.PublishShoppingListsRequest",
@@ -148,7 +155,8 @@ the Engage SDK.
             "getter": "getShoppingLists()",
             "adderAll": "addShoppingLists(List<ShoppingList>)"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_SHOPPING_LIST"
       },
       "PublishShoppingOrderTrackingClusterRequest": {
         "package": "com.google.android.engage.shopping.service.PublishShoppingOrderTrackingClusterRequest",
@@ -159,7 +167,8 @@ the Engage SDK.
             "setter": "setShoppingOrderTrackingCluster(ShoppingOrderTrackingCluster)",
             "getter": "getShoppingOrderTrackingCluster()"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_SHOPPING_ORDER_TRACKING"
       },
       "PublishShoppingReorderClusterRequest": {
         "package": "com.google.android.engage.shopping.service.PublishShoppingReorderClusterRequest",
@@ -170,7 +179,8 @@ the Engage SDK.
             "setter": "setReorderCluster(ShoppingReorderCluster)",
             "getter": "getReorderCluster()"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_SHOPPING_REORDER"
       },
       "PublishFoodShoppingCartsRequest": {
         "package": "com.google.android.engage.food.service.PublishFoodShoppingCartsRequest",
@@ -182,7 +192,8 @@ the Engage SDK.
             "getter": "getFoodShoppingCarts()",
             "adderAll": "addFoodShoppingCarts(List<FoodShoppingCart>)"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_FOOD_SHOPPING_CART"
       },
       "PublishFoodShoppingListsRequest": {
         "package": "com.google.android.engage.food.service.PublishFoodShoppingListsRequest",
@@ -194,7 +205,8 @@ the Engage SDK.
             "getter": "getFoodShoppingLists()",
             "adderAll": "addFoodShoppingLists(List<FoodShoppingList>)"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_FOOD_SHOPPING_LIST"
       },
       "PublishReorderClusterRequest": {
         "package": "com.google.android.engage.food.service.PublishReorderClusterRequest",
@@ -205,7 +217,8 @@ the Engage SDK.
             "type": "FoodReorderCluster",
             "getter": "getReorderCluster()"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_FOOD_REORDER"
       },
       "PublishContinueSearchClusterRequest": {
         "package": "com.google.android.engage.travel.service.PublishContinueSearchClusterRequest",
@@ -216,7 +229,8 @@ the Engage SDK.
             "setter": "setContinueSearchCluster(ContinueSearchCluster)",
             "getter": "getContinueSearchCluster()"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_CONTINUE_SEARCH"
       },
       "PublishReservationClusterRequest": {
         "package": "com.google.android.engage.travel.service.PublishReservationClusterRequest",
@@ -227,7 +241,8 @@ the Engage SDK.
             "setter": "setReservationCluster(ReservationCluster)",
             "getter": "getReservationCluster()"
           }
-        }
+        },
+        "associatedClusterType": "ClusterType.TYPE_RESERVATION"
       },
       "ServiceAvailabilityRequest": {
         "package": "com.google.android.engage.service.ServiceAvailabilityRequest",
@@ -237,7 +252,8 @@ the Engage SDK.
             "requirement": "Required",
             "adder": "addIntendedClusterType(@ClusterType int)",
             "adderAll": "addAllIntendedClusterTypes(List<Integer>)",
-            "getter": "getIntendedClusterTypes()"
+            "getter": "getIntendedClusterTypes()",
+            "description": "The ClusterType enum values for the clusters being published (e.g. ClusterType.TYPE_ENGAGEMENT). Use the 'associatedClusterType' from the respective publish request or cluster definition."
           }
         }
       }

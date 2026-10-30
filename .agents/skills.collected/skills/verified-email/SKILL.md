@@ -8,7 +8,7 @@ description: Provides a complete workflow for implementing verified email retrie
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-07-02'
+  last-updated: '2026-10-28'
   keywords:
   - implementation
   - Android
@@ -117,8 +117,10 @@ actions:
 - Leave a TODO for developers to handle the app's server-side validation and parsing.
 - Direct users to the home screen after API call success and show a snackbar with user details for reference purpose only.
 
+## Overview
+
 This guide describes how to implement verified email retrieval using the
-[Digital Credentials Verifier API](references/android/identity/digital-credentials/credential-verifier.md) through an [OpenID for Verifiable
+[Digital Credentials Verifier API](https://developer.android.com/identity/digital-credentials/credential-verifier) through an [OpenID for Verifiable
 Presentations (OpenID4VP)](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html) request.
 
 ## Add dependencies
@@ -130,8 +132,8 @@ Manager:
 
 ```kotlin
 dependencies {
-    implementation("androidx.credentials:credentials:1.7.0-alpha02")
-    implementation("androidx.credentials:credentials-play-services-auth:1.7.0-alpha02")
+    implementation("androidx.credentials:credentials:1.7.0-alpha03")
+    implementation("androidx.credentials:credentials-play-services-auth:1.7.0-alpha03")
 }
 ```
 
@@ -139,8 +141,8 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation "androidx.credentials:credentials:1.7.0-alpha02"
-    implementation "androidx.credentials:credentials-play-services-auth:1.7.0-alpha02"
+    implementation "androidx.credentials:credentials:1.7.0-alpha03"
+    implementation "androidx.credentials:credentials-play-services-auth:1.7.0-alpha03"
 }
 ```
 
@@ -234,32 +236,37 @@ a `GetCredentialRequest`, and call `getCredential()`.
 
 Present the user with the request, using the Credential Manager built-in UI.
 
-    try {
-        // Requesting Digital Credential from user...
-        val result = credentialManager.getCredential(activity, request)
+    coroutineScope {
+        try {
+            // Requesting Digital Credential from user...
+            val result = credentialManager.getCredential(activity, request)
 
-        when (val credential = result.credential) {
-            is DigitalCredential -> {
-                val responseJsonString = credential.credentialJson
+            when (val credential = result.credential) {
+                is DigitalCredential -> {
+                    val responseJsonString = credential.credentialJson
 
-                // Successfully received digital credential response.
+                    // Successfully received digital credential response.
 
-                // Next, parse this response and send it to your server.
-                // ...
+                    // Next, parse this response and send it to your server.
+                    // ...
+                }
+
+                else -> {
+                    // handle Unexpected State() - Up to the developer
+                }
             }
-
-            else -> {
-                // handle Unexpected State() - Up to the developer
-            }
+        } catch (e: Exception) {
+            // handle exceptions - Up to the developer
         }
-    } catch (e: Exception) {
-        // handle exceptions - Up to the developer
     }
 
 > [!NOTE]
 > **Note:** There is no equivalent of Sign in with Google's `preferImmediatelyAvailableCredentials` for Digital Credentials. If no verifiable credential is found (for example, no eligible account on device), the user will be shown a "No options available" or similar system screen.
 
 ## Parse the response on the client
+
+> [!WARNING]
+> **Warning:** From August 2026, the [response JSON](https://developer.android.com/reference/androidx/credentials/DigitalCredential#getCredentialJson()) format has been updated to strictly match the W3C standards. It contains `data` and `protocol` keys, with the OpenID4VP `vp_token` nested in `data`, while legacy formats hold the `vp_token` directly. Ensure your client-side parsing and server-side validation handle both formats during the transition period, while the older implementation is phased out. Apps that begin to integrate the email verification flow after August 2026 need to use the new format only.
 
 After receiving the response, you can perform a preliminary parse on the client.
 This is useful for immediately updating the UI, for example, by showing the
@@ -273,7 +280,8 @@ The following code extracts the raw [Selective Disclosure JWT
 
     // 1. Parse the outer JSON wrapper to get the `vp_token`
     val responseData = JSONObject(responseJsonString)
-    val vpToken = responseData.getJSONObject("vp_token")
+    val dataObject = responseData.getJSONObject("data")
+    val vpToken = dataObject.getJSONObject("vp_token")
 
     // 2. Extract the raw SD-JWT string
     val credentialId = vpToken.keys().next()
@@ -304,12 +312,15 @@ additional metadata as well along with verified email:
     /*
     // Example of the raw JSON response from credential.credentialJson:
     {
-      "vp_token": {
-        // This key matches the 'id' you set in your dcql_query
-        "user_info_query": [
-          // The SD-JWT string (Issuer JWT ~ Disclosures ~ Key Binding JWT)
-          "eyJhbGciOiJ...~WyI...IiwgImVtYWlsIiwgInVzZXJAZXhhbXBsZS5jb20iXQ~...~eyJhbGciOiJ..."
-        ]
+      "protocol": "openid4vp-v1-unsigned",
+      "data": {
+        "vp_token": {
+          // This key matches the 'id' you set in your dcql_query
+          "user_info_query": [
+            // The SD-JWT string (Issuer JWT ~ Disclosures ~ Key Binding JWT)
+            "eyJhbGciOiJ...~WyI...IiwgImVtYWlsIiwgInVzZXJAZXhhbXBsZS5jb20iXQ~...~eyJhbGciOiJ..."
+          ]
+        }
       }
     }
 
@@ -333,7 +344,7 @@ additional metadata as well along with verified email:
      */
 
 > [!IMPORTANT]
-> **Important:** We highly recommend that after receiving the verified email, you trigger Credential Manager's [passkey creation](https://developer.android.com/identity/credential-manager/passkeys/create-passkeys).
+> **Important:** We highly recommend that after receiving the verified email, you trigger Credential Manager's [passkey creation](references/android/identity/passkeys/create-passkeys.md).
 
 ## Server-side validation for account creation
 
@@ -368,6 +379,9 @@ replay attacks.
 By combining these steps, your server can validate both the authenticity of the
 data and the identity of the presenter, ensuring the credential wasn't
 intercepted or spoofed before provisioning the new account.
+
+> [!WARNING]
+> **Warning:** As mentioned in [Parse the response on the client](#parse-response), from August 2026, the [response JSON](https://developer.android.com/reference/androidx/credentials/DigitalCredential#getCredentialJson()) format has been updated to match W3C standards. Ensure your client-side parsing and server-side validation handle both formats during the transition period, while the older implementation is phased out. Apps that begin to integrate the email verification flow after August 2026 need to use the new format only.
 
     try {
         // Send the raw credential response and the original nonce to your server.

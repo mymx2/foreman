@@ -66,34 +66,107 @@ The following defaults apply to standard buttons:
 > [!NOTE]
 > **Note:** Any modifier passed to the `Button` composable is applied to the outer layout. While [`ButtonSize`](https://developer.android.com/reference/kotlin/androidx/xr/glimmer/ButtonSize) sets the default minimum height, you can also apply custom size modifiers to control the button's final layout, such as [`Modifier.fillMaxWidth`](https://developer.android.com/reference/kotlin/androidx/compose/foundation/layout/fillMaxWidth.modifier).
 
-## Example: Button with text
+## Example: Button with text and icons
 
-The following code creates a standard button with text:
+A basic button includes only a text label, but you can also add icons to the
+start (using `leadingIcon`) or end (using `trailingIcon`) of the text to provide
+additional context.
+
+The following code creates a button with both a leading and trailing icon:
 
 
 ```kotlin
-@Composable
-fun ButtonSample() {
-    Button(onClick = {}) { Text("Send") }
+Button(
+    onClick = { /* Handle navigation or action */ },
+    leadingIcon = { Icon(FavoriteIcon, contentDescription = null) },
+    trailingIcon = { Icon(SendIcon, contentDescription = null) }
+) {
+    Text("Text Label", style = GlimmerTheme.typography.titleSmall)
 }
 ```
 
 <br />
 
-## Example: Buttons with leading and trailing icons
+## Button groups
 
-You can also add icons to the start (using `leadingIcon`) or end (using
-`trailingIcon`) of the text to provide additional context.
+The [`ButtonGroup`](https://developer.android.com/reference/kotlin/androidx/xr/glimmer/ButtonGroup.composable) composable lets you group buttons into a scrollable row
+that acts as a focus controller. As the user scrolls, focus automatically moves
+to highlight the button corresponding to the current scroll position.
+![](https://developer.android.com/static/images/xr/button-group-scroll.gif) An example of a button group scrolling and focusing features.
 
-The following code creates a button with a leading icon:
+## Example: Button groups
 
 
 ```kotlin
-@Composable
-fun ButtonWithLeadingIconSample() {
-    Button(onClick = {}, leadingIcon = { Icon(FavoriteIcon, "Localized description") }) {
-        Text("Send")
+ButtonGroup(modifier = Modifier.fillMaxWidth()) {
+    Button(onClick = {}) { Text("Button 1") }
+    Button(onClick = {}) { Text("Button 2") }
+    Button(onClick = {}) { Text("Button 3") }
+    Button(onClick = {}) { Text("Button 4") }
+    Button(onClick = {}) { Text("Button 5") }
+}
+```
+
+<br />
+
+## Focus control in button groups
+
+You can move the focus to any button in a group to manually control the
+selection.
+
+Customize and control scrolling behavior using the `ButtonGroup` state:
+
+1. Declare the state with `rememberButtonGroupState`.
+2. Pass it to the `ButtonGroup` composable.
+3. Call [`animateScrollToItem`](https://developer.android.com/reference/kotlin/androidx/xr/glimmer/ButtonGroupState#animateScrollToItem(kotlin.Int,androidx.compose.animation.core.FiniteAnimationSpec)) (or [`scrollToItem`](https://developer.android.com/reference/kotlin/androidx/xr/glimmer/ButtonGroupState#scrollToItem(kotlin.Int)) for instant scrolling) to scroll to a specific item and automatically move focus to it.
+
+The following code moves the focus from one button to another upon click:
+
+
+```kotlin
+val scope = rememberCoroutineScope()
+val state = rememberButtonGroupState()
+ButtonGroup(modifier = Modifier.fillMaxWidth(), state = state) {
+    Button(onClick = { scope.launch { state.animateScrollToItem(1) } }) {
+        Text("Select last item")
     }
+    Button(onClick = { scope.launch { state.animateScrollToItem(0) } }) {
+        Text("Select first item")
+    }
+}
+```
+
+<br />
+
+## Customize focus color for brand expression
+
+In Jetpack Compose Glimmer, components are [designed and optimized for
+transparent displays](https://developer.android.com/design/ui/ai-glasses/guides/foundations/made-for-glasses#transparent-first), so they rely primarily on subtle translucent
+surfaces and high-contrast borders to ensure legibility and visual comfort
+against the real world. Because resting states favor neutral tones to avoid both
+visual fatigue and obstructing the user's field of view, the
+[`focusedColor`](https://developer.android.com/reference/kotlin/androidx/xr/glimmer/ButtonDefaults#focusedColor(androidx.compose.ui.graphics.Color)) parameter on [`Button`](https://developer.android.com/reference/kotlin/androidx/xr/glimmer/Button.composable) provides the primary affordance
+expressing your app's brand.
+
+This affordance makes your brand's accent a dynamic part of the system's active
+interaction state instead of tinting idle buttons with saturated colors that
+might compromise transparency and contrast in optical see-through environments.
+When focused, the button elevates its background to this branded hue, paired
+with automatic content contrast recalculation using
+`calculateContentColor(focusedColor)`, achieving clear, interactive feedback
+while preserving the restraint and optical ergonomics required on display
+glasses.
+
+The following example shows how override the default `focusedColor` with
+your brand's color:
+
+
+```kotlin
+Button(
+    onClick = {},
+    focusedColor = brandColor,
+) {
+    Text("Focus Color Button")
 }
 ```
 

@@ -34,26 +34,17 @@ vpx skills add openai/skills --skill screenshot -g -y
 
 ## 项目技能（--agent codex 项目级安装）
 
-### 安装命令
-
-```bash
-# openai/plugins — GitHub 协作
-vpx skills add https://github.com/openai/plugins/tree/main/plugins/github/skills \
-  --skill gh-address-comments \
-  --skill gh-fix-ci \
-  --skill yeet \
-  --skill github \
-  --agent codex -p -y
-```
+> ⚠️ 本节 4 个技能已转为**手动维护**（无上游，已从根 `skills-lock.json` 移除）。
+> 原上游 `openai/plugins` 于 2026-08-26（PR #388）删除 `plugins/github/skills/` 并重构为纯 MCP 插件市场，技能无官方新家，本地快照保留在 `.agents/skills/`。
 
 ### 技能索引
 
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
-| `gh-address-comments` | openai/plugins | PR 评审评论处理 |
-| `gh-fix-ci` | openai/plugins | GitHub Actions CI 修复 |
-| `github` | openai/plugins | GitHub 仓库/PR/Issue 导航与摘要 |
-| `yeet` | openai/plugins | 一键 stage + commit + push + PR |
+| `gh-address-comments` | 手动维护（原 openai/plugins） | PR 评审评论处理 |
+| `gh-fix-ci` | 手动维护（原 openai/plugins） | GitHub Actions CI 修复 |
+| `github` | 手动维护（原 openai/plugins） | GitHub 仓库/PR/Issue 导航与摘要 |
+| `yeet` | 手动维护（原 openai/plugins） | 一键 stage + commit + push + PR |
 
 ---
 
@@ -84,7 +75,7 @@ vpx skills add anthropics/skills \
 
 vpx skills add https://github.com/standardagents/arrow-js/blob/main/packages/skill/resources/skill --agent openclaw -p -y
 
-vpx skills add antfu/skills --skill slidev --agent openclaw -p -y
+vpx skills add slidevjs/slidev --skill slidev --agent openclaw -p -y
 ```
 
 > `storyset` 为个人创建，无 skills.sh 安装命令。
@@ -108,7 +99,7 @@ vpx skills add antfu/skills --skill slidev --agent openclaw -p -y
 | `webapp-testing` | anthropics/skills | Web 应用测试策略 |
 | `slack-gif-creator` | anthropics/skills | Slack 动图生成 |
 | `arrow-js` | standardagents/arrow-js | 轻量响应式 UI 框架 |
-| `slidev` | antfu/skills | Markdown 幻灯片 |
+| `slidev` | slidevjs/slidev | Markdown 幻灯片 |
 | `storyset` | 个人创建 | Storyset 插画检索、下载、品牌换色与动画 SVG/GIF 导出 |
 | `ardot` | 本仓（repros 吸收） | Ardot 设计工具 MCP 伞技能：像素网格 / 衍生展示区 / 文本布局适配 |
 | `photocraft` | mroxso/artcraft-skills | PhotoCraft 图像编辑自动化：CLI/serve/MCP/control，打印 PDF、RAW 显影、图层选区文字与批处理 |
@@ -122,20 +113,22 @@ Tech: Vue 3 Composition API, TypeScript, Vite, UnoCSS, Pinia
 ### 安装命令
 
 ```bash
-# antfu/skills
+# antfu/skills（仅保留 7 个一手生成技能；vendored 技能已于 2026-09-25 上游移除，见下方注释）
 vpx skills add antfu/skills \
   --skill vue \
-  --skill vueuse-functions \
   --skill pinia \
   --skill vite \
   --skill vitepress \
   --skill vitest \
   --skill unocss \
-  --skill tsdown \
-  --skill turborepo \
   --skill pnpm \
-  --skill web-design-guidelines \
   --agent openclaw -p -y
+
+# 以下 4 个原属 antfu/skills 的 vendored 技能，2026-09-25 上游移除（commit e98e476e），已换到官方独立来源
+vpx skills add vueuse/skills --skill vueuse-functions --agent openclaw -p -y
+vpx skills add rolldown/tsdown --skill tsdown --agent openclaw -p -y
+vpx skills add vercel/turborepo --skill turborepo --agent openclaw -p -y
+vpx skills add https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design-guidelines --agent openclaw -p -y
 
 # vuejs-ai/skills
 vpx skills add vuejs-ai/skills \
@@ -178,7 +171,7 @@ vpx skills add https://github.com/vercel/ai --skill ai-sdk --agent openclaw -p -
 | `unocss` | antfu/skills | 即时原子化 CSS 引擎 |
 | `vue-router-best-practices` | vuejs-ai/skills | Vue Router 4 导航守卫 |
 | `vue-pinia-best-practices` | vuejs-ai/skills | Pinia Store 模式 |
-| `vueuse-functions` | antfu/skills | VueUse 组合式工具 |
+| `vueuse-functions` | vueuse/skills | VueUse 组合式工具 |
 | `vue-jsx-best-practices` | vuejs-ai/skills | Vue 中的 JSX 语法 |
 | `vue-debug-guides` | vuejs-ai/skills | Vue 3 调试与错误处理 |
 | `vue-testing-best-practices` | vuejs-ai/skills | 组件测试与 E2E |
@@ -186,10 +179,10 @@ vpx skills add https://github.com/vercel/ai --skill ai-sdk --agent openclaw -p -
 | `vitest` | antfu/skills | 基于 Vite 的单元测试 |
 | `playwright-cli` | microsoft/playwright-cli | 浏览器自动化测试 |
 | `pnpm` | antfu/skills | 包管理与 Workspace |
-| `tsdown` | antfu/skills | TypeScript 库打包 |
-| `turborepo` | antfu/skills | Monorepo 构建系统 |
+| `tsdown` | rolldown/tsdown | TypeScript 库打包 |
+| `turborepo` | vercel/turborepo | Monorepo 构建系统 |
 | `vitepress` | antfu/skills | 静态文档站生成 |
-| `web-design-guidelines` | antfu/skills | Web 设计与无障碍规范 |
+| `web-design-guidelines` | vercel-labs/agent-skills | Web 设计与无障碍规范 |
 | `shadcn-vue` | unovue/shadcn-vue | shadcn/ui Vue 组件库 |
 | `valibot` | open-circle/agent-skills | 轻量 Schema 验证库 |
 | `formisch` | open-circle/agent-skills | 类型安全表单库（Valibot 生态） |
@@ -385,18 +378,6 @@ vpx skills add redis/agent-skills --skill redis-core --agent openclaw -p -y
 ### 安装命令
 
 ```bash
-# tw93/Waza
-vpx skills add tw93/Waza \
-  --skill think \
-  --skill ui \
-  --skill check \
-  --skill hunt \
-  --skill learn \
-  --skill read \
-  --skill write \
-  --skill health \
-  --agent openclaw -p -y
-
 # dgreenheck/webgpu-claude-skill — WebGPU 3D
 vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent openclaw -p -y
 ```
@@ -411,14 +392,6 @@ vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent
 
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
-| `think` | tw93/Waza | 方案设计与决策 |
-| `ui` | tw93/Waza | 生产级 UI 设计 |
-| `check` | tw93/Waza | 代码审查与发布检查 |
-| `hunt` | tw93/Waza | 根因诊断与修复 |
-| `learn` | tw93/Waza | 深度研究与成稿 |
-| `read` | tw93/Waza | URL/PDF 阅读与摘要 |
-| `write` | tw93/Waza | 中英文润色与去 AI 味 |
-| `health` | tw93/Waza | 工程健康度审计 |
 | `webgpu-threejs-tsl` | dgreenheck/webgpu-claude-skill | Three.js WebGPU + TSL 着色器 |
 | `tencentos-expert` | 手动收集 | TencentOS 服务器运维诊断 |
 | `sql-parser-cst` | 个人创建 | 解析 SQL 生成 CST 语法树，提取表结构与 SQL 元信息 |

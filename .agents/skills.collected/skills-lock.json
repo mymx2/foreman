@@ -5,19 +5,19 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "jetpack-compose/adaptive/SKILL.md",
-      "computedHash": "0838968924e6fcc77c65022565f33be9e9aa5dcb9d5529f50852b9530c40cd6f"
+      "computedHash": "ef25a01831ff41ad268f1488d6fcba0c3d2d36b1058f32d34ec4518ff64efdb0"
     },
     "agp-9-upgrade": {
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "build-system/agp/agp-9-upgrade/SKILL.md",
-      "computedHash": "03f2379f02e971d76e3e89f0b63aa289b1b9240d873ccccc25924e7b0d8f3cdc"
+      "computedHash": "c48bd5cf973f49dbc3779bac268fe24e141d622d5d532bd3318b7fe454680fbd"
     },
     "ai-sdk": {
       "source": "vercel/ai",
       "sourceType": "github",
       "skillPath": "skills/use-ai-sdk/SKILL.md",
-      "computedHash": "dfce60b0f2749991e000123526e298d5ede1c8353d837e71886fb3c8e5f8b730"
+      "computedHash": "12672e7c040c99b182ceb86517f36f6409e7e22e101178cf554767b0f5d9dd0a"
     },
     "algorithmic-art": {
       "source": "anthropics/skills",
@@ -29,19 +29,19 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "devtools/android-cli/SKILL.md",
-      "computedHash": "d1d6a1ac872541e0ee42e93927b9898b575398df8f8a3ee2cc07687a5fab1004"
+      "computedHash": "791335db7bd348cc3ae68859d8732ad12a4f62e22b0a7a2cddb72058d89e73d3"
     },
     "android-intent-security": {
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "security/android-intent-security/SKILL.md",
-      "computedHash": "032668596a1031d8c1952a666075f365127d98856f71040886baa3a55f6a118e"
+      "computedHash": "e90597939253d57e55fa2c44dd5b522b0bd50e507c4b858b014d42ef97231224"
     },
     "appfunctions": {
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "device-ai/appfunctions/SKILL.md",
-      "computedHash": "08462a95689f9a4367f27eeb88b8a777414107f397ad1e94aeab77f2cebcf05d"
+      "computedHash": "240b29c88e740b44ddd16e421616807716fcb69a62b9b9a8b286758974fe34e1"
     },
     "arrow-js": {
       "source": "standardagents/arrow-js",
@@ -59,7 +59,7 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "camera/camerax/SKILL.md",
-      "computedHash": "50a99565089361b69f33702d75b998a25183f6d163d15da68eb05537f1a54485"
+      "computedHash": "b396e6c954862b885f1cb72572b2ef8705bae73ecf9677c9bb29c0ca6ca77ec4"
     },
     "canvas-design": {
       "source": "anthropics/skills",
@@ -101,7 +101,7 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "xr/display-glasses-with-jetpack-compose-glimmer/SKILL.md",
-      "computedHash": "9c2b529ffc37e069778de63d785cc2915601df6e727f8397d87b7ac521b1eae8"
+      "computedHash": "647241a688a618707ae093bc93f45f0eb49ece4482aad9546beeaa188be8e29d"
     },
     "doc-coauthoring": {
       "source": "anthropics/skills",
@@ -125,13 +125,13 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "system/edge-to-edge/SKILL.md",
-      "computedHash": "7a1051ff9b6561f002a242173862a902d028fad528b533e6fa0fb1120f020983"
+      "computedHash": "7ccf71d4ff4d16509ee07df3312d6475741cd68006156c1a90e0638aa67b5fa0"
     },
     "engage-sdk-integration": {
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "play/engage-sdk-integration/SKILL.md",
-      "computedHash": "daf48ddd07c73a15f5e58d87f4ed0948d3ffe4117ccd866efd536c9c0a719f09"
+      "computedHash": "8b36f128806e42bbfd38aef3ff2800bdcd375760eaadf21bf5e1b10363d4501c"
     },
     "error-model-validation-architect": {
       "source": "jetbrains/skills",
@@ -143,13 +143,13 @@
       "source": "open-circle/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/formisch/SKILL.md",
-      "computedHash": "24d27a0c7a09bd4dc71826882e24fd5953029fb9d9b660199219c285505d8513"
+      "computedHash": "50ee9b7b0a7b1b29b03ed87743744eba1271ec1487672fbba39372696e6c8b9d"
     },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "skillPath": "skills/frontend-design/SKILL.md",
-      "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
+      "computedHash": "106acf230014cbb43ca34e6410371321b56ca742f9ee0442e8ec05bf02eb0384"
     },
     "glass-easel": {
       "source": "wechat-miniprogram/glass-easel",
@@ -209,13 +209,13 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "jetpack-compose/migration/migrate-xml-views-to-jetpack-compose/SKILL.md",
-      "computedHash": "fd900f421f489edcc8249b1b658364908b239a23697a255de908113703a137dd"
+      "computedHash": "ae6038a866075c48f63a5a34e95a33d77a8379c241217a70c17fd02e1e8461b9"
     },
     "navigation-3": {
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "navigation/navigation-3/SKILL.md",
-      "computedHash": "54905c96a787e48af6e1b9a352b68597eccb64f871d77828ef3732203f554bf9"
+      "computedHash": "8f9ecceee72b2b8c46ed70ec67ec35c2beaf4b4e160575d1adfe14e4a435bbea"
     },
     "observability-integrator": {
       "source": "jetbrains/skills",
@@ -251,31 +251,31 @@
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/pinia/SKILL.md",
-      "computedHash": "8e8346fac8cb76d6f186462b712352d5a651c9c049076ea73559f47210c874ef"
+      "computedHash": "5a43d60a532efe755d354fc3e95f966dd75e58879adb9c6c158c626c0f77d774"
     },
     "play-billing-library-version-upgrade": {
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "play/play-billing-library-version-upgrade/SKILL.md",
-      "computedHash": "9fae407150f75cc759e3d3785ceefc41f9faf7f17886fd1fadcdb2ccd7cf1aab"
+      "computedHash": "90c03ffce111e46a068454646c5448a547be5b2b3a5e475c4c86bb6791c4c559"
     },
     "play-policy-insights": {
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "play/play-policy-insights/SKILL.md",
-      "computedHash": "b37522c0d832c2ec761ef0a2f9355c738107d63d8fa14ac9eee30d96c6342c5e"
+      "computedHash": "be04243a343915b08c633cd4356b58969d125aa7339f291e7a0d1a7e60e4ea8d"
     },
     "playwright-cli": {
       "source": "microsoft/playwright-cli",
       "sourceType": "github",
       "skillPath": "skills/playwright-cli/SKILL.md",
-      "computedHash": "438b922468b7bb2ab5ce4a0f318fc65db93337f0df03908a5476effbae9487e6"
+      "computedHash": "d4983e06b5daae441e48604b4b813a0c38784f3d87ea58f8391d2b5ffeb803fd"
     },
     "pnpm": {
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/pnpm/SKILL.md",
-      "computedHash": "20bca721bb934e39c8ff2dc3df2cd1712f9efb5419afe2cb847267f6fe0eacbc"
+      "computedHash": "10f97a882328fe50c481ca1a4045d431e59f877463880efb75461b16a346d0fc"
     },
     "pptx": {
       "source": "anthropics/skills",
@@ -299,13 +299,13 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "performance/r8-analyzer/SKILL.md",
-      "computedHash": "351014594d3baa58d6c2ad40860250065efcc811445293a70f74861e68188b18"
+      "computedHash": "f8463f44ea1f51cf9d4c592c2f45a930bb91162e0ce89a303b07c71154a69eba"
     },
     "redis-core": {
       "source": "redis/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/redis-core/SKILL.md",
-      "computedHash": "2c0aedf490d57dc8e5ac4d38b5b92b57ceae5ac92ccb4e1ce30c9a0c6f643e30"
+      "computedHash": "7805229f286490b074aa105bc9650060202e247764f09102b928421789380b63"
     },
     "schema-migration-planner": {
       "source": "jetbrains/skills",
@@ -317,7 +317,7 @@
       "source": "unovue/shadcn-vue",
       "sourceType": "github",
       "skillPath": "skills/shadcn-vue/SKILL.md",
-      "computedHash": "7037ba3c62e72d5324dbe0bfebe21d4fb8cb7aba5a2200dce96a797e948dc368"
+      "computedHash": "84e70208ff5a21a2a601804795f1bc7053e4ba9967b121f5121b207acaaf2359"
     },
     "skyline-components": {
       "source": "wechat-miniprogram/skyline-skills",
@@ -335,7 +335,7 @@
       "source": "wechat-miniprogram/skyline-skills",
       "sourceType": "github",
       "skillPath": "skills/skyline-overview/SKILL.md",
-      "computedHash": "0add0cd530f29731e027497cfd53131492c998283b19b0af4c2a261cc58655d5"
+      "computedHash": "74f86c136be0a11a81ae7fb0d4a9730d0d039e76516fa2ba48a13bba47ab4417"
     },
     "skyline-route": {
       "source": "wechat-miniprogram/skyline-skills",
@@ -359,7 +359,7 @@
       "source": "wechat-miniprogram/skyline-skills",
       "sourceType": "github",
       "skillPath": "skills/skyline-wxss/SKILL.md",
-      "computedHash": "681db37296b4e1659c2dddea22df388f15fc7ee103107f6758af11a6761cc922"
+      "computedHash": "51bf3fade5061ba9e127e1ab2c61a543db3f754622aa2bda8e6aa08a7a61f444"
     },
     "slack-gif-creator": {
       "source": "anthropics/skills",
@@ -368,10 +368,10 @@
       "computedHash": "a36e1ceb3f07eb37bdc259f1bfb18e48cc0e809b2e1651cb2369286cd66b2107"
     },
     "slidev": {
-      "source": "antfu/skills",
+      "source": "slidevjs/slidev",
       "sourceType": "github",
       "skillPath": "skills/slidev/SKILL.md",
-      "computedHash": "949d94a83134759f3e9dd7ffc41ade2d1e03eb69706322f0467cda73705e47ce"
+      "computedHash": "a56b00fa553662ba8418ec033f36aee15d86807dfd8033e1b164824c2a46aab1"
     },
     "spring-context-di-reasoning": {
       "source": "jetbrains/skills",
@@ -419,7 +419,7 @@
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "testing/testing-setup/SKILL.md",
-      "computedHash": "7729a1664ec5a03154121e1114c942da4a5ef70605e5d17169cb149c0b92b58d"
+      "computedHash": "823537d239f2ba61e0ed04e3858b77346d01167e77e953007a814a1f5bb87264"
     },
     "theme-factory": {
       "source": "anthropics/skills",
@@ -434,22 +434,22 @@
       "computedHash": "faae1d2548c16defd4912bb49e339f18a2831dba5655ee8d2431a1f2451a15de"
     },
     "tsdown": {
-      "source": "antfu/skills",
+      "source": "rolldown/tsdown",
       "sourceType": "github",
       "skillPath": "skills/tsdown/SKILL.md",
-      "computedHash": "9a6610fe135e406e9339fbe9cdce89f97fcae071f64d78f42618420d5a5e2946"
+      "computedHash": "77e5f80fd74dd03f3d93e9d744833add021350f05ee0c267c14e22aa9eba6d81"
     },
     "turborepo": {
-      "source": "antfu/skills",
+      "source": "vercel/turborepo",
       "sourceType": "github",
       "skillPath": "skills/turborepo/SKILL.md",
-      "computedHash": "8d79e43351214e623cecd20e0ddf0ef64226fca4930a025249d9072451635fcd"
+      "computedHash": "8d2e73117a6c0445e6ba88a1dd2f7a0a34b3c291c625805edf3a6fa71aa02e07"
     },
     "unocss": {
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/unocss/SKILL.md",
-      "computedHash": "1054e69977e1d2d3b7c8479adf16b4db43191bf775f150ce8a06a0b1c191318b"
+      "computedHash": "88be6c6c1ce60f3d6e9b1468ffe2b474bff4d27e1efcb3433e805e93f143836b"
     },
     "upgrade-breaking-change-navigator": {
       "source": "jetbrains/skills",
@@ -461,49 +461,49 @@
       "source": "open-circle/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/valibot/SKILL.md",
-      "computedHash": "31d519d234d3af2cb44fb777f613abf9c187959791af172221af7d0b7af6e892"
+      "computedHash": "b2d5af1c1b9256347946a067e8e0af452c3c9efaef1eff5f1c691bbd2d7ae56e"
     },
     "verified-email": {
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "identity/verified-email/SKILL.md",
-      "computedHash": "63d5165b3c369911051a6be0c0a758efa9da08f56781f49752d1d61a86828b4a"
+      "computedHash": "9ce2881956863f47528e7e1614624e99be6dad706211ab55799eceda784333dd"
     },
     "vite": {
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/vite/SKILL.md",
-      "computedHash": "1cdc4bbecaa89544e6ef92566b015db989994bf90c4472683ac64f7a114dc3af"
+      "computedHash": "8a05956b65faa8131826da179f2d09afe73931971466d5640d95388b4182cda5"
     },
     "vitepress": {
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/vitepress/SKILL.md",
-      "computedHash": "a8aa9c4c23b88c5f6ff59159d8dd0678c8c87ae28bab19b4e84fa399022ce5ce"
+      "computedHash": "4fa65b441c03a570dbd472649d144d82fd67bdb6169048d6abad02a5cddb26dd"
     },
     "vitest": {
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/vitest/SKILL.md",
-      "computedHash": "3594bf6d97ca50836c611d8b1907322888c03d2c41b2f26761e644b8e67fe106"
+      "computedHash": "b26b7f8d10e860e944e0334c003207771707c4906514cb96c971faae13fba875"
     },
     "vue": {
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/vue/SKILL.md",
-      "computedHash": "f72b54618560c53d65740515ded5bb833750c4574dbe961fd21f022bd2b31a74"
+      "computedHash": "2375c65a63ec942f753ad91d7ffde9b4c1ed6e16819c3bd1633a6f5c7b3d3ee1"
     },
     "vue-best-practices": {
       "source": "vuejs-ai/skills",
       "sourceType": "github",
       "skillPath": "skills/vue-best-practices/SKILL.md",
-      "computedHash": "21132f6c11c765bd11d0d6ad081122dd858630073e2123b651e58f17b399b131"
+      "computedHash": "dc4e09f71772f07102e470451812a74cb7193b019b5a02e738e29951451b24cc"
     },
     "vue-debug-guides": {
       "source": "vuejs-ai/skills",
       "sourceType": "github",
       "skillPath": "skills/vue-debug-guides/SKILL.md",
-      "computedHash": "58bb2ad9e92dce0c15b42acc65aeec1dd93bc36f9db96ab248e52b1d22945472"
+      "computedHash": "8726d3a3b2c56292eeea31179f5684468cc98f536456c8263f004e491aea1e59"
     },
     "vue-jsx-best-practices": {
       "source": "vuejs-ai/skills",
@@ -530,16 +530,16 @@
       "computedHash": "743e11d7e5eaea83aead5853200df531328036f0cb7009d70f525626292f12d2"
     },
     "vueuse-functions": {
-      "source": "antfu/skills",
+      "source": "vueuse/skills",
       "sourceType": "github",
       "skillPath": "skills/vueuse-functions/SKILL.md",
-      "computedHash": "0a762ae555673c6a7705749bd58d74e2ae9b07007a2cde8168f1f6c480b8d8d9"
+      "computedHash": "03acb588ce85ed214a33c765735fa0ff56c27f574a2ae5732d55ef7237443977"
     },
     "wear-compose-m3": {
       "source": "android/skills",
       "sourceType": "github",
       "skillPath": "wear/wear-compose-m3/SKILL.md",
-      "computedHash": "fc8a324823a6e3b03b36329d1bd74cba505da50c7e741b8349e028501c3f7efb"
+      "computedHash": "78fa142ad39dc1689341b6ed990d03303873dc2f3bf48078a2f488f51aac2d29"
     },
     "web-artifacts-builder": {
       "source": "anthropics/skills",
@@ -548,10 +548,11 @@
       "computedHash": "fdddbe9bb720ea1aea9292ee513ec10b2a8f4912e2c343bdc246ab3febd7c9b3"
     },
     "web-design-guidelines": {
-      "source": "antfu/skills",
+      "source": "vercel-labs/agent-skills",
+      "ref": "main",
       "sourceType": "github",
       "skillPath": "skills/web-design-guidelines/SKILL.md",
-      "computedHash": "57cefa41cea390d412000acc24e5526034027ca46d4f7581ba8fa05777a8687f"
+      "computedHash": "d8e7d3afe37dcc8a97b99ffb5afdb4d0919ae0092ea8b68f44eb201f035e33ac"
     },
     "webapp-testing": {
       "source": "anthropics/skills",

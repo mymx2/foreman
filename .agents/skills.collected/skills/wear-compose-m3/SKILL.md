@@ -1,23 +1,27 @@
 ---
 name: wear-compose-m3
-description: Expert guidance for working with Wear OS Compose Material3. Use this
-  skill when creating, updating, or migrating Wear OS projects. This includes the
-  androidx.wear.compose.material3, androidx.wear.compose.foundation, and androidx.wear.compose.navigation3
-  libraries. Also working with core components such as AppScaffold, ScreenScaffold,
-  and TransformingLazyColumn, and core Wear OS concepts such as ambient mode. Migration
-  from lower versions such as Material 2.5 and Horologist.
+description: Guidance for Wear OS Compose Material3 (Wear Compose Material 3 / Wear
+  Compose Material3) watch and wearable apps. Covers creating, updating, and migrating
+  projects (Material 2.5 and Horologist migration) using androidx.wear.compose.material3,
+  androidx.wear.compose.foundation, and androidx.wear.compose.navigation3, including
+  AppScaffold, ScreenScaffold, TransformingLazyColumn, ambient mode, and previews.
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-07-18'
+  last-updated: '2026-10-28'
   keywords:
   - Wear OS
   - Compose
   - Material3
   - Horologist
   - TransformingLazyColumn
+  - ScalingLazyColumn
   - AppScaffold
   - ScreenScaffold
+  - EdgeButton
+  - SwipeDismissableSceneStrategy
+  - Material 2.5
+  - ambient mode
 ---
 
 ## Prerequisites and compatibility
@@ -26,109 +30,151 @@ metadata:
 2. **Wear OS Compose Material3 version:** If an internal tool is available to establish the **latest stable version** `{VERSION}` of `androidx.wear.compose:compose-material3`, use that tool.
    - Otherwise, fetch the [official Maven metadata XML](https://dl.google.com/dl/android/maven2/androidx/wear/compose/compose-material3/maven-metadata.xml) to identify `{VERSION}` (highest number, ignoring `-alpha`, `-beta`, or `-rc`).
 3. **Strict compliance:** If a version is listed as stable, you MUST use it, unless overridden by the user. Do not downgrade based on initial "Unresolved reference" errors in the editor or outdated web search results.
-4. **Kotlin version:** For Wear Compose Material3, use Kotlin **2.0.0 or
-   higher**.
-5. **Compose compiler:**
-   - If Kotlin version is **2.0.0+** , the project must use the `org.jetbrains.kotlin.plugin.compose` Gradle plugin.
-   - If Kotlin version is **\< 2.0.0** , the project must use `kotlinCompilerExtensionVersion` in `composeOptions`, matching the [Compose to Kotlin Compatibility Map](https://developer.android.com/jetpack/androidx/releases/compose-kotlin).
-6. **Min SDK:** Ensure `minSdk` is at least **25**.
-7. **Sample extraction mandate**: Wear Compose libraries ship with an additional JAR file which contains individual samples for each and every component. You mustn't propose code changes, other than previews or basic changes such as color changes, until the samples in Capability 3 are extracted to the local cache. Library source files are incomplete and NOT a substitute for these samples; bypassing extraction is an environment setup failure.
+4. **Kotlin \& Compose compiler:** Use Kotlin **2.0.0+** with the `org.jetbrains.kotlin.plugin.compose` Gradle plugin.
+5. **Min SDK:** Ensure `minSdk` is at least **25**.
+6. **Compile SDK \& AGP:** Ensure `compileSdk` and AGP meet the library's AAR metadata floors (`compileSdk >= 35` and `AGP >= 8.6.0` for `1.6.x`; `compileSdk >= 37` and `AGP >= 9.1.0` for `1.7.x`).
 
 ## Gotchas
 
-1. **Mandatory sync and validation:** After updating versions in `libs.versions.toml` or `build.gradle.kts`, you **must** perform a Gradle sync before refactoring any code. This ensures the environment has resolved the libraries correctly.
+1. **Mandatory sync and validation:** After updating versions in `libs.versions.toml` or `build.gradle.kts`, perform a Gradle sync (or `./gradlew assembleDebug`) before refactoring, and run `./gradlew assembleDebug` after refactoring to verify the build.
 2. **Prohibition of guessing (error protocol):** If you encounter an 'Unresolved Reference' or API mismatch after a successful sync, do not attempt to 'fix' it by downgrading the library version.
 
 ## Capabilities and tools
 
-### Capability 1: Migration
+### Capability 1: Migration, updates, and adding features
 
 Use this guidance when migrating from an older version of Wear OS Compose or
-Horologist.
-
-1. Unless otherwise indicated by the developer, use the latest stable version of Wear Compose Material3 from `{VERSION}`.
-2. Read the [migration guide](references/android/training/wearables/compose/migrate-to-material3.md).
-3. Use the official component mappings from the migration guide.
-4. Before refactoring any component (for example, `Chip` -\> `Button`), check the parameter names, slot types, and "Expressive" design tokens.
-5. Do not use the Horologist Composables, Compose Layout, or Compose Material libraries.
-6. **Always** check against the component guidance in Capability 4.
-7. Expect screenshot tests to fail when a migration has been performed: Even when migrating to very similar components, expected defaults for padding and positioning will have changed. Do not seek to artificially match the pre-migration screenshot, but give preference to the Material3 defaults.
-
-### Capability 2: Adding Wear OS Compose Material3 features or updating the app
-
-Use this guidance when the developer asks to update a project which is using an
-earlier version of Wear OS Compose Material3, or when they ask to add further
+Horologist, updating an existing Wear Compose Material3 project, or adding
 features.
 
-1. Unless otherwise indicated by the developer, use the latest stable version of Wear Compose Material3 from `{VERSION}`.
-2. Do not use the Horologist Composables, Compose Layout, or Compose Material libraries.
-3. **Always** check against the component guidance in Capability 4.
-4. Expect screenshot tests to fail when a migration has been performed: Even when migrating to very similar components, expected defaults for padding and positioning will have changed. Do not seek to artificially match the pre-migration screenshot, but give preference to the Material3 defaults.
+1. Unless otherwise indicated by the developer, use the latest stable version of Wear Compose Material3 from `{VERSION}` (superseding any literal version strings in the migration guide).
+2. When migrating from Material 2.5 or Horologist, read the [migration guide](references/android/training/wearables/compose/migrate-to-material3.md) and use its official component mappings.
+3. Before refactoring any component (for example, `Chip` -\> `Button`), check the parameter names, slot types, and "Expressive" design tokens.
+4. Do not use the Horologist Composables, Compose Layout, or Compose Material libraries; replace Horologist components with Wear Compose M3 equivalents (`AppScaffold` -\> M3 `AppScaffold`, `ScreenScaffold` -\> M3 `ScreenScaffold`, `ScalingLazyColumn` -\> `TransformingLazyColumn`, `ResponsiveListHeader` -\> `ListHeader`, `PagerScreen` -\> `HorizontalPagerScaffold`, `Chip` -\> `Button`, `Confirmation` -\> `ConfirmationDialog`).
+5. **Always** check against the component guidance in Capability 3.
+6. Expect screenshot tests to fail when migrating or updating components: expected defaults for padding and positioning will have changed. Do not seek to artificially match the previous screenshot, but give preference to the Material3 defaults.
 
-### Capability 3: Component samples
+### Capability 2: Component samples
 
-Wear Compose includes individual component samples for each and every component,
-within the `<artifact>-<version>-samples-sources.jar` file. Gradle automatically
-downloads these JAR files along with the main library JAR when using any of
-`compose-material3`, `compose-foundation` or `compose-navigation3`.
+Use this table of reference to find canonical samples for Wear Compose
+components.
+When working with a Wear Compose component, you must use the samples linked
+from the table to ensure you know how to correctly use it.
 
-Use the canonical component samples whenever adding or adjusting a Wear Compose
-Material3 component.
+**Important:** Symbols marked with `[alpha]`, `[beta]`, or `[rc]` are only
+available in that pre-release track and are **not** in stable `{VERSION}`. Do
+not use them unless the project explicitly targets that pre-release version.
 
-STRICT COMPLIANCE: Extraction is NOT optional. You are FORBIDDEN from
-implementing any code until samples are extracted and read. Bypassing this step
-with alternative search tools or by assuming library documentation is sufficient
-is a protocol breach. You MUST verify the local cache by reading a sample file
-before proceeding.
+#### Material 3 components in `androidx.wear.compose.material3.*`
 
-Exception: You don't need to extract samples if the request is strictly related
-to tooling (for example, adding @WearPreviewDevices), updating text/colors, or
-basic refactoring that doesn't involve adding new Wear Compose components.
+| Component / Symbol | Reference Samples |
+|---|---|
+| `AlertDialog`, `AlertDialogDefaults` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md) |
+| `AnimatedPage`, `HorizontalPagerScaffold`, `VerticalPagerScaffold` | [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [PageIndicatorSample](references/material3/PageIndicatorSample.kt.md), [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md) |
+| `AnimatedText`, `rememberAnimatedTextFontRegistry` | [AnimatedTextSample](references/material3/AnimatedTextSample.kt.md) |
+| `AppCard` | [CardSample](references/material3/CardSample.kt.md) |
+| `AppScaffold` | [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `ArcProgressIndicator`, `ArcProgressIndicatorDefaults`, `CircularProgressIndicator`, `CircularProgressIndicatorDefaults`, `ProgressIndicatorDefaults`, `SegmentedCircularProgressIndicator`, `drawCircularProgressIndicator` | [ProgressIndicatorSample](references/material3/ProgressIndicatorSample.kt.md) |
+| `Button` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md), [AnimatedTextSample](references/material3/AnimatedTextSample.kt.md), [ButtonGroupSample](references/material3/ButtonGroupSample.kt.md), [ButtonSample](references/material3/ButtonSample.kt.md), [DatePickerSample](references/material3/DatePickerSample.kt.md), [DynamicColorSchemeSample](references/material3/DynamicColorSchemeSample.kt.md), [FadingExpandingLabelSample](references/material3/FadingExpandingLabelSample.kt.md), [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [PageIndicatorSample](references/material3/PageIndicatorSample.kt.md), [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md), [PickerSample](references/material3/PickerSample.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [ScrollIndicatorSample](references/material3/ScrollIndicatorSample.kt.md), [StepperSample](references/material3/StepperSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [TimePickerSample](references/material3/TimePickerSample.kt.md), [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md), [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `ButtonDefaults` | [ButtonSample](references/material3/ButtonSample.kt.md), [CurvedTextSamples](references/material3/CurvedTextSamples.kt.md), [DynamicColorSchemeSample](references/material3/DynamicColorSchemeSample.kt.md), [EdgeButtonSample](references/material3/EdgeButtonSample.kt.md), [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [PlaceholderSample](references/material3/PlaceholderSample.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [ScrollIndicatorSample](references/material3/ScrollIndicatorSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [TextButtonSample](references/material3/TextButtonSample.kt.md), [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md), [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `ButtonGroup` | [ButtonGroupSample](references/material3/ButtonGroupSample.kt.md), [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md) |
+| `Card` | [CardSample](references/material3/CardSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `CardDefaults` | [CardSample](references/material3/CardSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `CheckboxButton` | [CheckboxButtonSample](references/material3/CheckboxButtonSample.kt.md), [SwipeToDismissBoxSample](references/material3/SwipeToDismissBoxSample.kt.md) |
+| `ChildButton`, `OutlinedButton` | [ButtonSample](references/material3/ButtonSample.kt.md) |
+| `ColorScheme`, `dynamicColorScheme` | [DynamicColorSchemeSample](references/material3/DynamicColorSchemeSample.kt.md) |
+| `CompactButton`, `CompactButtonDefaults` | [ButtonSample](references/material3/ButtonSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `ConfirmationDialog`, `ConfirmationDialogDefaults`, `FailureConfirmationDialog`, `SuccessConfirmationDialog`, `confirmationDialogCurvedText` | [ConfirmationDialogSample](references/material3/ConfirmationDialogSample.kt.md) |
+| `CurvedTextDefaults` | [CurvedTextSamples](references/material3/CurvedTextSamples.kt.md) |
+| `DatePicker`, `DatePickerType` | [DatePickerSample](references/material3/DatePickerSample.kt.md) |
+| `EdgeButton` | [EdgeButtonSample](references/material3/EdgeButtonSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `EdgeButtonSize` | [EdgeButtonSample](references/material3/EdgeButtonSample.kt.md) |
+| `FadingExpandingLabel` | [FadingExpandingLabelSample](references/material3/FadingExpandingLabelSample.kt.md) |
+| `FilledIconButton`, `FilledTonalIconButton`, `IconButtonColors`, `IconButtonShapes`, `OutlinedIconButton` | [IconButtonSample](references/material3/IconButtonSample.kt.md) |
+| `FilledTonalButton` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md), [ButtonSample](references/material3/ButtonSample.kt.md), [ConfirmationDialogSample](references/material3/ConfirmationDialogSample.kt.md), [OpenOnPhoneDialogSample](references/material3/OpenOnPhoneDialogSample.kt.md), [PlaceholderSample](references/material3/PlaceholderSample.kt.md), [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [SwipeToDismissBoxSample](references/material3/SwipeToDismissBoxSample.kt.md) |
+| `HorizontalPageIndicator`, `VerticalPageIndicator` | [PageIndicatorSample](references/material3/PageIndicatorSample.kt.md) |
+| `Icon` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md), [ButtonSample](references/material3/ButtonSample.kt.md), [CardSample](references/material3/CardSample.kt.md), [CheckboxButtonSample](references/material3/CheckboxButtonSample.kt.md), [ConfirmationDialogSample](references/material3/ConfirmationDialogSample.kt.md), [CurvedTextSamples](references/material3/CurvedTextSamples.kt.md), [DatePickerSample](references/material3/DatePickerSample.kt.md), [EdgeButtonSample](references/material3/EdgeButtonSample.kt.md), [IconButtonSample](references/material3/IconButtonSample.kt.md), [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [PlaceholderSample](references/material3/PlaceholderSample.kt.md), [ProgressIndicatorSample](references/material3/ProgressIndicatorSample.kt.md), [RadioButtonSample](references/material3/RadioButtonSample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [SwitchButtonSample](references/material3/SwitchButtonSample.kt.md), [TimePickerSample](references/material3/TimePickerSample.kt.md) |
+| `IconButton` | [IconButtonSample](references/material3/IconButtonSample.kt.md), [LevelIndicatorSample](references/material3/LevelIndicatorSample.kt.md), [ProgressIndicatorSample](references/material3/ProgressIndicatorSample.kt.md) |
+| `IconButtonDefaults` | [IconButtonSample](references/material3/IconButtonSample.kt.md), [ProgressIndicatorSample](references/material3/ProgressIndicatorSample.kt.md) |
+| `IconToggleButton`, `IconToggleButtonDefaults` | [IconToggleButtonSample](references/material3/IconToggleButtonSample.kt.md) |
+| `LevelIndicator` | [LevelIndicatorSample](references/material3/LevelIndicatorSample.kt.md) |
+| `LinearProgressIndicator` | [LinearProgressIndicatorSample](references/material3/LinearProgressIndicatorSample.kt.md) |
+| `ListHeader` | [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `ListHeaderDefaults` | [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `ListSubHeader` | [ListHeaderSample](references/material3/ListHeaderSample.kt.md) |
+| `LocalOneHandedGestureEnabled`, `OneHandedGestureDefaults`, `OneHandedGestureHorizontalPageIndicator`, `OneHandedGesturePageIndicatorState`, `OneHandedGesturePriority`, `OneHandedGestureScrollIndicator`, `OneHandedGestureScrollIndicatorState`, `OneHandedGestureVerticalPageIndicator` | [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md) |
+| `MaterialTheme` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md), [ButtonSample](references/material3/ButtonSample.kt.md), [CardSample](references/material3/CardSample.kt.md), [CurvedTextSamples](references/material3/CurvedTextSamples.kt.md), [DynamicColorSchemeSample](references/material3/DynamicColorSchemeSample.kt.md), [LinearProgressIndicatorSample](references/material3/LinearProgressIndicatorSample.kt.md), [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md), [ProgressIndicatorSample](references/material3/ProgressIndicatorSample.kt.md), [SwipeToDismissBoxSample](references/material3/SwipeToDismissBoxSample.kt.md), [TimeTextSample](references/material3/TimeTextSample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md) |
+| `OneHandedGestureAction`, `OneHandedGestureClickIndicator`, `OneHandedGestureClickIndicatorState`, `oneHandedGesture`, `rememberOneHandedGestureConfiguration` | [ButtonSample](references/material3/ButtonSample.kt.md), [CardSample](references/material3/CardSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md) |
+| `OpenOnPhoneDialog`, `OpenOnPhoneDialogDefaults`, `openOnPhoneDialogCurvedText` | [OpenOnPhoneDialogSample](references/material3/OpenOnPhoneDialogSample.kt.md) |
+| `OutlinedCard` | [CardSample](references/material3/CardSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `PagerScaffoldDefaults` | [PageIndicatorSample](references/material3/PageIndicatorSample.kt.md), [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md) |
+| `Picker` | [PickerSample](references/material3/PickerSample.kt.md) |
+| `PickerGroup` | [PickerGroupSample](references/material3/PickerGroupSample.kt.md) |
+| `RadioButton`, `SplitRadioButton` | [RadioButtonSample](references/material3/RadioButtonSample.kt.md) |
+| `ResponsiveTransformationSpec`, `TransformationVariableSpec` | [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md) |
+| `RevealValue`, `SwipeToReveal`, `SwipeToRevealDefaults`, `rememberRevealState` | [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md) |
+| `ScreenScaffold` | [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `ScreenScaffoldDefaults`, `ScrollIndicator` | [ScrollIndicatorSample](references/material3/ScrollIndicatorSample.kt.md) |
+| `ScreenStage`, `scrollAway` | [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md) |
+| `Slider`, `SliderDefaults` | [SliderSample](references/material3/SliderSample.kt.md) |
+| `SplitCheckboxButton` | [CheckboxButtonSample](references/material3/CheckboxButtonSample.kt.md) |
+| `SplitSwitchButton` | [SwitchButtonSample](references/material3/SwitchButtonSample.kt.md) |
+| `Stepper`, `StepperLevelIndicator`, `rangeSemantics` | [StepperSample](references/material3/StepperSample.kt.md) |
+| `StepperDefaults` | [LevelIndicatorSample](references/material3/LevelIndicatorSample.kt.md), [StepperSample](references/material3/StepperSample.kt.md) |
+| `SurfaceTransformation` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md), [DynamicColorSchemeSample](references/material3/DynamicColorSchemeSample.kt.md), [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md), [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `SwipeToDismissBox` | [SwipeToDismissBoxSample](references/material3/SwipeToDismissBoxSample.kt.md) |
+| `SwitchButton` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [SwitchButtonSample](references/material3/SwitchButtonSample.kt.md) |
+| `Text` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md), [AnimatedTextSample](references/material3/AnimatedTextSample.kt.md), [ButtonGroupSample](references/material3/ButtonGroupSample.kt.md), [ButtonSample](references/material3/ButtonSample.kt.md), [CardSample](references/material3/CardSample.kt.md), [CheckboxButtonSample](references/material3/CheckboxButtonSample.kt.md), [ConfirmationDialogSample](references/material3/ConfirmationDialogSample.kt.md), [DatePickerSample](references/material3/DatePickerSample.kt.md), [DynamicColorSchemeSample](references/material3/DynamicColorSchemeSample.kt.md), [EdgeButtonSample](references/material3/EdgeButtonSample.kt.md), [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [OpenOnPhoneDialogSample](references/material3/OpenOnPhoneDialogSample.kt.md), [PageIndicatorSample](references/material3/PageIndicatorSample.kt.md), [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md), [PickerGroupSample](references/material3/PickerGroupSample.kt.md), [PickerSample](references/material3/PickerSample.kt.md), [PlaceholderSample](references/material3/PlaceholderSample.kt.md), [RadioButtonSample](references/material3/RadioButtonSample.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [ScrollIndicatorSample](references/material3/ScrollIndicatorSample.kt.md), [StepperSample](references/material3/StepperSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [SwipeToDismissBoxSample](references/material3/SwipeToDismissBoxSample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [SwitchButtonSample](references/material3/SwitchButtonSample.kt.md), [TextButtonSample](references/material3/TextButtonSample.kt.md), [TextToggleButtonSample](references/material3/TextToggleButtonSample.kt.md), [TimePickerSample](references/material3/TimePickerSample.kt.md), [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `TextButton` | [TextButtonSample](references/material3/TextButtonSample.kt.md) |
+| `TextButtonDefaults` | [TextButtonSample](references/material3/TextButtonSample.kt.md), [TextToggleButtonSample](references/material3/TextToggleButtonSample.kt.md) |
+| `TextToggleButton`, `TextToggleButtonDefaults`, `touchTargetAwareSize` | [TextToggleButtonSample](references/material3/TextToggleButtonSample.kt.md) |
+| `TimePicker`, `TimePickerType` | [TimePickerSample](references/material3/TimePickerSample.kt.md) |
+| `TimeText` | [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [ScrollIndicatorSample](references/material3/ScrollIndicatorSample.kt.md), [TimeTextSample](references/material3/TimeTextSample.kt.md) |
+| `TimeTextDefaults`, `timeTextCurvedText` | [TimeTextSample](references/material3/TimeTextSample.kt.md) |
+| `TitleCard` | [CardSample](references/material3/CardSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md), [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md) |
+| `TransformationSpec` | [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md) |
+| `curvedText` | [CurvedTextSamples](references/material3/CurvedTextSamples.kt.md), [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [TimeTextSample](references/material3/TimeTextSample.kt.md) |
+| `firstVisibleItemLayoutItemInfo`, `layoutItemInfoOf`, `rememberTransformingLazyColumnFirstLayoutItemProvider` | [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `placeholder`, `placeholderShimmer`, `rememberPlaceholderState` | [PlaceholderSample](references/material3/PlaceholderSample.kt.md) |
+| `rememberPickerState` | [PickerGroupSample](references/material3/PickerGroupSample.kt.md), [PickerSample](references/material3/PickerSample.kt.md) |
+| `rememberTransformationSpec`, `transformedHeight` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md), [DynamicColorSchemeSample](references/material3/DynamicColorSchemeSample.kt.md), [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md), [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `timeTextSeparator` | [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [TimeTextSample](references/material3/TimeTextSample.kt.md) |
 
-#### Step 1: Prepare
+#### Foundation components in `androidx.wear.compose.foundation.*`
 
-1. Check the `build.gradle.kts` or `libs.versions.toml` to ensure the Wear Compose version matches `{VERSION}`.
-2. Ensure that the necessary dependencies are downloaded by doing a Gradle sync.
+| Component / Symbol | Reference Samples |
+|---|---|
+| `AmbientMode`, `LocalAmbientModeManager`, `rememberAmbientModeManager` | [AmbientModeSample](references/foundation/AmbientModeSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md) |
+| `AmbientTickEffect` | [AmbientModeSample](references/foundation/AmbientModeSample.kt.md) |
+| `BasicSwipeToDismissBox` | [SwipeToDismissBoxSample](references/foundation/SwipeToDismissBoxSample.kt.md) |
+| `CurvedAlignment`, `CurvedTextStyle`, `angularGradientBackground`, `angularSize`, `basicCurvedText`, `clearAndSetSemantics`, `curvedColumn`, `padding`, `radialGradientBackground`, `radialSize`, `semantics`, `size` | [CurvedWorldSample](references/foundation/CurvedWorldSample.kt.md) |
+| `CurvedDirection`, `CurvedLayout`, `angularSizeDp`, `background`, `curvedBox`, `curvedComposable`, `curvedRow` | [CurvedTextSamples](references/material3/CurvedTextSamples.kt.md), [CurvedWorldSample](references/foundation/CurvedWorldSample.kt.md) |
+| `CurvedModifier` | [CurvedTextSamples](references/material3/CurvedTextSamples.kt.md), [CurvedWorldSample](references/foundation/CurvedWorldSample.kt.md), [TimeTextSample](references/material3/TimeTextSample.kt.md) |
+| `HorizontalPager`, `VerticalPager`, `rememberPagerState` | [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [PageIndicatorSample](references/material3/PageIndicatorSample.kt.md), [PagerSamples](references/foundation/PagerSamples.kt.md), [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md) |
+| `PagerDefaults` | [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md) |
+| `RotaryScrollableDefaults` | [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md), [RotarySamples](references/foundation/RotarySamples.kt.md), [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md) |
+| `RotarySnapLayoutInfoProvider`, `rotaryScrollable` | [RotarySamples](references/foundation/RotarySamples.kt.md) |
+| `ScrollInfoProvider` | [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md) |
+| `SwipeToDismissValue`, `edgeSwipeToDismiss`, `rememberSwipeToDismissBoxState` | [SwipeToDismissBoxSample](references/foundation/SwipeToDismissBoxSample.kt.md), [SwipeToDismissBoxSample](references/material3/SwipeToDismissBoxSample.kt.md) |
+| `TransformingLazyColumn` | [DynamicColorSchemeSample](references/material3/DynamicColorSchemeSample.kt.md), [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [ScrollIndicatorSample](references/material3/ScrollIndicatorSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md), [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `TransformingLazyColumnDefaults` | [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md) |
+| `TransformingLazyColumnFirstLayoutItemProvider` | [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `TransformingLazyColumnItemScrollProgress` | [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md) |
+| `expandableButton`, `expandableItem`, `expandableItems`, `rememberExpandableState` | [ExpandableSample](references/foundation/ExpandableSample.kt.md) |
+| `hierarchicalFocusGroup` | [HierarchicalFocusSample](references/foundation/HierarchicalFocusSample.kt.md) |
+| `items` | [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md) |
+| `itemsIndexed` | [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `rememberTransformingLazyColumnState` | [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [ScrollIndicatorSample](references/material3/ScrollIndicatorSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md), [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
+| `requestFocusOnHierarchyActive` | [HierarchicalFocusSample](references/foundation/HierarchicalFocusSample.kt.md), [RotarySamples](references/foundation/RotarySamples.kt.md) |
+| `weight` | [CurvedWorldSample](references/foundation/CurvedWorldSample.kt.md), [TimeTextSample](references/material3/TimeTextSample.kt.md) |
 
-#### Step 2: Check the local cache
+#### Navigation 3 components in `androidx.wear.compose.navigation3.*`
 
-1. Define the cache directory path: `/tmp/wear-compose-samples/{VERSION}/`. Do NOT choose your own different location.
-2. Check if this directory exists and contains subdirectories with `.kt` files.
-   - **IF YES (cache hit):** Proceed to **Step 4**.
-   - **IF NO (cache miss):** Proceed to **Step 3**.
+| Component / Symbol | Reference Samples |
+|---|---|
+| `rememberSwipeDismissableSceneStrategy` | [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md) |
 
-#### Step 3: Network-based sample retrieval
-
-Google Maven publishes a `-samples-sources.jar` alongside every library release.
-Download and extract it directly without needing a local Gradle sync or cache
-lookup.
-
-1. Determine the `{VERSION}` of `androidx.wear.compose:compose-material3` from `build.gradle.kts` or `libs.versions.toml`.
-2. Define `{ARTIFACT}` as the items in the list `["material3", "foundation"]`. Also include `navigation3` if `androidx.wear.compose.navigation3` is used.
-3. For each `{ARTIFACT}`, run the following commands to download and extract
-   the samples:
-
-       # Download the samples-sources JAR
-       curl -sSL "https://dl.google.com/dl/android/maven2/androidx/wear/compose/compose-{ARTIFACT}/{VERSION}/compose-{ARTIFACT}-{VERSION}-samples-sources.jar" -o {ARTIFACT}-{VERSION}-samples.jar
-
-       # Extract and flatten into the cache directory
-       unzip -q -o {ARTIFACT}-{VERSION}-samples.jar -d /tmp/wear-compose-samples/{VERSION}/{ARTIFACT}/
-
-       # Clean up
-       rm {ARTIFACT}-{VERSION}-samples.jar
-
-4. If this works, proceed directly to step 4.
-
-#### Step 4: Read samples and implement
-
-1. Read the relevant `.kt` sample files.
-2. Use these official, version-matched samples as the source of truth for:
-   - Required parameters and slot names.
-   - Default styling and typography tokens.
-   - Interactive behaviors (for example: `onClick`, `onLongClick`).
-   - Component nesting (for example: `AppScaffold` -\> `ScreenScaffold`).
-
-### Capability 4: Component guidance
+### Capability 3: Component guidance
 
 **Mandatory**: Use this capability as a checklist against any component use. It
 provides more holistic guidance on how to use each component in practice, beyond
@@ -208,11 +254,11 @@ the component syntax.
    - \[ \] Use `TransformingLazyColumn` instead of `ScalingLazyColumn`.
    - \[ \] You must pass the `contentPadding` parameter from `ScreenScaffold` to the `TransformingLazyColumn`.
    - \[ \] Use the `minimumVerticalContentPadding` modifier to achieve required padding top and bottom.
-     - This expects a value from defaults, such as `ButtonDefaults`, `CardDefaults`, \`ListHeaderDefaults.
+     - This expects a value from defaults, such as `ButtonDefaults`, `CardDefaults`, `ListHeaderDefaults`.
      - Note: This is a scoped modifier available within `TransformingLazyColumnItemScope`.
-   - \[ \] Ensure the list morphs and scales.
-   - \[ \] Use `transformedHeight` modifier.
-   - \[ \] Use `transform = SurfaceTransform(...)`.
+   - \[ \] Ensure items morph and scale (apply to components **within** `TransformingLazyColumn`, not the list itself):
+     - \[ \] Use `Modifier.transformedHeight(this, transformationSpec)`.
+     - \[ \] Use `transformation = SurfaceTransformation(transformationSpec)`.
    - \[ \] If configuring a list for snapping, use `flingBehavior` and `rotaryScrollableBehavior` **together**:
 
 
@@ -234,7 +280,7 @@ the component syntax.
 
 4. `ScreenScaffold`
 
-   - \[ \] Guard the `scrollIndicator` with `!LocalScrollCaptureInProgress.current`.
+   - \[ \] Guard the `scrollIndicator` with `!LocalScrollCaptureInProgress.current` (`androidx.compose.ui.platform`).
 5. `EdgeButton`
 
    - \[ \] Do **NOT** use as the final item within a `TransformingLazyColumn`. Instead, use the slot in `ScreenScaffold`.
@@ -274,7 +320,7 @@ the component syntax.
 
 6. `Column`
 
-   - \[ \] USE as a direct child of `ScreenScaffold` *if* the screen is will **never** scroll, even with the largest system font.
+   - \[ \] USE as a direct child of `ScreenScaffold` *if* the screen will **never** scroll, even with the largest system font.
    - \[ \] Use `TransformingLazyColumn` instead for all other cases.
 7. Styles
 
@@ -284,17 +330,19 @@ the component syntax.
 
    - \[ \] Components such as `Button` have a corresponding `ButtonDefaults` object.
    - \[ \] Check for and use the `*Defaults` object for any component when working with padding and styling values, in preference to hard-coded values.
-9. Use Wear specific previews:
+9. Use Wear-specific preview annotations
+   (`androidx.wear.compose.ui.tooling.preview`):
 
-   - \[ \] `WearPreviewDevices`
-   - \[ \] `WearPreviewFontScales`
+   - \[ \] `@WearPreviewDevices`
+   - \[ \] `@WearPreviewFontScales`
+   - \[ \] Ensure the `androidx.wear.compose:compose-ui-tooling` dependency is included.
 10. Ambient mode
 
-    - \[ \] Use `LocalAmbientModeManager` instead of `AmbientLifecycleObserver`.
+    - \[ \] Use `LocalAmbientModeManager` (provided by `CompositionLocalProvider` and `rememberAmbientModeManager()`) instead of `AmbientLifecycleObserver`.
 11. Navigation
 
-    - \[ \] When adding navigation fresh, use Navigation3.
-    - \[ \] For Navigation3 in Wear OS, use `SwipeDismissableSceneStrategy()` from the Wear Compose `compose-navigation3` library.
+    - \[ \] When adding navigation fresh, use Navigation3 (`androidx.wear.compose:compose-navigation3`).
+    - \[ \] Use `rememberSwipeDismissableSceneStrategy()` / `SwipeDismissableSceneStrategy` (`androidx.wear.compose.navigation3`).
 12. Comments
 
     - \[ \] Where any Kotlin file has been modified, ensure that the existing comments are up to date and accurately reflect any changes to the implementation.

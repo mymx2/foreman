@@ -35,7 +35,7 @@ Before you begin, complete the following steps:
    ### TV
 
        dependencies {
-         implementation 'com.google.android.engage:engage-tv:1.0.6'
+         implementation 'com.google.android.engage:engage-tv:1.1.0'
        }
 
 4. Add permission for `WRITE_EPG_DATA` for TV APK
@@ -48,12 +48,18 @@ Before you begin, complete the following steps:
 6. Test your implementation using the verification app as outlined in the
    [Testing section](https://developer.android.com/guide/playcore/engage/tv/getting-started#testing).
 
-7. In your production app, set the Engage service environment to production in
-   the `AndroidManifest.xml` file.
+7. In your production app, set the Engage service environment to production by
+   adding the `<meta-data>` element directly under the `<application>` tag
+   in your `AndroidManifest.xml` file.
+   Don't place this tag inside an `<activity>`.
 
-       <meta-data
-           android:name="com.google.android.engage.service.ENV"
-           android:value="PRODUCTION" />
+       <application ...>
+           <!-- Other application configurations -->
+
+           <meta-data
+               android:name="com.google.android.engage.service.ENV"
+               android:value="PRODUCTION" />
+       </application>
 
    > [!IMPORTANT]
    > **Important:** The Engage service environment declaration is only needed for your release build. For your local testing with the verification app, don't include this element.
@@ -65,11 +71,34 @@ Before you begin, complete the following steps:
 Use `AppEngagePublishClient` to interact with the service. Always check if the
 service is available before publishing.
 
+You can check the service availability for every cluster type that you intend to
+publish. The `isServiceAvailable` API accepts a request object,
+`ServiceAvailabilityRequest`, which contains the cluster types for which service
+availability needs to be checked. You can find the `ClusterType` enum values
+required for `ServiceAvailabilityRequest` from the following table.
+
+| Cluster Type | Cluster Type Constant | Integer Value |
+|---|---|---|
+| Unknown | `TYPE_UNKNOWN` | 0 |
+| Recommendation Cluster | `TYPE_RECOMMENDATION` | 1 |
+| Continuation Cluster | `TYPE_CONTINUATION` | 3 |
+
     val client = AppEngagePublishClient(context)
 
-    client.isServiceAvailable().addOnCompleteListener { task ->
-      if (task.isSuccessful && task.result) {
-        // Service is available, proceed with publishing
+    val request = ServiceAvailabilityRequest.Builder()
+        .addIntendedClusterType(ClusterType.TYPE_CONTINUATION)
+        .addIntendedClusterType(ClusterType.TYPE_RECOMMENDATION)
+        .build()
+
+    client.isServiceAvailable(request).addOnCompleteListener { task ->
+      if (task.isSuccessful) {
+        val availabilityMap = task.result
+        if (availabilityMap[ClusterType.TYPE_CONTINUATION] == true) {
+          // Proceed with publishing continuation content
+        }
+        if (availabilityMap[ClusterType.TYPE_RECOMMENDATION] == true) {
+          // Proceed with publishing recommendation content
+        }
       } else {
         // Service is not available or call failed
       }

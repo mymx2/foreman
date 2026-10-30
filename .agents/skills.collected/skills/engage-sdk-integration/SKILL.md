@@ -6,7 +6,7 @@ description: Helps developers integrate, debug, and resolve Play Engage SDK impl
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-07-18'
+  last-updated: '2026-10-28'
   keywords:
   - android
   - engage
@@ -65,13 +65,17 @@ Follow these steps to assist the developer:
    - Provide the necessary `implementation` dependencies for `build.gradle` or `build.gradle.kts` from [patterns.md](references/patterns.md).
    - Provide the `<receiver>` and `<service>` declarations for `AndroidManifest.xml`.
    - Note: Except for TV, there aren't any vertical-specific imports. For all other verticals, `com.google.android.engage:engage-core:1.6.0` is sufficient.
-6. **Debugging:**
+6. **Debugging and verification**:
 
+   - **Self-verification checklist** : Before considering your work complete, you must verify that you've implemented all of the following:
+     - \[ \] Registered `EngageBroadcastReceiver` **statically** in `AndroidManifest.xml` (inside the `<application>` tag).
+     - \[ \] Registered `EngageBroadcastReceiver` **dynamically** by calling `EngageBroadcastReceiver.register(context)` in the `Application` class or main `Activity` class.
+     - \[ \] Implemented the `register` method in `EngageBroadcastReceiver`'s `companion object` to handle dynamic registration.
+     - \[ \] Handled empty data lists in `EngageWorker` (for example, by deleting the cluster instead of publishing empty data).
+     - \[ \] Used `--no-daemon` for all Gradle compilations.
    - Perform a Gradle sync.
-   - If errors occur, follow this resolution order:
-     - Fix import errors. For package `com.google.android.engage` or classes starting with `AppEngage`, verify the package name in the `{VERTICAL}.md` in **[references/schemas/](references/schemas)** directory or [common.md](references/common.md).
-     - Fix any other errors.
-   - Execute a full Gradle build and resolve any remaining compilation issues. Repeat this step until the Gradle build is successful.
+   - If errors occur (such as import failures, namespace conflicts, or compile errors), read **[references/troubleshooting.md](references/troubleshooting.md)** to resolve them.
+   - Execute a Gradle compilation. You must run `./gradlew compileDebugUnitTestSources --no-daemon` or `./gradlew assembleDebug --no-daemon`. See **[references/troubleshooting.md](references/troubleshooting.md)** for compile rules and warnings about fast-compilation shortcuts. Repeat this step until compilation is successful.
 7. **User checklist:** At the end of code generation, notify the user to go
    through this checklist to verify that the integration is complete and as
    intended:
@@ -102,7 +106,7 @@ Follow these steps to assist the developer:
   - [Listen Vertical](references/android/guide/playcore/engage/listen.md)
   - [Read Vertical](references/android/guide/playcore/engage/read.md)
   - [Shopping Vertical](references/android/guide/playcore/engage/shopping.md)
-  - [Social Vertical](https://developer.android.com/guide/playcore/engage/social)
+  - [Social Vertical](references/android/guide/playcore/engage/social.md)
   - [Travel Vertical](references/android/guide/playcore/engage/travel.md)
   - [Health and Fitness Vertical](references/android/guide/playcore/engage/healthandfitness.md)
   - [Other Verticals](references/android/guide/playcore/engage/otherverticals.md)
