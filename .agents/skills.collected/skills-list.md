@@ -7,6 +7,23 @@
 
 ---
 
+## 全局技能（-g 全局安装，所有项目可用）
+
+### 安装命令
+
+```bash
+# openai/skills
+vpx skills add openai/skills --skill screenshot -g -y
+```
+
+### 技能索引
+
+| 技能 | 来源 | 一句话 |
+|------|------|--------|
+| `screenshot` | openai/skills | 桌面/系统截图：全屏、指定应用或窗口、像素区域 |
+
+---
+
 ## 项目技能（本仓自包含安装示例）
 
 > ⚠️ **仅作案例，不实际安装。** 演示如何把本仓 `.agents/skills/` 下的本地技能用 skills CLI 以本地路径方式安装。
