@@ -1,0 +1,72 @@
+# Example plan. Everything here is a placeholder: no real ids, no coordinates.
+#
+# Targets are semantic. Substitute your own labels from a live observation:
+#   python desktop_observe.py --handle <handle> --observation-dir ./evidence
+#
+# Run (resolves targets only, clicks nothing):
+#   python flow_run.py example-plan.yaml --app "<window title>" \
+#     --set record_id=YOUR_ID --set output_dir=/tmp/out --observation-dir ./evidence
+# Add --execute to actually act.
+#
+# Never commit a plan filled with real business identifiers.
+
+steps:
+  # Locator priority: auto_id (stable native id) wins over text (localized,
+  # changes between versions). Use text only when no AutomationId exists.
+  #   target: {auto_id: "btnSearch"}
+  #   target: {text: "...", sources: [uia]}
+  - name: open_section
+    action: click
+    target: {text: "${section_label}"}
+
+  - name: focus_field
+    action: click
+    target: {text: "${field_label}"}
+
+  - name: enter_value
+    action: fill
+    target: {text: "${field_label}"}
+    value: "${record_id}"
+
+  - name: run_search
+    action: click
+    target: {text: "${search_label}"}
+
+  - name: confirm_row_visible
+    action: wait_text
+    target: {text: "${record_id}", match: contains}
+    timeout: 20
+
+  - name: open_detail
+    action: click
+    target: {text: "${detail_label}"}
+    # not_in_before: the success toast must NOT be on screen before the click —
+    # otherwise the assertion would pass even if the click never landed.
+    expect:
+      target: {text: "${detail_toast}", match: contains}
+      not_in_before: true
+
+  - name: verify_detail
+    action: assert_text
+    target: {text: "${record_id}", match: contains}
+
+  - name: trigger_download
+    action: click
+    target: {text: "${download_label}"}
+    optional: true        # some apps expose the action as an icon only
+
+  # The download click stays optional, but the artifact check must not be:
+  # an optional click followed by an unconditional expect_file verifies whatever
+  # file happens to sit at that path — including one from a previous run.
+  # expect_file below requires a fresh file (see min_bytes/contains) and will
+  # fail loudly when the optional click was skipped and nothing was produced.
+  - name: verify_downloaded_file
+    action: expect_file
+    expect:
+      path: "${output_dir}/${record_id}.pdf"
+      magic: "%PDF-"
+      min_bytes: 1000
+      # Verifying content, not just the filename: with several similar rows the
+      # easiest silent bug is saving record A's export under record B's name.
+      contains: ["${record_id}"]
+      timeout: 30         # poll while the download completes

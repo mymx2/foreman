@@ -1,0 +1,25 @@
+# Evidence and scratch outputs must never be committed: they can contain
+# screenshots, OCR text and business identifiers from the target application.
+evidence/
+__evidence__/
+*.png
+*.jpg
+*.jpeg
+*.pdf
+!requirements-desktop.txt
+*.log
+*.flag
+*stall-state.json
+step-*-before.json
+step-*-after.json
+observation.json
+log.json
+log.jsonl
+log.jsonl.tmp
+result.json
+__pycache__/
+.pytest_cache/
+# Credentials for webhooks/SMTP/API steps live in .env by contract.
+.env
+.env.*
+!.env.example
