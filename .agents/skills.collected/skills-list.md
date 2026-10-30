@@ -32,19 +32,29 @@ vpx skills add openai/skills --skill screenshot -g -y
 
 ---
 
-## 项目技能（--agent codex 项目级安装）
+## 项目技能（本仓自包含安装示例）
 
-> ⚠️ 本节 4 个技能已转为**手动维护**（无上游，已从根 `skills-lock.json` 移除）。
-> 原上游 `openai/plugins` 于 2026-08-26（PR #388）删除 `plugins/github/skills/` 并重构为纯 MCP 插件市场，技能无官方新家，本地快照保留在 `.agents/skills/`。
+> ⚠️ **仅作案例，不实际安装。** 演示如何把本仓 `.agents/skills/` 下的本地技能用 skills CLI 以本地路径方式安装。
+> 原 `openai/plugins` 4 技能（gh-address-comments / gh-fix-ci / github / yeet）已于 2026-08-26（PR #388）被上游删除，现合并为单个本地技能 `gh-toolkit`，无上游、手动维护。
+
+### 安装命令（示例）
+
+```bash
+# 本地路径安装 —— 指向本仓技能目录
+# --agent codex 项目级（根目录执行），安装到 ./.agents/skills/
+vpx skills add ./.agents/skills/gh-toolkit --agent codex -p -y
+
+# 或 openclaw 项目级（.agents/skills.collected/ 下执行），安装到 ./skills/
+# vpx skills add ../skills/gh-toolkit --agent openclaw -p -y
+```
+
+> 本地技能已在 `.agents/skills/` 生效，无需再装；此处仅演示 `add <local-path>` 的用法。
 
 ### 技能索引
 
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
-| `gh-address-comments` | 手动维护（原 openai/plugins） | PR 评审评论处理 |
-| `gh-fix-ci` | 手动维护（原 openai/plugins） | GitHub Actions CI 修复 |
-| `github` | 手动维护（原 openai/plugins） | GitHub 仓库/PR/Issue 导航与摘要 |
-| `yeet` | 手动维护（原 openai/plugins） | 一键 stage + commit + push + PR |
+| `gh-toolkit` | 本仓自包含（原 openai/plugins 4 技能合并） | PR 评论分析 / CI 失败诊断 / 提交发布开 PR 三合一 |
 
 ---
 
