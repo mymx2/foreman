@@ -52,10 +52,52 @@
 
 ## 6. 拉直、裁剪与尺寸
 
-- 拉直：`image.crop {x, y, width, height, angle}` 的 `angle` 与倾斜时 `image.rotation.arbitrary {angle, direction:"cw"}` 的角度**同号**。照片顺时针歪了 3°，用 `angle:3` 拉回；写成 `-3` 会再多转 3°。验收看四个角都没有空白楔形，不要只看一个角。
+- 拉直：`image.crop {x, y, width, height, angle}` 的 `angle` 与 `image.rotation.arbitrary {angle, direction:"ccw"}` 同号——**和 `direction:"cw"` 反号**（实测 0.18：`crop angle:15` 的内容主轴是 −15°，`rotation cw:15` 是 +15°）。照片顺时针歪了 3°，用 `angle:3` 拉回；写成 `-3` 会再多转 3°。`angle` 必须同时给 `x`/`y`/`width`/`height`，缺一项报 ``an `angle` needs an explicit `x`, `y`, `width` and `height```。验收看四个角都没有空白楔形，不要只看一个角。
 - 旋转或扩展裁剪露出的空白可以用 `image.crop {contentAware:true}` 补（注册表说明，未实测）。
 - `image.canvasSize`（改画布，不重采样）和 `image.imageSize`（重采样）分开用，缩放保持宽高比。
 - 构图：给出几种备选（原比例修正、主体放大、表达性画幅、留负空间），保留原构图时说明理由；不切关节、指尖、文字、产品轮廓。
+
+## 6.5 频率分离（纹理与色调分开修）
+
+磨皮、去噪、保纹理的调色都用这套：低频层管颜色和明暗，高频层管毛孔、织物纹理。
+
+```
+orig（合并成一层像素层）
+├─ high   原始 − low 的残差，blend = Linear Light
+└─ low    orig 的高斯模糊
+```
+
+配方（实测 0.18，重建差 ≤1/255）：
+
+```bash
+photocraft-cli run <稿>.psd \
+  --cmd layer.flattenImage \
+  --cmd layer.setProps --params '{"name":"orig"}' \
+  --cmd layer.duplicate --params '{"name":"low"}' \
+  --cmd filter.blur.gaussianBlur --params '{"radius":6}' \
+  --cmd layer.select --params '{"name":"orig"}' \
+  --cmd layer.duplicate --params '{"name":"high"}' \
+  --cmd layer.select --params '{"name":"high"}' \
+  --cmd image.applyImage --params '{"source":{"layer":"low"},"blending":"subtract","scale":2,"offset":128}' \
+  --cmd layer.setProps --params '{"blend":"LinearLight"}' \
+  --cmd layer.moveTo --params '{"layer":"high","target":"low","position":"above"}' \
+  --cmd layer.select --params '{"name":"orig"}' \
+  --cmd layer.setProps --params '{"visible":false}' \
+  --out <稿>_fs.psd
+```
+
+- `scale` 必须是 **2**，`offset` 128：把残差压缩一半再存到 128 两侧，Linear Light 展开回来正好还原。写 1 时合成结果变成 `2×原始 − 低频`，超出 0..255 的部分被截断——实测同一样张有 1812 个像素与正确配方不同，最大差 54，边缘处偏成青色（`scale:2` 得 129 灰，`scale:1` 得 `75,183,183`）。纯色块或全灰图看不出这个错，必须用带边缘的样张验。
+- 混合模式写 `LinearLight` 或 `linear light` 都行（大小写与空格不敏感），存盘后读回是 `Linear Light`。拼错的模式名会直接报 `unknown blend mode`，这点和多数参数不同。
+- **`layer.duplicate` 插入在被复制层的正上方**。连续从同一层复制两次，第二次会落在第一次**下面**——层序变成 low 压着 high，高频根本叠不到低频上，渲染结果等于只有低频。必须显式 `layer.moveTo {target:"low", position:"above"}` 把 high 提上去。这个错不会报错，只能靠下面的验收发现。
+- `layer.list` 不返回 `blend` 字段，回读混合模式要用 `document.inspect`。
+- 半径按输出尺寸取：屏幕图 2–4 px，印刷 300 ppi 的皮肤 6–12 px。半径越大分得越粗，纹理越完整、色调越块。
+
+验收（缺一不可）：
+
+1. **重建校验**：隐藏 orig 前后各渲一张，逐像素差应 ≤1/255。差得多先查层序和 `scale`/`offset`。
+2. **职责校验**：只改 high（比如 `filter.blur.gaussianBlur` 小半径）后，低频区域的颜色和明暗不应移动；只改 low（调色、`edit.fill`）后，纹理的锐度不应变化。
+
+修纹理改 high，修色斑改 low，改完两张都可单独回退——比一次性磨皮更可控。合并前留 PSD 母版。
 
 ## 7. 人像与上色
 

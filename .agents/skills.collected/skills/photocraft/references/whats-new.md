@@ -1,6 +1,6 @@
-# 0.12 → 0.14 变更与升级检查
+# 0.12 → 0.18 变更与升级检查
 
-> 用途：技能文档的基线核对。0.12.0 = 924 条命令；0.14.0 = 935 条（本机 ff4738810 实测）。这里只收会影响自动化写法或验收的变化，不替代上游 release notes。
+> 用途：技能文档的基线核对。0.12.0 = 924 条命令；0.14.0 = 935 条（本机 ff4738810 实测）；0.18.0 = 948 条命令、19 个 serve 方法（本机 8a87a457a 实测，增量见文末「0.14 → 0.18」）。这里只收会影响自动化写法或验收的变化，不替代上游 release notes。
 
 ## 命令与参数
 
@@ -46,9 +46,24 @@
 | Camera Raw | 交互式打开 RAW 才有对话框；自动化打开固定 AHD（`rawDefaults.resolution` 可调），交互式按 `rawDefaults` 的 `demosaic`/`openInCameraRaw`；`openingRaw.demosaic` 可读；`filter.cameraRaw` 可作智能滤镜 |
 | MCP | 2026-07-28 请求可使用，但 initialize 仍回 2025-11-25；list/read 可能带 `resultType/ttlMs/cacheScope`；1 MiB 超限仍会杀进程 |
 
+## 0.14 → 0.18（已知增量，未完待补）
+
+本目录的核对基线与行为实测停在 0.14.0；在 0.18.0 上实测到的已知差异：
+
+| 变化 | 说明 |
+|---|---|
+| 命令数 935 → 948 | 以 `check_docs.py` 实时输出的 baseline 为准，正文不写死数字 |
+| serve 方法 18 → 19 | 新增 `doc.replaceSmartObject {path, layer?, index?}` → `{layer, instances, warnings}`；MCP 对应 `doc_replace_smart_object`（工具数 25 → 26） |
+| 文字层 `postscript_name` | 会话内新建或改样式后为 `null`，存盘重开才补（实测 0.18，0.14 未复核） |
+| `image.crop` 越界 | 不报错，静默产出纯白小图并计入成功（实测 0.18，0.14 未复核） |
+| 无选区 `select.deselect` | **行为反转**：0.12–0.14 的 CLI `run` 里报 `no selection` 并中止整条 run；0.18 改成回 `null`、退出码 0、继续执行。serve 两个版本都报错 |
+| 选中组后新建层 | **行为反转**：0.12–0.14 落在组外，0.18 落进组内（`parent` 指向组）。要精确入组就用 `layer.moveTo {position:"into"}` |
+
+0.14→0.18 的其余变化（格式、打印、RAW、GUI）尚未系统复核；遇到与文档不符时以运行结果为准，并在本表补一行。
+
 ## 升级后要重跑
 
-1. `python <skill-dir>/scripts/check_docs.py`：确认文档里的命令 id、参数、方法名与已安装注册表一致（0.14 基线 935 条、18 serve 方法、29 桌面方法、25 MCP 工具）。
+1. `python <skill-dir>/scripts/check_docs.py`：确认文档里的命令 id、参数、方法名与已安装注册表一致。计数以脚本输出的 baseline 为准（0.14 基线曾是 935 条命令、18 serve 方法、25 MCP 工具；0.18 为 948 / 19 / 26），不在正文硬编码。
 2. `PHOTOCRAFT_CLI=<路径> python <skill-dir>/scripts/run_examples.py`：本技能 41 个案例在 0.14.0 上实测 40 PASS、0 FAIL、1 SKIP（案例 31 需要窗口）。
 3. `python <skill-dir>/scripts/probe_gotchas.py`：逐条复核 Gotchas 的实测项；运行结果与文档冲突时以运行结果为准并改文档。
 4. 若新增命令/格式，在 `references/commands.md`、`formats.md` 和本文件各补一行，再跑 `check_docs.py`。

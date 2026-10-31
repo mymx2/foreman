@@ -8,15 +8,16 @@
 
 按顺序找，找到就停：
 
-1. 环境变量 `PHOTOCRAFT_CLI`（技能约定，指向可执行文件的绝对路径）。
-2. `PATH` 里的 `photocraft-cli`。
-3. Windows：MSI 装在 `C:\Program Files\PhotoCraft\`，`photocraft-cli.exe` 和 `photocraft.exe` 在同一目录，安装程序不把它加进 PATH，所以 `command not found` 不代表没装。改过安装目录时查注册表：`reg query "HKLM\Software\PhotoCraft" /v InstallDir`（Git Bash 里把 `/v` 写成 `//v`）。便携版 zip 解压到哪里就在哪里，两个 exe 同目录。
-4. macOS：CLI 是单独的 `photocraft-cli-<版本>-macos-universal.zip`；`PhotoCraft.app` 里只有桌面版。
-5. Linux：deb、rpm 装到 `/usr/bin/photocraft-cli`；tar.gz 在解压目录的 `bin/` 下；Flatpak 不带 CLI。
+1. 环境变量 `PHOTOCRAFT_CLI`（技能约定，指向可执行文件的绝对路径）。它是**硬 pin**：指到不能运行的文件就直接报错，不会退回别的二进制。
+2. 环境变量 `PC_CLI`（旧名，有些以 0.12 为基线的模板工程仍只设它）。与 `PHOTOCRAFT_CLI` 不同，它只是候选：路径无效会被跳过，继续往后找。
+3. `PATH` 里的 `photocraft-cli`。
+4. Windows：MSI 装在 `C:\Program Files\PhotoCraft\`，`photocraft-cli.exe` 和 `photocraft.exe` 在同一目录，安装程序不把它加进 PATH，所以 `command not found` 不代表没装。改过安装目录时查注册表：`reg query "HKLM\Software\PhotoCraft" /v InstallDir`（Git Bash 里把 `/v` 写成 `//v`）。便携版 zip 解压到哪里就在哪里，两个 exe 同目录。
+5. macOS：CLI 是单独的 `photocraft-cli-<版本>-macos-universal.zip`；`PhotoCraft.app` 里只有桌面版。
+6. Linux：deb、rpm 装到 `/usr/bin/photocraft-cli`；tar.gz 在解压目录的 `bin/` 下；Flatpak 不带 CLI。
 
 （执行）`python <skill-dir>/scripts/find_cli.py --check` 按这个顺序查找，并跑 `--version` 和一次注册表查询；`--json` 列出查过的每个位置。
 
-安装检查就是用绝对路径跑 `--version`，输出 `photocraft-cli 0.14.0 (ff4738810, 2026-10-23)` 这样一行即可，不要求 CLI 在 PATH 上。找不到时请用户给出路径，不要猜。
+安装检查就是用绝对路径跑 `--version`，输出形如 `photocraft-cli <版本> (<hash>, <日期>)` 的一行即可，只校验格式和能否执行，本技能文档的核对基线（0.14.0）与实际装机版本（如 0.18.0）不同是正常的，不要求 CLI 在 PATH 上。找不到时请用户给出路径，不要猜。
 
 ## 子命令与参数
 
@@ -24,16 +25,16 @@
 |---|---|---|---|---|
 | `convert` | `<in> <out>` | `--format` `--quality` `--tga-bits` `--dpx-bits` `--dds-compression` `--tiff-compression` `--jpeg-format` | `--in-place` `--tiff-layers` `--dds-mipmaps` | 打开一个文件，按输出扩展名导出 |
 | `info` | `<file>` | — | `--compact` | 打印文档 JSON |
-| `run` | `<file>` 或 `--new <json>` | `--new` `--cmd` `--params` `--out` `--format` `--quality` `--tga-bits` `--dpx-bits` `--dds-compression` `--tiff-compression` `--jpeg-format` | `--tiff-layers` `--dds-mipmaps` | 打开或新建文档，按顺序执行引擎命令，给了 `--out` 才保存 |
+| `run` | `<file>` 或 `--new <json>` | `--new` `--cmd` `--params` `--out` `--format` `--quality` `--tga-bits` `--dpx-bits` `--dds-compression` `--tiff-compression` `--jpeg-format` | `--in-place` `--tiff-layers` `--dds-mipmaps` | 打开或新建文档，按顺序执行引擎命令，给了 `--out` 才保存 |
 | `batch` | — | `--actions` `--action` `--in` `--out` `--format` `--quality` `--tga-bits` `--dpx-bits` `--dds-compression` `--tiff-compression` `--jpeg-format` | `--in-place` `--tiff-layers` `--dds-mipmaps` | 目录里每个文件跑同一组步骤 |
 | `droplet` | `<file.pcdroplet> <文件或目录>…` | `--out` | — | 运行 Droplet |
-| `commands` | — | `--filter` | `--json` | 列出命令注册表（0.14.0 共 935 条） |
+| `commands` | — | `--filter` | `--json` | 列出命令注册表（条数随版本变） |
 | `serve` | — | `--port` `--control-token` `--control-token-file` `--automation-read-root` `--automation-write-root` | — | 常驻 JSON-lines 会话 |
 | `mcp` | — | `--bridge` `--control-token` `--control-token-file` `--automation-read-root` `--automation-write-root` | — | MCP 服务 |
 
 - `--format <ext>` 覆盖输出扩展名推断的格式，`--format .jpg` 与 `--format jpg` 等价。`run` 的 `--out` 已经给了完整文件名，`--format` 只换编码，不改文件名；`batch` 会用它改输出扩展名。
 - `--quality <1-100>` 只作用于 JPEG 和 WebP，刻度见下文"quality 刻度"。
-- `--in-place` 只对 `convert`/`batch` 有效：输入=输出或输出目录=输入目录时默认拒绝，加了才覆盖原图。
+- `--in-place` 适用于 `convert`、`batch` 和 `run`：输入=输出（或输出目录=输入目录）时默认拒绝，加了才覆盖原图。`run --out` 指到输入文件时不加它会报 `is the input file, so the result would replace the original`。
 - `--tga-bits 24|32`、`--dpx-bits 8|10|12|16` 设定位数；`--dds-compression none|bc1|bc2|bc3` 设 DDS 压缩（DXT1/DXT3/DXT5），`--dds-mipmaps` 写完整 mip 链；`--tiff-compression none|lzw|zip` 设 TIFF 压缩；`--jpeg-format baseline|optimized|progressive` 设 JPEG 扫描方式（optimized 只对 Gray/CMYK 缩表，RGB 仍是 4:2:0 标准表；progressive 通常更小）。TIFF 默认扁平，`--tiff-layers` 才写图层。
 - 取值 flag 写成 `--quality 80` 或 `--quality=80` 都行；开关 flag 带值（`--tiff-layers=1`）是用法错误。
 - `run` 里每个 `--params` 属于它前面那个 `--cmd`；不需要参数时省略。`--params` 和 `--new` 都只收 JSON 对象，不支持 `@文件` 写法。
@@ -54,13 +55,13 @@
 - `batch`：stdout 每个成功文件一行 `ok    <in> -> <out>`，最后一行 `N succeeded, M failed`；stderr 是 `FAIL  <in>: <原因>`、各文件的 warning 和最后的 `error: N file(s) failed`。
 - `droplet`：每个成功文件一行 `ok    <输出文件>`，失败为 `FAIL  <文件>: <原因>`。
 - `info`：与引擎命令 `document.inspect` 结构相同，多了 `file` 和 `warnings`，去掉 `history`、`canUndo`、`canRedo`、`revision`。缺字体等警告留在 JSON 的 `warnings` 里，stderr 为空，加不加 `--compact` 都一样；`--compact` 只是输出成一行。
-- `commands`：默认每行 id、标签、菜单；`--json` 输出数组，每项 `{id, label, menu, shortcut, params, enabled, disabledReason, needsDocument}`，个别命令另有 `keywords`。`--filter` 对 id、标签、`keywords` 做不分大小写的子串匹配。0.14.0 共 935 条。
+- `commands`：默认每行 id、标签、菜单；`--json` 输出数组，每项 `{id, label, menu, shortcut, params, enabled, disabledReason, needsDocument}`，个别命令另有 `keywords`。`--filter` 对 id、标签、`keywords` 做不分大小写的子串匹配。总条数以 `check_docs.py` 输出的 baseline 为准。
 
 ## run 的执行模型
 
 1. 打开 `<file>`（按文件内容识别格式，扩展名写错也能打开），或用 `--new` 新建。`--new` 收 `file.new` 的参数：`width` `height`（1..300000，小数四舍五入）`mode` `depth` `background` `backgroundColor` `resolution` `name` `profile`（内置 ICC id、`working` 或 `.icc` 路径；路径在自动化里按 ambient 规则判定）。超出范围直接报错，例如 `error: --new: invalid parameters for \`file.new\`: \`height\` must be a number within 1..=300000`；`file.new` 不认识的键也报错。
 2. 命令按顺序作用于活动文档。
-3. 任何一条命令报错，整条 `run` 以退出码 1 结束，后面的命令和 `--out` 都不执行，磁盘上什么都不写。"当前状态不可用"的命令也算报错（例如没有选区时 `select.deselect`）。
+3. 任何一条命令报错，整条 `run` 以退出码 1 结束，后面的命令和 `--out` 都不执行，磁盘上什么都不写。注意不是所有"状态不对"都算报错：实测 0.18 无选区时 `select.deselect` 在 `run` 里回 `null`、退出码 0，后面的步骤照跑；同样的调用走 serve 的 `engine.execute` 才报 `not available right now: no selection`。
 4. 下列命令会新建文档并把它设为活动文档：`file.new`、`image.duplicate`、`channel.split`（拆出的文档编号 0/1/2，最后一个活动，原文档默认关闭）、`layer.smartObjects.editContents`、`history.newDocument`、`file.scripts.loadFilesIntoStack`、`file.automate.contactSheetII`、`file.automate.cropAndStraightenPhotos`、`file.automate.photomerge`、`file.automate.mergeToHdrPro`。之后的命令都落在新文档上，用 `document.activate {"document":i}` 或 `{"offset":±n}` 切回；0.14 的 `document.activate` 回 `{document}`，`offset` 越界报错、不回绕。
 5. `--out` 只保存活动文档。其他文档先 `document.activate`，再 `file.saveACopy {"path":…}` 逐个保存。
 6. `run <file> --out <file>` 不带 `--cmd` 时等于一次转换。
@@ -164,7 +165,7 @@ photocraft-cli run poster.psd \
 
 | 入口 | 刻度 | 不给时 | 超出范围 |
 |---|---|---|---|
-| CLI `--quality`（`convert`、`run`、`batch`） | 1..100 | JPEG 用 90（不看源文件原来的质量）；WebP 无损 | 0 或 101 报错，退出码 1 |
+| CLI `--quality`（`convert`、`run`、`batch`） | 1..100 | JPEG 用 90（不看源文件原来的质量）；WebP 无损 | 0 或 101 报 `invalid value … is not in 1..=100`，退出码 2 |
 | serve `doc.save`、MCP `doc_save` / `doc_export` 的 `quality` | 1..100 | JPEG 90；WebP 无损 | 严格报错，不截断（0、101、500 都报 ``quality must be a whole number from 1 to 100``） |
 | 桌面 `app.save` 的 `quality` | 0..12（12=最高） | 沿用当前设置 | 13、字符串报错 |
 | 引擎命令的 `quality`：`file.saveACopy`、`file.automate.batch`、`file.scripts.imageProcessor`（默认 8）、`file.automate.createDroplet`、`file.export.layersToFiles`、`file.export.layerCompsToFiles`、`file.export.artboardsToFiles`、`file.export.artboardsToPdf`（默认 10）；serve `doc.exportLayers`、MCP `doc_export_layers` 同样 | 0..12（Photoshop 档位） | `file.saveACopy` 沿用源文件的 JPEG 质量和 WebP 有损/无损，新建文档 JPEG 按 90 | 静默截断，大于 12 一律按 12，不报错 |

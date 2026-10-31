@@ -36,9 +36,10 @@ def main(args):
 
     step("客户说曲线太重：只改那一层的参数（layer.setAdjustment），别的层不受影响")
     curve_id = next(l.id for l in info("graded.psd").layers if l.name == "Film curve")
+    # 0.18 起 run 也拒绝 out==input，覆盖原稿必须显式 --in-place
     pc_run([("layer.setAdjustment", {"layer": curve_id,
                                      "points": [[0, 8], [64, 60], [128, 130], [192, 200], [255, 250]]})],
-           input="graded.psd", out="graded.psd", check=True)
+           input="graded.psd", out="graded.psd", extra=("--in-place",), check=True)
     pc("convert", "graded.psd", "graded.jpg", "--quality", "90")
 
     step("导出 LUT：只取全局调整层（蒙版是空间信息，LUT 表达不了，天空层要排除）")

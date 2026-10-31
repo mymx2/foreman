@@ -274,7 +274,8 @@ def t_audit_defaults(env):
     r = env.script("psd_audit", "audit", env.sample("defaults"), "--json")
     flagged = sorted(i["path"].split("/")[-1] for i in r.issues("DEFAULT_NAME"))
     want = sorted(["Background", "Layer 1", "Group 1", "Rectangle 1", "Curves 1", "Curves 1 copy"])
-    copies = [i["path"] for i in r.issues("COPY_NAME")]
+    # 只比较层名：0.18 起新层可能落进活动组，路径会带 "Group 1/" 前缀，绑死完整路径会误报
+    copies = sorted(i["path"].split("/")[-1] for i in r.issues("COPY_NAME"))
     ok = flagged == want and copies == ["图标_箭头 拷贝"] and r.code == 1
     return ok, f"default={flagged} copy={copies} exit={r.code}"
 
@@ -587,6 +588,23 @@ def t_compare_guards(env):
     return ok, f"same-file={same.code} fuzz300={fuzz.code} broken-cli={broken.code} leftovers={leftovers}"
 
 
+def t_compare_tall_low_luminance(env):
+    """长图低亮度通道差异：任一 RGB 通道非零即算差异，不转灰度。"""
+    need("PIL", "Pillow")
+    from PIL import Image
+    tall = env.path("tall.png")
+    tall_diff = env.path("tall_diff.png")
+    with Image.new("RGB", (64, 4096), (0, 0, 0)) as a, Image.new("RGB", (64, 4096), (0, 0, 0)) as b:
+        b.putpixel((32, 2048), (0, 0, 1))
+        a.save(tall)
+        b.save(tall_diff)
+    r = env.script("psd_compare", tall, tall_diff)
+    d = r.data or {}
+    ok = (r.code == 1 and d.get("result") == "differs" and d.get("differingPixels", 0) == 1
+          and d.get("maxChannelDelta") == 1)
+    return ok, f"result={d.get('result')} differingPixels={d.get('differingPixels')} maxDelta={d.get('maxChannelDelta')}"
+
+
 # ------------------------------------------------------------------ trim_export
 
 def trim(env, *args):
@@ -715,6 +733,7 @@ CASES = [
     ("psd_compare", "PNG inputs", t_compare_png),
     ("psd_compare", "real vs expected warnings", t_compare_warnings),
     ("psd_compare", "guards + temp cleanup on error", t_compare_guards),
+    ("psd_compare", "tall low-luminance channel diff", t_compare_tall_low_luminance),
     ("trim_export", "alpha + manifest + overwrite", t_trim_alpha),
     ("trim_export", "bg + tolerance", t_trim_bg),
     ("trim_export", "padding + scales", t_trim_padding_scales),

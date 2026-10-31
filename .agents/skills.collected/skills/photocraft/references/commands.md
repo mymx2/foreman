@@ -4,7 +4,7 @@
 
 ## 怎么查
 
-- 注册表是唯一的权威：0.14.0 有 935 条命令，CLI、serve、MCP、桌面控制通道共用同一份。本文只列常用的，参数以已安装版本的注册表为准。
+- 注册表是唯一的权威：CLI、serve、MCP、桌面控制通道共用同一份，条数随版本变，以 `check_docs.py` 输出的 baseline 为准。本文只列常用的，参数以已安装版本的注册表为准。
 - 查参数：（执行）`python <skill-dir>/scripts/params.py --exact <id>`；不知道 id 时传关键词（`curves`、`blur`）；也可以 `photocraft-cli commands --json --filter <关键词>`。参数文本的读法、哪些命令校验未知键、拼错的枚举会怎样，见 cli.md。
 - 同一条命令在各入口的写法：`run --cmd <id> --params '<json>'`；serve `engine.execute {"command":"<id>","params":{…}}`；MCP `command_run {"id":"<id>","params":{…}}`；动作步骤 `["<id>", {…}]`。哪个入口能用哪些命令见 automation.md。
 - "案例"列是 `examples/` 里的脚本编号；32–41 是新增场景。
@@ -56,7 +56,7 @@
 | `view.colorSamplers.add` / `view.colorSamplers.list` / `move` / `delete` / `clear` | `x` `y`；`index` `x` `y` | `{count, index, point:{rgb, cmyk, position…}}`；每个文档最多 10 个 | 11 |
 | `image.imageSize` | `width` `height` `percent` `resolution` `keepPrintSize` `resample`（缩小 `bicubicSharper`，放大 `preserveDetails`，只改 ppi 用 `none`） | `{width,height}`；只给一边时保持比例 | 02 06 |
 | `image.canvasSize` | `width` `height` `relative` `anchor` `extensionColor`（可为 `transparent`） | `{width,height,offset}`；`offset` 是原内容在新画布里的位移 | 03 06 23 39 |
-| `image.crop` | `x` `y` `width` `height` `angle` `targetWidth` `targetHeight` `resample` `contentAware` `deleteCroppedPixels` | `targetWidth`、`targetHeight` 必须同时给，裁完精确缩放到该尺寸；拉直时 `angle` 与 `image.rotation.arbitrary {direction:"cw"}` 的倾斜角同号（顺时针歪了 3° 就传 `angle:3`） | 04 20 |
+| `image.crop` | `x` `y` `width` `height` `angle` `targetWidth` `targetHeight` `resample` `contentAware` `deleteCroppedPixels` | `targetWidth`、`targetHeight` 必须同时给，裁完精确缩放到该尺寸；带 `angle` 时 `x`/`y`/`width`/`height` 也必填。`angle` 与 `image.rotation.arbitrary {direction:"ccw"}` 同号、与 `cw` 反号（实测 0.18；顺时针歪了 3° 就传 `angle:3`） | 04 20 |
 | `image.perspectiveCrop` | `corners`（左上起顺时针四点）`width` `height` `resolution` | 文字、形状、填充、智能对象层会被栅格化 | 23 |
 | `image.trim` | `basedOn`（`transparent`/`topLeft`/`bottomRight`）`top` `bottom` `left` `right` | 只裁掉完全透明（或与角点同色）的整行整列 | 12 22 35 |
 | `image.rotation.arbitrary` | `angle` `direction`（`cw`/`ccw`）`interpolation` | 画布自动放大，回新尺寸 | 20 |
@@ -80,7 +80,7 @@
 | `layer.select` | `layer`（id 或图层名）`name` `occurrence` `mode`（`replace`/`add`/`remove`/`toggle`/`range`） | 没有数组参数，多选逐个 `mode:"add"`；同名层用 `occurrence`（0 起，按文档遍历顺序） | 12 13 38 |
 | `layer.setProps` | `layer` `layers` `name` `visible` `opacity` `fill` `blend` `clipped` `locked` `locks` | `blend` 不分大小写（`Multiply` / `multiply`），拼错报错 | 07 08 |
 | `layer.new.layer` | `name` `position`（`above`/`below`）`mode` `opacity` `clipToPrevious` `fillNeutral` | `{layer}`；`below` 也到不了 Background 下面 | 08 17 |
-| `layer.duplicate` | `layer` `name` `document`（`"new"` 复制到新文档）`inPlace` | `{layer}`；副本在源层正上方；不给 `layer` 时复制所有选中层 | 08 23 |
+| `layer.duplicate` | `layer` `name` `document`（`"new"` 复制到新文档）`inPlace` | `{layer}`；副本在**源层**正上方（不是在上一次副本上方）；不给 `layer` 时复制所有选中层。连续从同一层复制两次，第二份会落在第一份**下面**，需要的话显式 `layer.moveTo` 调整 | 08 23 |
 | `layer.delete` | `layer` | 文档至少要留一层 | — |
 | `layer.renameLayer` | `layer` `name` | 没有 `layer.rename`（不是引擎命令）；改名用 `layer.renameLayer` 或 `layer.setProps {name}` | 07 13 34 |
 | `layer.new.layerFromBackground` / `layer.new.backgroundFromLayer` | `ifPresent` `select`；`layer` | 背景层转普通层（加蒙版、写带路径的分层 TIFF 之前要做）；反过来要求文档里还没有 Background | 17 23 |
@@ -177,7 +177,7 @@
 | `type.create` | `x` `y`（点文字的基线位置）或 `box:[x,y,w,h]`（段落文字），`text` `font` `size` `color` `align` `name`，以及 `type.setStyle` 的全部字符属性 | `{bounds, layer}`，字体没装时多 `warnings` | 13 16 32 38 |
 | `type.edit` | `layer` `text`（整段替换，保留样式）`replace:{start,end,text}` `runs` `box` `point` `antialias` | | 15 32 38 |
 | `type.setStyle` | `layer` / `layers` `range` `font` `fontStyle` `size` `color` `tracking` `leading` `align`… | 不校验未知键 | 13 |
-| `type.info` | `layer` | 文字、样式段、`lines`（图层坐标）、`transform`、`bounds` | 32 38 |
+| `type.info` | `layer` 只认数字 id；传图层名被静默忽略、回落到活动层（实测 0.18，0.14 未复核）。目标不是文字层时报 `not a type layer` | `text`、`runs[].style`（含 `font_family`、`font_style`、`postscript_name`、`size_pt`、`weight`）、`paragraphs`、`lines`（图层坐标）、`transform`、`bounds` | 32 38 |
 | `type.warpText` | `style`（`arc`/`flag`/`wave`…）`bend` | | 13 |
 | `type.fonts` | `family` | `{families:[…]}`，不需要打开文档 | 13 |
 | `type.resolveMissingFonts` | `map` | 不给 `map` 列出缺失字体，给了就替换 | 15 34 |
@@ -283,7 +283,8 @@
 | `edit.fillForeground` / `edit.fillBackground` / `edit.fillHistory` | `state` | 用前景色/背景色/历史状态填充选区；`edit.fillHistory` 回 `{contents:"history"}` | — |
 | `edit.fade` / `edit.toggleLastState` / `edit.deleteAndFillSelection` | `opacity` `mode`；—；— | `fade` 回 `{faded:<上一步名称>}`；`deleteAndFillSelection` 回 `{filled}` | — |
 | `edit.puppetWarp` / `edit.perspectiveWarp` | `pins:[{src,dst}]`；`planes:[{src,dst}]`（各四角） | `puppetWarp` 看 `changed`；`perspectiveWarp` 的退化输入可能不报错，要自己校验四边形 | — |
-| `paint.dodge` / `paint.burn` / `paint.sponge` | `points` `size` `range`（`shadows`/`midtones`/`highlights`）`exposure` `protectTones` | | 08 |
+| `paint.dodge` / `paint.burn` | `points` `size` `range`（`shadows`/`midtones`/`highlights`）`exposure` `protectTones` | | 08 |
+| `paint.sponge` | `points` `size` `mode`（`desaturate`/`saturate`）`vibrance` | 没有 `range`/`exposure`；传了会静默忽略（实测 0.18） | — |
 | `paint.redEye` | `x` `y` 或 `points`，`pupilSize`（默认 50）`darken` | `{damage, pixels}`；`pupilSize:50` 会在约 139 px 的窗口里搜索，附近偏红的皮肤也被压暗；用小值或先建选区 | — |
 | `paint.historyBrush` | `points` `size` `state` | 只能画回目标层在那个状态下已有的像素，不恢复透明；状态里目标层还没有像素时，回执照样带 `damage` 但画面不变 | — |
 | `paint.bucket` | `x` `y` `tolerance` `contiguous` `color` `contents`（`foreground`/`pattern`）`opacity` | | 37 |

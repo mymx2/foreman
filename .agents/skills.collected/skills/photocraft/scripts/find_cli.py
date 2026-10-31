@@ -7,13 +7,15 @@
   python <skill-dir>/scripts/find_cli.py --cli PATH     pin a binary (no fallback to others)
   python <skill-dir>/scripts/find_cli.py --repo DIR     also search a PhotoCraft checkout's target/
 
-Search order: --cli, PHOTOCRAFT_CLI, --repo/PHOTOCRAFT_REPO (target/release|debug,
-also per target triple), PATH, next to `photocraft` on PATH, then on Windows the
-registry (HKLM/HKCU Software\\PhotoCraft InstallDir, App Paths photocraft.exe) and
-Program Files; on macOS /usr/local/bin, /opt/homebrew/bin, ~/.local/bin, ~/bin (the
-CLI ships as a separate zip, never inside PhotoCraft.app); on Linux /usr/bin (deb/rpm),
-/usr/local/bin, ~/.local/bin, ~/bin. --cli and PHOTOCRAFT_CLI are pins: when the pinned
-file does not run, the script fails instead of using another binary.
+Search order: --cli, PHOTOCRAFT_CLI, PC_CLI (legacy name some repos still set),
+--repo/PHOTOCRAFT_REPO (target/release|debug, also per target triple), PATH, next to
+`photocraft` on PATH, then on Windows the registry (HKLM/HKCU Software\\PhotoCraft
+InstallDir, App Paths photocraft.exe) and Program Files; on macOS /usr/local/bin,
+/opt/homebrew/bin, ~/.local/bin, ~/bin (the CLI ships as a separate zip, never inside
+PhotoCraft.app); on Linux /usr/bin (deb/rpm), /usr/local/bin, ~/.local/bin, ~/bin.
+--cli and PHOTOCRAFT_CLI are pins: when the pinned file does not run, the script fails
+instead of using another binary. PC_CLI is only a candidate: a stale value is skipped
+and the search continues.
 
 Exit codes: 0 found (and --check passed), 1 not found or check failed, 2 usage error.
 """

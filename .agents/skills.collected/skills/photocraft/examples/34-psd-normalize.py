@@ -42,7 +42,9 @@ def main(args):
     pcx_init("34-psd-normalize")
 
     step('造一份"乱"稿：默认名、根层散落、空组、同级重名')
+    # 0.18 起活动层是组时会落进组内，造根层要先选回 Background，否则后建的元素全进 Group 1
     pc_run([("layer.new.group", {"name": "Group 1"}),
+            ("layer.select", {"name": "Background"}),
             ("layer.duplicate", {"name": "Layer 1"}),
             ("layer.duplicate", {"name": "Layer 1"}),
             ("shape.create", {"kind": "rect", "rect": [80, 80, 300, 160], "fill": "#93c5fd",
@@ -82,7 +84,8 @@ def main(args):
     layers = info("step1.psd").layers
     kill = [l.id for l in layers if l.name in ("Empty bits", "Group 1", "Layer 1")]
     for lid in kill:
-        pc_run([("layer.delete", {"layer": lid})], input="step1.psd", out="step1.psd", check=True)
+        pc_run([("layer.delete", {"layer": lid})], input="step1.psd", out="step1.psd",
+               extra=("--in-place",), check=True)
 
     # 把元素放进页面组；背景也放进去（契约允许背景在根，这里统一收进页面便于验收）
     by_name = {l.name: l.id for l in info("step1.psd").layers}

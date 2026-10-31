@@ -41,7 +41,7 @@
 
 - 字号、行距、首行缩进、段前段后都是 **pt**。像素换算：`px = pt × ppi / 72`，72 ppi 时 1 pt = 1 px，144 ppi 时翻倍，300 ppi 时约 4.17 倍。
 - 参考线的字符串长度（`"3mm"`、`"50pt"`）默认按 PostScript 点（72 英寸点）换算；只有把 `unitsAndRulers.pointSize` 设成 `traditional` 时才用 72.27。
-- `edit.transform` 的缩放是百分比，旋转是角度，锚点是内容中心。
+- `edit.transform` 的缩放是百分比，旋转是角度，锚点是内容中心。文字层不要用它缩放：`size_pt` 不随之更新，字号与实际渲染脱节；改字号用 `type.setStyle {size}`。
 
 ## 行距与首基线
 

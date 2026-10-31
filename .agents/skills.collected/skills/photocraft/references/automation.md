@@ -50,7 +50,7 @@
 | `plugin.install {path}`、`plugin.reload` | 可用 | 拒；`plugin.install {data}` 可用 | 同左 |
 | `doc.*`、`session.list`、`batch`、`methods` | — | serve 方法（MCP 对应 `doc_*`、`session_list`、`command_batch`） | ``unknown method `doc.open` `` |
 | `ui.*`、`app.*` | — | serve 回 ``unknown method `ui.inspect` (try `methods`)``；MCP 的 `ui_*`、`control_call` 回 `isError`，提示开 bridge | 桌面方法（MCP 的 `ui_*`、`control_call`） |
-| `engine.execute`、`engine.commands`、`jobs.list`、`jobs.cancel` | — | 有；`engine.commands {filter}` 可过滤 | 有；`engine.commands` 忽略 `filter`，总回全部 935 条 |
+| `engine.execute`、`engine.commands`、`jobs.list`、`jobs.cancel` | — | 有；`engine.commands {filter}` 可过滤 | 有；`engine.commands` 忽略 `filter`，总回全部已注册命令（数量随版本变，以回复为准） |
 
 拒绝规则的全貌（serve、MCP、桌面共用，动作回放里的每一步也逐条判定）：
 
@@ -113,6 +113,8 @@ photocraft-cli serve --port <p> --control-token-file <私有文件> \
 stdio：
 
 - 不需要 auth，权限来自进程管道。
+- **环境里残留 `PHOTOCRAFT_CONTROL_PORT` 时会静默改听 TCP**（实测 0.18）：stderr 写 `PHOTOCRAFT_CONTROL_PORT=<p> is set; serving on TCP instead of stdio (unset it to serve stdio)`，然后照常起一个控制端口。所以"stdio 不开端口"的前提是这条变量没被导出；脚本里调 serve 前应显式清掉它。
+- `--control-token` / `--control-token-file` 只能配 `--port`；单独给 token 报 `--control-token requires --port`。
 - 超过 1 MiB 的请求行回 `{"error":"request exceeds 1048576 bytes","id":null}`，这一行被丢弃，会话和文档都还在。
 - 一次性的无界面操作直接把 JSON 行灌进去：
 
@@ -145,6 +147,7 @@ TCP（`--port`）：
 | `doc.new` | `file.new` 的参数 | `{document:<index>}` |
 | `doc.open` | `{path}` | `{index, name, width, height, layers, warnings}` |
 | `doc.place` | `{path, scale?, fit?, center?, smartObject?, index?}` | `{layer, bounds:[x0,y0,x1,y1], scale, smartObject}` |
+| `doc.replaceSmartObject` | `{path, layer?, index?}`，`path` 必填（缺了报 ``needs `path` ``）；0.18 新增，MCP 对应 `doc_replace_smart_object` | `{layer, instances:[…], warnings}`，`instances` 列出用同一源文件的所有实例 |
 | `doc.save` | `{path?, format?, quality?, tiffLayers?, tgaBits?, dpxBits?, ddsCompression?, ddsMipmaps?, index?}` | `{path, warnings}` |
 | `doc.exportLayers` | `{dir, format?, prefix?, visibleOnly?, quality?, index?}` | `{files, count}` |
 | `doc.exportDataSets` | `{dir, format?, dataSets?, naming?, index?}` | `{files, count}` |
@@ -154,7 +157,7 @@ TCP（`--port`）：
 | `doc.select` | `{index}` | 整个 `session.list` 结构 |
 | `doc.close` | `{index?}`，不保存 | 整个 `session.list` 结构 |
 | `batch` | `{steps, stopOnError?}` | `{completed, failed, results:[{ok, result 或 error}]}` |
-| `methods` | — | 以上 18 个方法名 |
+| `methods` | — | 以上方法名列表；数量随版本变化，以 `methods` 的实时回复为准（0.18 为 19 个） |
 
 - 引擎命令只能经 `engine.execute`：`prefs.get` 当方法调回 ``unknown method `prefs.get` (try `methods`)``；反过来把 `doc.save` 放进 `engine.execute` 回 ``unknown command `doc.save` ``。`session.inspect` 是引擎命令，经 `engine.execute` 调，结果同 `session.list`。
 - `params` 必须是对象：数组、字符串、数字报 ``invalid parameters for `<id>`: params must be a JSON object``；省略或 `null` 都行。
@@ -308,7 +311,7 @@ PHOTOCRAFT_CONFIG_DIR=<临时目录> photocraft --new-instance --control <port> 
 serve `--port`、`mcp --bridge` 和桌面用同一套规则：
 
 - token 值取 `--control-token`，没有就取 `PHOTOCRAFT_CONTROL_TOKEN`；token 文件取 `--control-token-file`，没有就取 `PHOTOCRAFT_CONTROL_TOKEN_FILE`。参数只覆盖同一类的环境变量（实测 `--control-token-file` 优先于 `PHOTOCRAFT_CONTROL_TOKEN_FILE`）。
-- 同时得到 token 值和 token 文件（不论来自参数还是环境变量）时拒绝启动：`use either a control token or a control token file, not both`。serve 退出码 1；桌面写 `photocraft: cannot configure control authentication: …` 后退出码 2。环境里导出了 `PHOTOCRAFT_CONTROL_TOKEN` 又传 `--control-token-file` 最容易撞上。
+- 同时得到 token 值和 token 文件时拒绝启动。实测 0.18：CLI 由参数解析层先拦，报 `the argument '--control-token <64-HEX>' cannot be used with '--control-token-file <PATH>'`，退出码 2；旧的 `use either a control token or a control token file, not both` 是引擎层文案，只有桌面路径还能见到（桌面写 `photocraft: cannot configure control authentication: …` 后退出码 2）。环境里导出了 `PHOTOCRAFT_CONTROL_TOKEN` 又传 `--control-token-file` 最容易撞上。
 - 两者都没有：每次启动现生成一个，写到 stderr（桌面 `photocraft: control token: <token>`，serve `photocraft-cli control token: <token>`）。Windows 桌面版看不到 stderr，所以总是给 token 文件。
 - token 文件不存在就创建（Unix 权限 0600）；存在就读，必须是普通文件、内容是 64 位十六进制。Unix 上组或其他人可读会被拒（0400/0600/0700 这类仅所有者可访问的模式都接受）；Windows 不检查 ACL，要放在只有本人能读的目录里。
 - PhotoCraft 不会在任何默认位置写 token 文件。客户端只用显式指定的 token 文件，文件不存在就报错，不要退回去找别处的 token（那可能是用户自己实例的）。
@@ -318,7 +321,7 @@ serve `--port`、`mcp --bridge` 和桌面用同一套规则：
 | 方法 | 用途 |
 |---|---|
 | `engine.execute {command, params?, wait?}` | 跑引擎命令，不弹对话框 |
-| `engine.commands` | 注册表全量（935 条），忽略 `filter`，与 `photocraft-cli commands --json` 是同一份 |
+| `engine.commands` | 注册表全量，忽略 `filter`，与 `photocraft-cli commands --json` 是同一份 |
 | `jobs.list`、`jobs.cancel {job?}` | 后台任务 |
 | `ui.inspect` | 完整界面状态：工具、面板、视图、`dialogs`、窗口、`jobs`、`notices`；不含菜单树 |
 | `ui.menu.list`、`ui.menu.invoke {id, params?, wait?}` | 菜单树；像点菜单一样执行，不带 params 时可能弹对话框 |

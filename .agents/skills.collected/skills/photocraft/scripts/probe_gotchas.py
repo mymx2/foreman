@@ -100,11 +100,103 @@ def engine_quality_clamped():
 
 
 @probe
+def duplicate_stack_order():
+    """连续从同一源层复制两次，第二份落在第一份下面（副本贴源层上方）"""
+    p = pc_run([("layer.select", {"name": "Background"}),
+                ("layer.duplicate", {"name": "first"}),
+                ("layer.select", {"name": "Background"}),
+                ("layer.duplicate", {"name": "second"}),
+                ("layer.list", {"flat": True})], new={"width": 16, "height": 16})
+    assert_ok(p, "run")
+    order = [l["name"] for l in json_lines(p)[-1]["result"]["layers"]]
+    assert order.index("first") < order.index("second"), order
+
+
+@probe
+def frequency_separation_reconstructs():
+    """retouch.md 的频率分离配方：隐藏原层后，低频 + Linear Light 高频应还原原图（±2/255）"""
+    pts = [(20, 20), (60, 40)]
+    with pclib.Serve(read_root=str(TMP), write_root=str(TMP)) as s:
+        s.call("doc.new", {"width": 120, "height": 80, "background": "#808080"})
+        s.execute("shape.create", {"kind": "rect", "rect": [10, 10, 20, 20], "fill": "#ff0000"})
+        s.execute("layer.flattenImage")
+        s.execute("layer.select", {"name": "Background"})
+        s.execute("layer.setProps", {"name": "orig"})
+        orig = [s.execute("document.sampleColor", {"sampleLayer": "current", "x": x, "y": y})
+                for x, y in pts]
+
+        s.execute("layer.select", {"name": "orig"})
+        s.execute("layer.duplicate", {"name": "low"})
+        s.execute("filter.blur.gaussianBlur", {"radius": 6})
+        s.execute("layer.select", {"name": "orig"})
+        s.execute("layer.duplicate", {"name": "high"})
+        s.execute("layer.select", {"name": "high"})
+        s.execute("image.applyImage", {"source": {"layer": "low"}, "blending": "subtract",
+                                       "scale": 2, "offset": 128})
+        s.execute("layer.setProps", {"blend": "LinearLight"})
+        s.execute("layer.moveTo", {"layer": "high", "target": "low", "position": "above"})
+        s.execute("layer.select", {"name": "orig"})
+        s.execute("layer.setProps", {"visible": False})
+
+        got = [s.execute("document.pixel", {"x": x, "y": y}) for x, y in pts]
+    for i, (x, y) in enumerate(pts):
+        want = [round(c * 255) for c in orig[i][:3]]
+        now = [round(c * 255) for c in got[i][:3]]
+        assert all(abs(now[c] - want[c]) <= 2 for c in range(3)), f"{(x, y)}: orig={want} composite={now}"
+
+
+@probe
+def strict_quality_scales():
+    """1..100 的三个入口都严格报错，不静默截断：CLI --quality 越界退出码 2、
+    serve doc.save 越界报错、file.export.presets.save 的 settings.quality 越界报错"""
+    src = TMP / "qin.png"
+    p = pc_run([], new={"width": 32, "height": 32, "background": "white"}, out=str(src.name))
+    assert_ok(p, "seed png")
+    bad = pclib.run_cli(["convert", str(src), str(TMP / "q101.jpg"), "--quality", "101"],
+                        cwd=str(TMP), check=False)
+    assert bad.returncode == 2, f"CLI --quality 101 exit {bad.returncode}: {bad.stderr[-200:]}"
+    assert "is not in 1..=100" in (bad.stderr + bad.stdout), (bad.stderr + bad.stdout)[-300:]
+
+    with pclib.Serve(read_root=str(TMP), write_root=str(TMP)) as s:
+        s.call("doc.new", {"width": 32, "height": 32, "background": "white"})
+        try:
+            s.call("doc.save", {"path": "q500.jpg", "quality": 500})
+        except Exception as exc:
+            assert "1 to 100" in str(exc), str(exc)[:200]
+        else:
+            raise AssertionError("serve doc.save quality 500 should be rejected")
+
+    presets = pc_run([("file.export.presets.save",
+                       {"name": "probe", "settings": {"quality": 500}})],
+                     new={"width": 32, "height": 32})
+    assert presets.returncode != 0, presets.returncode
+    assert "must be within 1..=100" in (presets.stderr + presets.stdout), \
+        (presets.stderr + presets.stdout)[-300:]
+
+
+@probe
 def deselect_without_selection_fails_run():
-    """没有选区时 select.deselect 让整条 run 失败，后面的步骤不执行"""
-    p = pc_run([("select.deselect", {}), ("layer.flattenImage", {})], new={"width": 8, "height": 8})
-    assert p.returncode == 1, p.returncode
-    assert "no selection" in p.stderr.lower(), p.stderr[-400:]
+    """无选区的 select.deselect 随入口不同：CLI run 里 0.18 静默通过、后续步骤照跑；
+    serve 的 engine.execute 两个版本都报 no selection。两个入口都要验。"""
+    out = "deselect-out.png"
+    p = pc_run([("select.deselect", {}), ("layer.flattenImage", {})], new={"width": 8, "height": 8}, out=out)
+    wrote = (TMP / out).exists()
+    if p.returncode == 0:
+        # 静默通过的入口：断言"报错才中止"这条规律不成立——后续步骤确实跑了，--out 落盘
+        assert "no selection" not in p.stderr.lower(), p.stderr[-400:]
+        assert wrote, "run returned 0 but --out was not written; the step order claim broke"
+    else:
+        assert "no selection" in p.stderr.lower(), p.stderr[-400:]
+        assert not wrote, "run failed but --out was still written"
+
+    with pclib.Serve(read_root=str(TMP), write_root=str(TMP)) as s:
+        s.call("doc.new", {"width": 8, "height": 8})
+        try:
+            s.execute("select.deselect")
+        except Exception as exc:
+            assert "no selection" in str(exc).lower(), exc
+        else:
+            raise AssertionError("serve select.deselect without a selection should report no selection")
 
 
 @probe
@@ -173,15 +265,26 @@ def layer_ids_renumber_on_reopen():
 
 @probe
 def new_layer_goes_above_active():
-    """新图层插在活动图层上方、同一父级里"""
-    p = pc_run([("layer.new.group", {"name": "G"}), ("layer.select", {"name": "G"}),
-                ("layer.new.layer", {"name": "inside?"}), ("layer.list", {"flat": True})],
-               new={"width": 8, "height": 8})
-    assert_ok(p, "run")
-    layers = json_lines(p)[-1]["result"]["layers"]
+    """选中根层时新层留在根层（各版本一致）；入组的稳妥做法是显式 moveTo into。
+    活动层是组本身时的隐含落点随版本变（0.18 进组、早期落组外），文档因此不依赖它。"""
+    root = pc_run([("layer.select", {"name": "Background"}),
+                   ("layer.new.layer", {"name": "onRoot"}),
+                   ("layer.list", {"flat": True})], new={"width": 8, "height": 8})
+    assert_ok(root, "run")
+    layers = json_lines(root)[-1]["result"]["layers"]
+    on_root = next(l for l in layers if l["name"] == "onRoot")
+    assert on_root.get("parent") is None and on_root.get("depth") == 0, on_root
+
+    inside = pc_run([("layer.new.group", {"name": "G"}),
+                     ("layer.new.layer", {"name": "loose"}),
+                     ("layer.select", {"name": "loose"}),
+                     ("layer.moveTo", {"target": "G", "position": "into"}),
+                     ("layer.list", {"flat": True})], new={"width": 8, "height": 8})
+    assert_ok(inside, "run")
+    layers = json_lines(inside)[-1]["result"]["layers"]
     group = next(l for l in layers if l["name"] == "G")
-    new = next(l for l in layers if l["name"] == "inside?")
-    assert new["parent"] is None and group["id"] != new["id"], (group, new)
+    moved = next(l for l in layers if l["name"] == "loose")
+    assert moved.get("parent") == group["id"], (group, moved)
 
 
 @probe

@@ -47,18 +47,18 @@ columnWidth = (canvasWidth - margin*2 - gutter*(columns-1)) / columns
 | 单条参考线 | `view.newGuide {orientation, position}` | 回 `null` |
 | 读现状 | `photocraft-cli info <稿> --compact`、`document.inspect`、serve `doc.inspect` | 三者层树相同：bounds `[x,y,w,h]`，自上而下，组的 bounds 为 `null`，`kind` 为 `Pixel/Shape/Type/Group/Adjustment/Fill/Smart Object` |
 | 相对移动 | `layer.translate {layer, dx, dy}` | `{x, y}` 被静默忽略；没有 `layer.setBounds`，绝对定位靠 `dx = 目标 - 当前`；移动组会带着子层走 |
-| 缩放、精确四角 | `edit.transform {rect, quad}` / `{matrix}` / `{scaleX, scaleY, rotate, dx, dy}` | 只传 `rect` 报 ``pass `quad` …`` |
+| 缩放、精确四角 | `edit.transform {rect, quad}` / `{matrix}` / `{scaleX, scaleY, rotate, dx, dy}` | 只传 `rect` 报 ``pass `quad` …``。文字层除外：缩放后 `size_pt` 仍报原值，会变成被压扁的文字；改字号用 `type.setStyle {size}` |
 | 对齐 | `layer.align.leftEdges` 等 6 条，`{to:"auto\|layers\|selection\|canvas"}` | 作用于图层选区；`to:"canvas"` 对齐画布 |
 | 分布 | `layer.distribute.horizontally` 等 8 条，`{}` | 作用于图层选区 |
 | 选层 | `layer.select {layer \| name, mode:"add"}` | 参数是单数 `layer`；传 `{"layers":[…]}` 报 `needs layer or name` |
 | 入组 | `layer.groupLayers {name}`、`layer.moveTo {layers:[…], target, position:"into"}` | `groupLayers` 包住当前选中的层；`into` 放到组内最上面 |
-| 清像素选区 | `select.deselect` | 没有选区时报 `not available right now: no selection`，先看 inspect 的 `hasSelection`；`select.none` 不存在 |
+| 清像素选区 | `select.deselect` | 先看 inspect 的 `hasSelection`；没有选区时，CLI `run` 回 `null`、退出码 0（实测 0.18），serve 的 `engine.execute` 才报 `not available right now: no selection`；`select.none` 不存在 |
 
 层级顺序就是层树顺序，没有 z-index；改上下用 `layer.moveTo {target, position:"above"|"below"|"into"}`。
 
 ## 3. 新层落在哪
 
-- 新层插在活动层上方、同一个父级里。活动层是组里的子层时，新层进这个组；活动层是组本身时，新层落在组外，与组同级。
+- 新层插在活动层上方、同一个父级里。活动层是组里的子层时，新层进这个组；活动层是组本身时，**0.18 实测新层落进该组**（`parent` 指向组，`depth` 加一），与早期"落在组外"的记录相反。要在根级建层就先选中一个根层，别停在组上。
 - 往组里加层：先 `layer.select` 组里的某个子层再建；或者建完用 `layer.moveTo {layer, target:<组>, position:"into"}`；一批散层用 `layer.select` 选好后 `layer.groupLayers {name}` 一步包起来。
 - 组内面板顺序就是视觉上下顺序：先建底层（背景），再往上建。
 
@@ -90,7 +90,7 @@ print(sorted(loc / 32 for loc, d in info.data if d == 1))  # 横向参考线 y
 2. 跑 `layout_design.py calc` 拿列宽、列起点、合法宽度，不要手推。
 3. 用 `calc` 输出的 `guideLayoutParams` 调 `view.newGuideLayout`。
 4. 从底向上建层和组（第 3 节）。只建要用的组：空组会被判 HIGH。
-5. 读 bounds（`info --compact` 或 `doc.inspect`），按 `calc` 结果算 dx/dy，`layer.translate` 写回；改尺寸用 `edit.transform`。
+5. 读 bounds（`info --compact` 或 `doc.inspect`），按 `calc` 结果算 dx/dy，`layer.translate` 写回；改尺寸用 `edit.transform`（文字层改 `type.setStyle {size}`，见第 2 节）。
 6. 残差用 `layer.align.*` / `layer.distribute.*` 收：先 `layer.select` 选好层；有像素选区时才 `select.deselect`（`edit.fill` 之后选区会留着）。
 7. 每批改动后重读 inspect 核对 bounds；跑 `layout_design.py check`（读 inspect JSON）和 `psd_audit.py audit --strict`（执行；读 PSD 文件，见 psd-workflow.md），两者输入不同，不能互相代替。
 8. 关键布局做渲染前后对比：`doc.render {maxSide:0, path}` 或 CLI `convert` 出图，交给 `psd_compare.py`（执行，见 psd-workflow.md）。蒙版、混合模式、智能对象会让几何改动看起来生效、实际没落。

@@ -97,9 +97,12 @@ GUI 控制通道和 serve/MCP 拒绝会碰本机任意路径的命令：`file.*`
 
 ### Image Assets（`file.generate.imageAssets`，只在 CLI）
 
+前置条件：Generator 必须先开。默认 `plugIns.generatorEnabled` 为 false，没开时报 `Enable Generator in Preferences ▸ Plug-ins`。CLI 的 `prefs.set` 不写回 `preferences.json`，跨进程不生效，所以要在**同一条 `run` 里**先开再导出：
+
 ```bash
-photocraft-cli run "<稿名>_切图.psd" --cmd file.generate.imageAssets \
-  --params '{"on":true,"dir":"<资产目录>"}'
+photocraft-cli run "<稿名>_切图.psd" \
+  --cmd prefs.set --params '{"path":"plugIns.generatorEnabled","value":true}' \
+  --cmd file.generate.imageAssets --params '{"on":true,"dir":"<资产目录>"}'
 ```
 
 | 层名 | 输出 |

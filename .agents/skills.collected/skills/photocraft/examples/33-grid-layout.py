@@ -61,7 +61,9 @@ def main(args):
     ], input="layout.psd", out="cards.psd", check=True)
 
     step("把内容层放进区块组（一次 moveTo 传 layers 数组），再导出 inspect 给 check 用")
-    layers = {l.name: l.id for l in info("cards.psd").layers}
+    # 用 flat 展开：0.18 起新建的层可能已在组内，只看顶层会漏
+    listing = pc_run([("layer.list", {"flat": True})], input="cards.psd")
+    layers = {l["name"]: l["id"] for l in pc_result(listing, "layer.list")["layers"]}
     move = {"layers": [layers[n] for n in ("背景_画布", "组件_卡片A", "组件_卡片B", "文字_说明A")],
             "target": layers["区块_首屏"], "position": "into"}
     pc_run([("layer.moveTo", move)], input="cards.psd", out="grouped.psd", check=True)

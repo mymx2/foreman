@@ -82,7 +82,7 @@
 
 1. **审计原稿（只读）**。记原稿 SHA256。跑 `psd_audit.py audit <原稿> --json > audit-before.json`；在 PhotoCraft 打开原稿，用 `document.inspect` 和 `type.resolveMissingFonts {}` 核对层树、文字和应用侧真实缺字。先出问题清单和重建计划，确认后再动手。
    - 输入是 Affinity（`.af/.afdesign/.afphoto/.afpub`）、Krita `.kra` 或 Paint.NET `.pdn`：PhotoCraft 只能导入，psd-tools 读不了。先导入，另存 `<稿名>_原稿.psd` 当只读基线再审计；导入警告里列出的不支持项记进问题清单。
-2. **冻结视觉基线**。同一引擎把原稿渲染成 PNG（`photocraft-cli convert`，或 serve `doc.render {maxSide:0, path}`，最长边超过 2048 只能用 `convert`），存为 `baseline.png` 并记 hash。后续对比都以它为准。
+2. **冻结视觉基线**。同一引擎把原稿渲染成 PNG（`photocraft-cli convert`，或 serve `doc.save {path}`；`doc.render` 最长边上限 2048，全尺寸基线别用它），存为 `baseline.png` 并记 hash。后续对比都以它为准。
 3. **排查怪稿（审计的盲区）**。第 1 步的审计和栅格检查只能查命名、层级、字体、落列——「画面正常但定义怪异」的稿件会全部漏过：渲染两遍都一样，检查器却看不见层里藏了什么。按第 2.5 节逐类过一遍，重点是 inspect 逐层读 `bounds`/`kind`/`hasMask`/`hasVectorMask`/`clipped`/`blend`/`opacity`，再把关键层**单独渲染**出来看（CLI 用 `layer.exportAs {path}` / `layer.quickExportAsPng {path}`；serve 的 `doc.exportLayers` 只出顶层，嵌套层先隐藏兄弟层）。发现的怪异点全部登记进问题清单，和结构问题一起排进重建计划。
 4. **设计目标层树**。写旧层 → 新组的映射；标出要拆的合并层、要重打的文字、要转智能对象的素材、无法恢复的项。原稿是平图时注明「只能按视觉复刻」。
 5. **另存规范稿**。存成 `<稿名>_规范.psd`：serve 用 `doc.save {path}`，GUI 用 `app.save {path}`（保存语义见 automation.md）。PSD/PSB/.pcraft 另存会让文档指向新文件，平图格式只是副本。确认当前文档已指向规范稿，不要用不带 path 的保存回写原稿。
@@ -178,11 +178,21 @@
 
 排查按「先机器后人工」：
 
-1. 跑 `psd_audit.py` + `layout_design.py check`（版式稿）拿结构/几何问题——这些是「定义错误」的子集；再跑 `slice.list` 看切片、参考线、图层复合是否还对着当前版面。
+1. 跑 `psd_audit.py` + `layout_design.py check`（版式稿）拿结构/几何问题——这些是「定义错误」的子集；再跑 `slice.list` 看切片、参考线、图层复合是否还对着当前版面。两者的输入不同：`psd_audit.py` 读 PSD 文件、出命名/字体/层级问题，**不产出 bounds**（它的组树只有 name/kind/visible/children）；几何一律看 `layout_design.py check` 或 `info`/`document.inspect`。
 2. 写个一次性脚本（或手工）扫 inspect JSON：B/C/D 三类信号全部可编程判定。A 类机器查不到，逐层单渲核对。
 3. 每个怪异点登记：路径、信号、人工确认结果、处置（修复/接受/待用户决定）。处置为「接受」的项写进描述文件「未解决项」。
 
 修这些不改变视觉：全部动作做完后走第 9 步 `psd_compare` 应得 `identical`——如果变了，说明修复改动了视觉，先修回归再交付。
+
+## 2.6 模板版本链的选区与占位
+
+做模板批量出图（模板 PSD + 变量数据）时，版本链推进遵循下面的选区与占位规则。版本角色：v1 = 规范母版（结构、命名、字体、初版样例），v2 = 变量标记（`VAR_` 前缀、字段拆分），v3 = 占位版（纯色 Shape 标出变量槽位），v4 = 生产版（真实数据替换）。「槽位」= 变量区域（文字区域、图片框等）。
+
+- **v1 不是一次冻结**：先出 v1 结构和初版样例，v2/v3 确定最终选区（变量区域）后，回到 v1 按选区修正样例文字、文本框、对齐，再重跑 v2/v3/v4。不要只改 v3 占位而不改 v1 样例——占位与样例必须自洽。v1 样例若来自用户素材，回改前征得同意或另存新版本号。
+- **满版变量不做占位**：占位色块只服务有边界的变量槽位（文字区域、图片框），让人看到可选区间；槽位就是整张画布时（如全画布智能对象替换），占位只会遮住画面，v3 直接跳过，v1/v2 标记 `VAR_` 即可，v4 替换。
+- **固定内容用 Box 文本框，可变内容用点文字**：固定说明（标语、品牌信息）用 Box 文本框保持自动换行；可变标题、姓名用点文字，换字后用 `type.info` 重读墨迹 `bounds`（会随缩放即时刷新），按 `min(区域宽/墨迹宽, 区域高/墨迹高)` 改 `size` 再复验，反复到落入区域。不要用 `edit.transform` 缩放文字层——缩完 `size_pt` 仍报原值，且与「点文字被压扁要重打」的规范冲突。多字段一行不塞一个框，拆成独立文字层各自固定选区。
+- **每版留同引擎对比**：画布一致时用 `psd_compare.py`（第 4 节）逐像素比对，并确认差异只在变量区域；画布尺寸变化时用 `doc.save` 或 CLI `convert` 出全尺寸图（`doc.render` 有 2048 上限，长图会失败）拼并排图 + `info --compact` 存尺寸表。
+- **构建脚本要幂等、产物要原子落盘**：源哈希固定，同一输入重跑得到同一结果；输出先写成同目录的 `.tmp`（`.psd`、`.json` 都算），过了 `info` 断言 + `psd_audit --strict` + `warnings` 检查再 `os.replace` 成正式名。中断只会留下 tmp，不会留下半截正式产物。Windows 上 `os.replace` 撞到读者占用会抛 `PermissionError`（WinError 5），做几次短退避重试再放弃，不要吞掉这个错。
 
 ## 3. psd_audit.py（执行）
 
@@ -209,7 +219,7 @@ photocraft-cli run --new '{"width":8,"height":8}' --cmd type.fonts \
   --cmd type.fonts --params '{"family":"Inter"}' > fonts.jsonl
 ```
 
-  字体装没装以应用侧 `type.resolveMissingFonts` 为准，这个参数只做辅助核对。
+  字体核对分两层：`type.resolveMissingFonts` 只做字族级辅助，字面是否装齐要逐文字层比对 `type.info` 的 `runs[].style.postscript_name` 与 `type.fonts` 的 `postscriptName`（见 fonts.md）；只把 faces 交给 `--installed-fonts` 做精确比对。`type.fonts` 传错 family 也回 `{"faces":[]}`，先核对家族拼写。
 - 命名与结构规则和 `layout_design.py check` 共用 `psd_contract.py`（阅读：库，不单独运行），两者不会给出相反结论；`check` 读 inspect JSON、还查栅格，`psd_audit.py` 读 PSD 文件、还查字体，互不替代。
 
 ## 4. psd_compare.py（执行）
@@ -225,6 +235,7 @@ python "<skill-dir>/scripts/psd_compare.py" <旧稿或PNG> <新稿或PNG> [--out
 - `--out` 下固定写 `old.png`、`new.png`、`diff.png`，已存在时拒绝（`--overwrite` 才覆盖）。不给 `--out` 时用临时目录：`identical` 或出错时删掉，`differs` 时保留并在 `out` 里给路径。
 - 退出码：0 identical；1 differs；2 出错（缺 Pillow、找不到 CLI、渲染失败、参数错误、两边是同一个文件）。
 - PSD 文件本身的哈希证明不了渲染一致：结构重写后字节必然不同，以渲染结果为准。
+- 长图（高远大于宽，如详情页、滚动页）差异复核：逐像素统计之外，自行把差异像素按 y 坐标聚成区段（`psd_compare.py` 目前不输出 bands），方便只复核变化区域；低亮度通道差异（如 `0,0,1`）不能漏掉——脚本按任一 RGBA 通道非零判定，不要先转灰度再统计。
 
 ## 5. 交付
 
@@ -353,7 +364,7 @@ python "<skill-dir>/scripts/trim_export.py" "<渲染图目录>" --out assets --t
 - [ ] 描述文件里的 SHA256、验证数据和复验命令能复跑
 - [ ] 平图与母版是同一版本
 - [ ] 授权允许再分发时，`fonts/` 覆盖稿内全部字体家族、没有多余家族，SHA256 与来源记录一致；不允许时已写明未随附的原因
-- [ ] `type.resolveMissingFonts` 没有缺失，`type.fonts` 能看到交付需要的字体
+- [ ] `type.resolveMissingFonts` 没有缺失，且逐文字层核对过 `postscript_name` 都在 `type.fonts` 已装列表里（字族通过不代表字面通过）
 - [ ] 规范化任务：原稿与规范稿 SHA256、audit-before/after、audit-compare、visual-diff、旧层 → 新组映射齐全；原稿 SHA256 未变
 - [ ] 规范稿 `psd_audit.py --strict` 通过，LOW 逐条有结论
 - [ ] 切图任务：`assets/` 与 `assets-manifest.json` 的命名、尺寸、倍率、格式、alpha 与 spec 对得上，`failures` 为空

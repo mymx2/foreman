@@ -52,9 +52,11 @@ def main(args):
     if w != 600:
         fail("resize did not apply")
 
-    step("当前状态不可用的命令直接报错并中止整条 run（例如无选区时取消选择）")
-    deselect = pc("run", "in.jpg", "--cmd", "select.deselect", capture=True)
-    expect_error(deselect, "no selection", "select.deselect without a selection fails")
+    step("当前状态不可用的命令直接报错并中止整条 run（例如给没有蒙版的层应用蒙版）")
+    # 注意：0.18 起 CLI run 里无选区的 select.deselect 静默通过、退出码 0，不能再用它演示报错；
+    # 同一个调用走 serve 的 engine.execute 仍报 no selection。
+    apply_mask = pc("run", "in.jpg", "--cmd", "layer.layerMask.apply", capture=True)
+    expect_error(apply_mask, "layer mask", "layer.layerMask.apply without a mask fails")
 
 
 run(main)

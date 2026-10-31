@@ -17,12 +17,12 @@
 | `automation path rejected: alternate separators are not allowed; use /` | 相对路径里用了反斜杠 | 相对路径统一用 `/` |
 | `I/O: automation write … failed (NotFound)` | `doc.save` / `app.save` / 带 path 的 `doc.render` 不建父目录 | 先建目录；`doc.exportLayers` 会自动建 |
 | `I/O: automation create export … failed (AlreadyExists)` | 导出目录里已有同名文件（导出类命令不覆盖） | 清空输出目录或换目录；`doc.exportLayers` 失败时会删掉本次已写文件 |
-| `not available right now: no selection` | 当前没有选区，命令需要选区（如 `select.deselect`、`layer.layerMask.apply`） | 先建选区；不要无脑调 deselect |
-| `not available right now: the active layer has no pixels` | 调整类命令作用在文字/形状/填充层上 | 先 `layer.select` 选像素层 |
+| `not available right now: no selection` | 当前没有选区，命令需要选区（如 `layer.layerMask.apply`）。注意 `select.deselect` 只有 serve 里才报这句，CLI `run` 里它静默通过（实测 0.18） | 先建选区；不要无脑调 deselect |
+| `active layer is a Type layer, not a pixel layer` / `… Type layer without a mask` | 像素类命令（`paint.stroke` 等）作用在文字层上 | 先选像素层，或给文字层加蒙版；空像素层上调色可能静默成功，不作为错误分支 |
 | `not available right now: select two or more layers` | `layer.arrange.reverse` 只选了一层 | 多选后再执行 |
 | `not available right now: a document must keep at least one layer` | 试图删掉唯一的层 | 保留一层或先新建 |
 | `needs \`layer\` or \`name\`` | `layer.select` 缺参数；它只认单数 `layer` | 传 `{"layer":id}` 或 `{"name":"…"}`，多选用 `mode:"add"` |
-| `missing \`document\`` | `document.activate` 的参数名是 `document`（索引），不是 `index` | 改参数名 |
+| `needs \`document\` (a tab index) or \`offset\`` | `document.activate` 的参数名是 `document`（索引），不是 `index` | 改参数名 |
 | `missing \`path\`` | `path.set` 需要 `{"path":{subpaths:…}}` 包一层 | 按形状改 |
 | `params must be a JSON object` | `--params` / `engine.execute` 传了数组、字符串、数字 | 传对象；省略或 `null` 表示空参数 |
 | `unknown parameter \`x\`` | 该命令严格校验参数（`file.new`、`ui.set`、`layer.hideLayers` 等） | 用 `params.py --exact <id>` 查合法键 |
@@ -31,7 +31,7 @@
 | `unknown key`（MCP `-32602`） | MCP 参数名是 snake_case，和 serve 的 camelCase 不同 | `visible_only`、`max_side`、`stop_on_error` |
 | `authentication required` | token 错、缺 token，或首帧不是 auth | 首帧发 `{"id":"auth","method":"auth","params":{"token":"…"}}`；无效会断开，需要重连 |
 | `already authenticated` | 同一连接重复 auth | 继续用这条连接即可 |
-| `use either a control token or a control token file, not both` | 环境变量和命令行参数各给了一种 token 来源 | 只留一种；`--control-token-file` 只覆盖同名环境变量 |
+| `the argument '--control-token <64-HEX>' cannot be used with '--control-token-file <PATH>'` | 环境变量和命令行参数各给了一种 token 来源 | 只留一种；`--control-token-file` 只覆盖同名环境变量 |
 | `request exceeds 1048576 bytes` | 单行请求超过 1 MiB。serve 只回错误并继续，MCP 会直接退出 | 缩小载荷；大 base64 改走 serve 或 CLI |
 | `automation preview side exceeds 2048 pixels` | `doc.render` 的 maxSide 或文档长边超过 2048 | 降 `maxSide`，或改用 CLI `convert`（无此上限） |
 | `automation preview source exceeds 67108864 pixels` | 源文档超过 67,108,864 像素 | 先缩小源文档 |
@@ -45,7 +45,7 @@
 | `not a PhotoCraft droplet` | 手写 `.pcdroplet` 缺 `photocraftDroplet` 键 | 用 `file.automate.createDroplet` 生成 |
 | `import-only` / `cannot be written in this build` / `unknown file format` | 只读格式（KRA、XCF、PDN、Affinity、HEIC、SVG）不能写回；Cineon 在 0.14 可写，DDS 可写 | 另存 PSD / `.pcraft`（KRA 可存 `.ora`）；AVIF 取决于构建特性 |
 | `Bitmap needs a Grayscale image` | 位图模式要求先转灰度 | 先 `image.mode.grayscale` |
-| `Color Table needs an Indexed image` | 颜色表要求索引色 | 先 `image.mode.indexedColor` |
+| `Color Table needs an Indexed Color image` | 颜色表要求索引色（0.18 原文是 `Indexed Color`，按旧文案 `Indexed image` 搜不到） | 先 `image.mode.indexedColor` |
 | `Duotone needs a Grayscale image` | 双色调要求灰度 | 先灰度再双色调；0.14 实测 PSD 重开仍为 Duotone，`.pcraft` 保留最全 |
 | `Trap needs a CMYK document` | 陷印只对 CMYK 文档 | 先转 CMYK |
 | `count, size and gutter must fit inside the target margins` | `view.newGuideLayout` 的 `width` 是单列宽，不是画布宽 | 先 `layout_design.py calc` 拿单列宽 |
@@ -53,7 +53,7 @@
 | `the oldest state can't be deleted` | 删历史最早状态 | 先新建一个状态再删，或保留它 |
 | `Color Sampler limit reached: at most 10 points per document` | 取样点超过 10 个 | 删掉旧的取样点 |
 | `unknown preference` | 首选项键名错（是 camelCase，如 `general.alwaysCreateSmartObjectsWhenPlacing`） | 先 `prefs.get {}` 看完整键树 |
-| `command not found` / 找不到 `photocraft-cli` | CLI 默认不在 PATH | 用 `find_cli.py` 定位，或设 `PHOTOCRAFT_CLI` |
+| `command not found` / 找不到 `photocraft-cli` | CLI 默认不在 PATH | 用 `find_cli.py` 定位，或设 `PHOTOCRAFT_CLI`（旧名 `PC_CLI` 也认，但它只是候选，坏路径会被跳过） |
 | `bad --new JSON` / `bad JSON` / `lone leading surrogate` | 引号被 shell 吃掉，或 GBK 控制台把中文参数弄坏了 | PowerShell 用 `'{\"a\":1}'` 或 `--%`；Python 用 `-X utf8` 或读 `sys.stdin.buffer` |
 | `duplicate name` / 同名输出 | `file.automate.batch` 的结果重名 | 在 `naming` 里加 `{serial}` 或 `{date}`；同名（含大小写差异）保留第一个 |
 | `startingSerial plus the input count exceeds 4294967295` | 序号溢出 | 调小 `startingSerial` 或分批 |
@@ -82,6 +82,7 @@
 
 - **CLI 不在 PATH**：跑 `<skill-dir>/scripts/find_cli.py --check`；Windows MSI 装在 `C:\Program Files\PhotoCraft\`，也查 `HKLM\Software\PhotoCraft\InstallDir`。
 - **GBK 控制台**：Python 脚本加 `-X utf8`，或在脚本里 `sys.stdout.reconfigure(encoding="utf-8")`；读 stdin 用字节流再解码。中文路径和中文参数最容易坏在这里。
+- **自己再起 Python 子进程**：只 `reconfigure` 本进程不够，子进程会退回系统代码页。显式传环境变量 `PYTHONIOENCODING=utf-8`（必要时加 `PYTHONUTF8=1`），并把这些变量从父进程复制过去，否则中文路径在子进程里会被写坏。
 - **日志 0 字节像卡死**：Python 重定向是块缓冲，用 `python -u`。
 - **Git Bash 路径**：位置参数会自动转换，JSON 字符串里的绝对路径不会；用 `cygpath -m` 得到 `C:/…`。
 - **全局导出的 `PHOTOCRAFT_CONTROL_*` / `PHOTOCRAFT_AUTOMATION_*`**：会让每次启动的桌面版都开控制端口、让客户端读到不是本任务的 token。跑案例或测试前显式清掉。

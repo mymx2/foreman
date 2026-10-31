@@ -51,7 +51,10 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import pclib  # noqa: E402
 
-# Desktop control dispatch set of 0.10.0 (crates/ui-egui/src/control.rs) plus the transport's auth.
+# Desktop control dispatch set, snapshotted from 0.10.0 (crates/ui-egui/src/control.rs).
+# It is NOT read from the runtime: the desktop method list only exists on a live --control
+# instance, which needs a window. Treat it as a lower bound, not an authority: a name here
+# is not proof the method still exists, and a missing name is not proof it is gone.
 GUI_METHODS = {
     "ui.context.choose", "engine.execute", "ui.menu.invoke", "engine.commands", "jobs.list",
     "jobs.cancel", "ui.menu.list", "ui.inspect", "ui.set", "ui.dialog.open", "ui.dialog.set",
@@ -787,14 +790,15 @@ def main(argv: list[str] | None = None) -> int:
         counts[f.kind] = counts.get(f.kind, 0) + 1
     summary = {"root": str(root), "files": len(files), "id_tokens": lint.tokens, "param_sets": lint.param_sets,
                "baseline": {"commands": len(base.reg), "serve_methods": len(base.serve),
-                            "gui_methods": len(base.gui), "mcp_tools": len(base.tools)},
+                            "gui_methods": len(base.gui), "mcp_tools": len(base.tools),
+                            "gui_methods_source": "static snapshot (0.10.0), not runtime-verified"},
                "counts": counts, "findings": [asdict(f) for f in findings]}
     if args.json:
         print(json.dumps(summary, indent=2, ensure_ascii=False))
     else:
         print(f"check_docs: {root}: {len(files)} files, {lint.tokens} id tokens, {lint.param_sets} param sets; "
-              f"baseline {len(base.reg)} commands, {len(base.serve)} serve methods, {len(base.gui)} GUI methods, "
-              f"{len(base.tools)} MCP tools")
+              f"baseline {len(base.reg)} commands, {len(base.serve)} serve methods, {len(base.tools)} MCP tools; "
+              f"{len(base.gui)} GUI methods (static 0.10 snapshot, not runtime-verified)")
         for f in findings:
             print(f"{f.file}:{f.line}: {f.kind} `{f.token}`" + (f" ({f.detail})" if f.detail else ""))
         if findings:

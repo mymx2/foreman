@@ -14,7 +14,7 @@
 |---|---|---|
 | `file.print` | 打印或写打印 PDF | `{pdf, imageRect, command, sent, spooler, backend}`；`pdf` 只在给了 `output` 时非空 |
 | `file.printOneCopy` | 用上一次 Print 设置打印一份；可覆盖任意 Print 参数 | 同 `file.print` |
-| `file.printers` | 列系统打印队列 | `{printers:[{name,default}], default}` |
+| `file.printers` | 列系统打印队列 | `{printers:[{name,default}], default}`；0.18 实测每项还带 `server` 字段，别把它当队列名传给 `printer` |
 | `file.print.printers` | 同上，带 `supported` 标记（Windows 为 true） | `{supported, printers}` |
 | `file.print.page` | Windows：当前打印机的纸张、可打印区、DPI；可转方向 | `{printer, paper, printable, dpi, printerSettings?}`；`printerSettings` 只在传 `orientation` 时回 |
 
@@ -47,7 +47,7 @@
 
 ## 自动化路线
 
-**默认：只出 PDF，不碰打印机。** 无界面环境没有打印机时，这是最可复现的做法：
+**默认不安全：什么都不给会真的送印。** 实测 0.18：`file.print {}` 不给 `output`、不给 `dryRun` 时直接进打印队列（回 `sent:true, backend:"windows"`），只有在纸张/方向不匹配时才被拦下。要"只出 PDF 不碰打印机"，必须显式给 `output`，或显式 `dryRun:true`。无界面环境的可复现写法：
 
 ```sh
 photocraft-cli run poster.psd \
@@ -58,6 +58,7 @@ photocraft-cli run poster.psd \
 - `dryRun:true` + `output` 会写出 PDF，`sent:false`，`backend:null`；适合 CI、评审、交付前的版式检查。
 - 去掉 `dryRun`、保留 `output` 且不写 `send`：仍只写 PDF（`send` 默认 false）。
 - 真的送印：`output` 可省，`send:true`，并显式给 `printer`；回执看 `sent`、`backend`（`lp`/`windows`/`ipp`/`portal`）、`spooler`。
+- **什么都不给（`{}`）不是安全默认**：既没有 `output` 也没有 `dryRun` 时按 `send:true` 处理，实测 0.18 会真的进队列。脚本里凡是可能收到空参数的调用点，都要兜底补 `dryRun:true`。
 - Windows 想确认纸张/可打印区：先 `file.print.page`，再按它的 `paper`/`printable` 传 `file.print`。
 - `PHOTOCRAFT_NO_PRINT` 非 0 时 `file.print`/`file.printOneCopy` 拒绝 spool，`dryRun` 仍可写 PDF；CI 建议设置，避免误打。
 
@@ -97,7 +98,7 @@ photocraft-cli run poster.psd \
 |---|---|---|
 | `file.print` 在 serve/MCP/桌面报 ambient 拒绝 | 打印按 `file.*` 规则禁用 | 改用 CLI `run`；桌面只能人工 File › Print 或经 UI 对话框 |
 | 没有 `output` 却期待 PDF | `pdf` 只在显式 `output` 时写出 | 加 `"output":"proof.pdf"` |
-| `send` 默认 true 导致误打 | 只有 `output` 会把 `send` 默认成 false；只给 `printer` 会真的送印 | 自动化一律显式 `dryRun` 或 `output`+`send:false` |
+| `send` 默认 true 导致误打 | 只有 `output` 会把 `send` 默认成 false；只给 `printer`、或什么都不给（`file.print {}`）都会真的送印 | 自动化一律显式 `dryRun` 或 `output`+`send:false` |
 | 纸张/方向不对 | Windows 驱动设置与参数不一致 | 用 `file.print.page` 读驱动纸张，再传 `paper`/`orientation` |
 | 图像位置偏移 | `center` 与 `top`/`left` 混用，或 `scaleToFit` 与 `scale` 同时给 | 选一种定位方式；先看 `imageRect` |
 | 打印颜色和屏幕不同 | 驱动色彩管理 | 需要可控时用 `photocraftManages` + 打印机 ICC，并做打样 |

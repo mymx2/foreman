@@ -1,6 +1,6 @@
 # PhotoCraft 案例
 
-41 个场景，每个都是可直接运行的 Python 脚本，跑完用 `info`、`type.info`、像素取样和命令返回值核对产出。不带参数时使用内置素材；带参数时处理你自己的文件（原文件只读，产出写到 `$PCX_WORK/out/<场景>/`）。0.14.0 实跑：40 PASS、0 FAIL、1 SKIP（案例 31 需要桌面窗口）。
+41 个场景，每个都是可直接运行的 Python 脚本，跑完用 `info`、`type.info`、像素取样和命令返回值核对产出。不带参数时使用内置素材；带参数时处理你自己的文件（原文件只读，产出写到 `$PCX_WORK/out/<场景>/`）。0.14.0 实跑：40 PASS、0 FAIL、1 SKIP（案例 31 需要桌面窗口）。0.18.0 也已适配到同样的 40 PASS / 0 FAIL / 1 SKIP。
 
 ```sh
 python <skill-dir>/scripts/run_examples.py            # 全部；案例 31 默认 SKIP，设 PCX_DESKTOP=1 才运行
@@ -60,7 +60,7 @@ PCX_WORK=/tmp/pc python <skill-dir>/examples/12-product-cutout-composite.py my-p
 | 37 | 程序化纸纹背景：笔触 + 波浪扭曲 + 噪点 + 文字 | `run` | 画笔、滤镜、图层混合 |
 | 38 | 模板改字：固定区域内替换文字，改完上下左右重新居中，检查换行与裁切 | `run` | 段落文字、图层对齐、bounds |
 | 39 | 按图片实际尺寸拼接：竖向上下、横向左右，画布与位置由尺寸算出 | `run` | 画布尺寸、置入、边界校验 |
-| 40 | 打印 PDF：A4、裁切标记、出血、dryRun 不送印；serve 拒绝打印 | `run` | `file.print`、打印 PDF |
+| 40 | 打印 PDF：A4、裁切标记、出血、dryRun 不送印；serve 拒绝打印。注意 `file.print` 什么都不给会真的送印，必须显式 `output` 或 `dryRun` | `run` | `file.print`、打印 PDF |
 | 41 | 图层 XMP：写入、保存 PSD、回读、清除 | `run` | `layer.xmpMetadata`、资产元数据 |
 
 相机 RAW 与 XCF/DICOM 没有内置夹具，按 `references/raw.md`、`references/formats.md` 的流程用你自己的文件跑；不要为了演示造一个假 RAW 当成真实显影结果。

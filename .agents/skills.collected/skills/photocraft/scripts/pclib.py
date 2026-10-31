@@ -325,6 +325,8 @@ def cli_candidates(explicit=None, *, repo=None) -> list[Candidate]:
 
     add(explicit, "--cli")
     add(os.environ.get("PHOTOCRAFT_CLI"), "PHOTOCRAFT_CLI")
+    # 旧名，部分仓库（含以 0.12 为基线的那批模板工程）仍只用它
+    add(os.environ.get("PC_CLI"), "PC_CLI (legacy)")
     triples = _TRIPLES[_platform_key()]
     for root, source in ((repo, "--repo"), (os.environ.get("PHOTOCRAFT_REPO"), "PHOTOCRAFT_REPO")):
         if not root:
@@ -385,7 +387,8 @@ def find_cli(explicit=None, *, repo=None) -> Path:
     """Path of a working photocraft-cli, or CliNotFound naming every place searched."""
     pinned_env = os.environ.get("PHOTOCRAFT_CLI")
     cache_key = (os.fspath(explicit) if explicit else None, os.fspath(repo) if repo else None,
-                 pinned_env, os.environ.get("PHOTOCRAFT_REPO"), os.environ.get("PATH"))
+                 pinned_env, os.environ.get("PC_CLI"), os.environ.get("PHOTOCRAFT_REPO"),
+                 os.environ.get("PATH"))
     if cache_key in _FOUND:
         return _FOUND[cache_key]
     pin = explicit or pinned_env
@@ -411,7 +414,8 @@ def find_cli(explicit=None, *, repo=None) -> Path:
     raise CliNotFound(
         "photocraft-cli not found. Install PhotoCraft (the Windows MSI puts it in "
         "Program Files, not on PATH; on macOS the CLI is a separate zip) or set "
-        "PHOTOCRAFT_CLI=<path>. Searched:\n" + lines, cands)
+        "PHOTOCRAFT_CLI=<path> (the legacy name PC_CLI is also read; PHOTOCRAFT_CLI wins). "
+        "Searched:\n" + lines, cands)
 
 
 def _resolve_cli(cli) -> Path:
@@ -437,8 +441,12 @@ def run_cli(args, *, cli=None, cwd=None, env=None, timeout=600, check=True, inpu
     except FileNotFoundError as exc:
         raise CliNotFound(f"cannot start {exe}: {exc}") from None
     except subprocess.TimeoutExpired:
-        raise CliError(f"photocraft-cli {argv[1] if len(argv) > 1 else ''} timed out after {timeout}s",
-                       argv=argv) from None
+        # 超时不代表没跑：前几步可能已经写盘（saveACopy 之类），--out 通常没写成
+        raise CliError(
+            f"photocraft-cli {argv[1] if len(argv) > 1 else ''} timed out after {timeout}s; "
+            "earlier steps may have written files, and --out was not written; "
+            "check the output directory before resending",
+            argv=argv) from None
     proc.stdout = proc.stdout.decode("utf-8", "replace")
     proc.stderr = proc.stderr.decode("utf-8", "replace")
     if check and proc.returncode != 0:

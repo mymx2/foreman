@@ -44,6 +44,7 @@ RAW 由 magic 识别，不只是扩展名。打开后得到 **16 位 RGB、ProPh
 | `rawDefaults.demosaic` | `ahd`（默认）/`mhc`/`bilinear` | 只影响交互式/桌面打开；CLI/serve/MCP 的 `doc.open` 固定 AHD，没有按调用传 demosaic 的参数 |
 | `rawDefaults.openInCameraRaw` | bool（默认 true） | 只影响交互式打开是否先弹 Camera Raw |
 | `rawDefaults.bitDepth` / `colorSpace` / `sharpenFor` / `openAsSmartObject` / `applyAutoTone` | — | 0.14 未接入导入路径；输出仍 16 位 ProPhoto |
+| `rawDefaults.writeXmpSidecars` | bool（0.18 实测默认 true） | 0.18 首选项里新增；实测打开 NEF 不产出 sidecar，是否接入导入路径未验证 |
 
 自动化里要改 `resolution`，可以在 **打开之前** 执行 `prefs.set`（serve/MCP 的 `engine.execute`），或使用带临时配置目录的桌面实例。`demosaic` 在 CLI/serve/MCP 里没有 per-open 参数；要换只能在桌面的交互式 Camera Raw/Preferences 里选，或接受默认 AHD。CLI `run` 是先打开文件再执行命令，改 `rawDefaults` 对当前文件已经太晚。`prefs.set` 属于需要用户同意的操作。Camera Raw 对话框里的 `demosaic` 只对当前这次打开有效，且在提交时重新显影。
 

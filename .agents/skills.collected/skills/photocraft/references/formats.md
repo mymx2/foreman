@@ -20,11 +20,11 @@
 
 | 格式 | 位深 | 透明 | 要点 |
 |---|---|---|---|
-| PNG | 8 / 16 | 是 | 无损，写入 ICC、XMP、DPI。32 位文档写成 16 位：`32-bit float will be reduced to 16-bit`。调色板 PNG 重新打开是 Indexed |
+| PNG | 8 / 16 | 是 | 无损，写入 ICC、XMP、DPI。32 位文档写成 16 位：`32-bit float will be reduced to 16-bit`。调色板 PNG 重新打开是 Indexed。有透明的文档存出来是 RGBA（透明区 `0,0,0,0`），要白底请先铺白色填充层或改存 JPEG |
 | JPEG | 8 | 否 | 透明区域合到白底：`transparency composited over white for Jpeg`；高位深降到 8 位：`16-bit will be reduced to 8-bit`；每次都提示 `lossy compression`。CMYK 文档写成 CMYK JPEG。`--jpeg-format baseline\|optimized\|progressive` 或 `jpegFormat` 设扫描方式；optimized 只对 Gray/CMYK 缩表，RGB 仍是 4:2:0 标准表 |
-| WebP | 8 | 是 | 不带 quality 无损，带了有损；不存 DPI：`resolution (DPI) not supported; it will be dropped`；32 位文档：`32-bit float will be reduced to 8-bit`。有损 WebP 的 Alpha 按每像素 1 字节不压缩存储，带透明的图有损反而更大，用无损 WebP 或 PNG |
-| GIF | 8，256 色调色板 | 1 位 | `colours will be quantized to a 256-colour palette`；`alpha will be reduced to on/off transparency`。重新打开是 RGB。动图用 `file.export.renderVideo {"dir":…,"format":"gif"}` |
-| TIFF（默认扁平） | 8 / 16 / 32 浮点 | 是 | 支持 CMYK、Lab。扁平 TIFF 丢掉额外的 Alpha 通道时不警告 |
+| WebP | 8 | 是 | 不带 quality 无损，带了有损；DPI 会保留（实测 0.18，300 ppi 往返一致，早期"不存 DPI"的记录已失效）；32 位文档：`32-bit float will be reduced to 8-bit`。有损 WebP 的 Alpha 按每像素 1 字节不压缩存储，带透明的图有损反而更大，用无损 WebP 或 PNG |
+| GIF | 8，256 色调色板 | 1 位 | `colours will be quantized to a 256-colour palette`；`alpha will be reduced to on/off transparency`。重新打开是 `Indexed`（实测 0.18），不是 RGB。动图用 `file.export.renderVideo {"dir":…,"format":"gif"}` |
+| TIFF（默认扁平） | 8 / 16 / 32 浮点 | 是 | 支持 CMYK、Lab。**同时存在 Alpha/专色通道时，图像透明会被合到白底**：`transparency composited over white; a TIFF with alpha or spot channels stores them as extra samples and drops image transparency`（实测 0.18）。要保留图层透明就别加额外通道，或改存 PNG/PSD |
 | TGA | 8 | 是 | 有透明时写 32 位（带 Alpha），否则 24 位；`--tga-bits` / `tgaBits` 指定。PhotoCraft 自己重新打开 TGA 时，Alpha 会变成 “Alpha 1” 通道而不是图层透明；要透明需自己从通道转蒙版/选区（其他软件读同一文件 Alpha 正常） |
 | DPX | 8 / 10 / 12 / 16 | 是 | 8 位文档写 8，其余写 16；`--dpx-bits` / `dpxBits` 指定 |
 | Cineon `.cin` | 10-bit log | 否 | 0.14 可写：10-bit log 灰度/RGB，读回 16 位；无 Alpha/ICC/DPI（`resolution (DPI) not supported; it will be dropped`） |
@@ -52,7 +52,8 @@
 | `.heic` `.heif` | 是（官方构建带解码器，8/16 位） | `unsupported: HEIF cannot be written in this build` |
 | `.svg` | 是：打开为形状图层，置入为矢量智能对象 | `unknown file format: svg` |
 | `.avif` | 否：`codec: Avif: decoding is not available for this format` | `unsupported: AVIF cannot be written in this build` |
-| `.jxl` `.jp2` | 否 | `unknown file format: jxl` |
+| `.jxl` | 否：`codec: Jxl: JPEG XL reading is not yet available; export is supported` | **可写**（实测 0.18，产出合法 JXL，不保留 DPI） |
+| `.jp2` | 否 | `unknown file format: jxl` |
 | `.pdf` | 否：`codec: unrecognized image format` | 可写，见上表 |
 
 只读格式打开后不一定记着可写回的源路径：Affinity 明确没有源保存路径，KRA 实测 `path` 为 `null`；XCF/PDN 也不要假设。不要依赖“不带 path 的保存”能回写；先看 `info`/`session.list` 的 `path`。另存为 `.pcraft`（KRA 也可存 `.ora`）。Cineon 在 0.14 已可写，不在只读表里。
@@ -84,7 +85,7 @@
 | `image.trap` | CMYK | `Trap needs a CMYK document (Image › Mode › CMYK Color)` |
 
 - 双色调：0.14 实测存 PSD 后重开仍是 `mode:Duotone`；`.pcraft` 仍是最稳的完全可编辑母版。存扁平格式警告 `Duotone (2 inks) written as RGB`。
-- GIF 重新打开是 RGB，`image.mode.colorTable` 在上面会报错；要读调色板，在导出 GIF 之前对索引色文档调用不带参数的 `image.mode.colorTable`。调色板 PNG 重新打开仍是 Indexed。
+- GIF 重新打开是 `Indexed`（实测 0.18），`image.mode.colorTable` 可以直接读调色板；调色板 PNG 重新打开也是 Indexed。早期记录说"重开变 RGB、colorTable 会报错"，与 0.18 不符。
 - 32 位文档存 PNG 写成 16 位，存 JPEG/WebP 降到 8 位，都有警告；TIFF 保留 32 位浮点，OpenEXR 保留浮点。
 - 大幅调色和修复前先 `image.mode.bits16`，交付前再 `image.mode.bits8`，减少断层。抽查过的 10 个常用命令（油画、马赛克、高斯模糊、色阶、滤镜库、选择主体、索引色、污点修复、内容识别缩放、HDR 色调）在 16 位和 32 位下都能运行，其余命令没有逐条验证。
 
@@ -128,4 +129,4 @@
 | 逐层、逐数据组导出 | PNG 或 JPEG |
 | 去掉元数据外发 | `file.export.saveForWebLegacy {"metadata":"none"}` |
 | XCF/DICOM/Amiga IFF | 只读导入；另存 PSD/`.pcraft`，不要写回 |
-| JPEG XL、JPEG 2000、AVIF、HEIC | 写不了，换上面的格式 |
+| JPEG 2000、AVIF、HEIC | 写不了，换上面的格式。JPEG XL 在 0.18 能写不能读，需要来回编辑别用它 |

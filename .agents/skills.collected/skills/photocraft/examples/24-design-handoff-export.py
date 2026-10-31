@@ -75,6 +75,8 @@ def main(args):
 
     step("导出：画板 PNG、评审 PDF、复合预览、Generator 切图、单层快速导出、切片 Web 图 + HTML")
     out = pc_run([
+        # Generator 默认关；prefs.set 不写回 preferences.json，必须和导出放在同一条 run
+        ("prefs.set", {"path": "plugIns.generatorEnabled", "value": True}),
         ("file.export.artboardsToFiles", {"dir": "boards", "format": "png", "prefix": ""}),
         ("file.export.artboardsToPdf", {"path": "review.pdf", "quality": 10}),
         ("file.export.layerCompsToFiles", {"dir": "comps", "format": "png", "prefix": "landing"}),
