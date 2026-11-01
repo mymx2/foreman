@@ -1,6 +1,6 @@
 # 报错速查
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 (ff4738810) 复核；行为描述写于 0.14.0。按报错原文找原因和做法；跨任务的静默失败在 `SKILL.md` 的 Gotchas 表里，这里只收报错和域内问题。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为描述以 0.14.0 为基线，0.18.0 的补充实测在文中标注。按报错原文找原因和做法；跨任务的静默失败在 `SKILL.md` 的 Gotchas 表里，这里只收报错和域内问题。
 
 ## 按报错文本查
 
@@ -83,6 +83,8 @@
 - **CLI 不在 PATH**：跑 `<skill-dir>/scripts/find_cli.py --check`；Windows MSI 装在 `C:\Program Files\PhotoCraft\`，也查 `HKLM\Software\PhotoCraft\InstallDir`。
 - **GBK 控制台**：Python 脚本加 `-X utf8`，或在脚本里 `sys.stdout.reconfigure(encoding="utf-8")`；读 stdin 用字节流再解码。中文路径和中文参数最容易坏在这里。
 - **自己再起 Python 子进程**：只 `reconfigure` 本进程不够，子进程会退回系统代码页。显式传环境变量 `PYTHONIOENCODING=utf-8`（必要时加 `PYTHONUTF8=1`），并把这些变量从父进程复制过去，否则中文路径在子进程里会被写坏。
+- **读 CLI 输出必须显式按 UTF-8 解码**：CLI 的 stdout/stderr 一律是 UTF-8，但 Windows 中文系统的默认代码页常是 cp936。用 `subprocess.run(..., text=True)` 不指定 `encoding` 会按系统代码页解码，中文图层名和文字全变成 U+FFFD，字数、层名比对跟着错（实测同一份输出按 cp936 解出 42 个替换字符）。写 `encoding="utf-8", errors="replace"`。
+- **Python 里传 `/tmp/...` 这类 Git Bash 路径会被当成非法路径**：`bash` 的位置参数会自动转换，Python `subprocess` 不会。实测 CLI 回 `系统找不到指定的路径。(os error 3)` 且 stdout 为空。用 `C:/...` 形式的绝对路径或相对路径。
 - **日志 0 字节像卡死**：Python 重定向是块缓冲，用 `python -u`。
 - **Git Bash 路径**：位置参数会自动转换，JSON 字符串里的绝对路径不会；用 `cygpath -m` 得到 `C:/…`。
 - **全局导出的 `PHOTOCRAFT_CONTROL_*` / `PHOTOCRAFT_AUTOMATION_*`**：会让每次启动的桌面版都开控制端口、让客户端读到不是本任务的 token。跑案例或测试前显式清掉。

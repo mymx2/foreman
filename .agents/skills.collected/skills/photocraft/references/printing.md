@@ -1,6 +1,6 @@
 # 打印与打印 PDF
 
-> 核对版本：photocraft-cli 0.14.0 (ff4738810)；命令参数来自运行时注册表，路由与限制来自 `docs/printing.md`。打印只在 CLI 可用；serve、MCP、桌面控制通道按 `file.*` 规则拒绝。
+> 核对版本：photocraft-cli 0.14.0；命令参数来自运行时注册表，路由与限制来自 `docs/printing.md`。打印只在 CLI 可用；serve、MCP、桌面控制通道按 `file.*` 规则拒绝。
 
 ## 能做什么
 

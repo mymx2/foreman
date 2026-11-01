@@ -1,6 +1,6 @@
 # 相机 RAW 开发
 
-> 核对版本：photocraft-cli 0.14.0 (ff4738810)。格式支持来自 `crates/raw`、`docs/file-format-parity.md` 的 Camera raw 表；Camera Raw 交互见 `docs/control-protocol.md`。RAW 图库管理（Lightroom 式目录、XMP sidecar、批量挑选）仍不在范围内；这里只讲单张/批量的 RAW 显影与自动化。
+> 核对版本：photocraft-cli 0.14.0。格式支持来自 `crates/raw`、`docs/file-format-parity.md` 的 Camera raw 表；Camera Raw 交互见 `docs/control-protocol.md`。RAW 图库管理（Lightroom 式目录、XMP sidecar、批量挑选）仍不在范围内；这里只讲单张/批量的 RAW 显影与自动化。
 
 ## 支持范围
 

@@ -1,6 +1,6 @@
 # 自动化入口：serve、MCP、桌面控制通道
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 (ff4738810) 复核；行为描述写于 0.14.0。入口决策树与质量尺度见 `entrypoints.md`；CLI 子命令、标志和退出码见 `cli.md`；动作、批处理、Droplet、变量数据组见 `actions-batch.md`；打印见 `printing.md`；RAW 见 `raw.md`。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为描述以 0.14.0 为基线，0.18.0 的补充实测在文中标注。入口决策树与质量尺度见 `entrypoints.md`；CLI 子命令、标志和退出码见 `cli.md`；动作、批处理、Droplet、变量数据组见 `actions-batch.md`；打印见 `printing.md`；RAW 见 `raw.md`。
 
 ## 选哪个入口
 
@@ -147,7 +147,7 @@ TCP（`--port`）：
 | `doc.new` | `file.new` 的参数 | `{document:<index>}` |
 | `doc.open` | `{path}` | `{index, name, width, height, layers, warnings}` |
 | `doc.place` | `{path, scale?, fit?, center?, smartObject?, index?}` | `{layer, bounds:[x0,y0,x1,y1], scale, smartObject}` |
-| `doc.replaceSmartObject` | `{path, layer?, index?}`，`path` 必填（缺了报 ``needs `path` ``）；0.18 新增，MCP 对应 `doc_replace_smart_object` | `{layer, instances:[…], warnings}`，`instances` 列出用同一源文件的所有实例 |
+| `doc.replaceSmartObject` | `{path, layer?, index?}`，`path` 必填（缺了报 ``needs `path` ``）；0.18 新增，MCP 对应 `doc_replace_smart_object` | `{layer, instances:[…], warnings}`。**`instances` 里的层会被一起改掉**：复制出来的智能对象共享同一份内容源，替换其中一个等于替换全部（实测 0.18：复制一层后替换，回执 `instances:[6,7]`，两层内容同时变）。要只改一个，别用这个命令，改用 `doc.place` 新建独立对象再把原层隐藏 |
 | `doc.save` | `{path?, format?, quality?, tiffLayers?, tgaBits?, dpxBits?, ddsCompression?, ddsMipmaps?, index?}` | `{path, warnings}` |
 | `doc.exportLayers` | `{dir, format?, prefix?, visibleOnly?, quality?, index?}` | `{files, count}` |
 | `doc.exportDataSets` | `{dir, format?, dataSets?, naming?, index?}` | `{files, count}` |
@@ -189,6 +189,7 @@ TCP（`--port`）：
 ### doc.render
 
 - 只出 PNG：`path` 的扩展名和 `format` 都不起作用，`.jpg` 也写 PNG 字节。要别的格式用 `doc.save`。
+- 不传 `path` 时回 `{mime:"image/png", base64}`，不写临时文件；预览要直接回给调用方或 HTTP response 时用这个形式。传 `path` 才写文件并回 `{path, bytes}`。
 - `maxSide` 默认 1024，只缩不放；`0` 表示原尺寸。
 - 上限：请求边长超过 2048（包括 `maxSide:0` 而文档长边超过 2048）报 `automation preview side exceeds 2048 pixels`；源文档超过 67,108,864 像素报 `automation preview source exceeds 67108864 pixels`；编码后的 PNG 超过 5 MiB 报 `automation PNG exceeds 5242880 bytes`。更大的图用 CLI `convert`，它没有这些上限。
 - 渲染整幅合成，不能指定图层或区域；参考线不进渲染。

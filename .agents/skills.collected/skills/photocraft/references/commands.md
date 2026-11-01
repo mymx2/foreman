@@ -1,6 +1,6 @@
 # 命令速查
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 (ff4738810) 复核；行为描述写于 0.14.0。参数以运行时注册表为准。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为描述以 0.14.0 为基线，0.18.0 的补充实测在文中标注。参数以运行时注册表为准。
 
 ## 怎么查
 
@@ -8,7 +8,7 @@
 - 查参数：（执行）`python <skill-dir>/scripts/params.py --exact <id>`；不知道 id 时传关键词（`curves`、`blur`）；也可以 `photocraft-cli commands --json --filter <关键词>`。参数文本的读法、哪些命令校验未知键、拼错的枚举会怎样，见 cli.md。
 - 同一条命令在各入口的写法：`run --cmd <id> --params '<json>'`；serve `engine.execute {"command":"<id>","params":{…}}`；MCP `command_run {"id":"<id>","params":{…}}`；动作步骤 `["<id>", {…}]`。哪个入口能用哪些命令见 automation.md。
 - "案例"列是 `examples/` 里的脚本编号；32–41 是新增场景。
-- 0.14 新增/变更：`layer.layerStyle.contours.*`、`layer.xmpMetadata`、`file.print*`、`channel.options`、`document.activate {offset}`、`layer.translate {selection}`、`file.new {profile}`、`file.saveACopy` 的 `jpegFormat`/`tiffCompression`/DDS 选项。汇总见 `whats-new.md`。
+- 0.14 新增/变更：`layer.layerStyle.contours.*`、`layer.xmpMetadata`、`file.print*`、`channel.options`、`document.activate {offset}`、`layer.translate {selection}`、`file.new {profile}`、`file.saveACopy` 的 `jpegFormat`/`tiffCompression`/DDS 选项。汇总见 `upgrading.md` 与 `history/0.14.md`。
 
 ## 回执形状
 
@@ -82,7 +82,7 @@
 | `layer.new.layer` | `name` `position`（`above`/`below`）`mode` `opacity` `clipToPrevious` `fillNeutral` | `{layer}`；`below` 也到不了 Background 下面 | 08 17 |
 | `layer.duplicate` | `layer` `name` `document`（`"new"` 复制到新文档）`inPlace` | `{layer}`；副本在**源层**正上方（不是在上一次副本上方）；不给 `layer` 时复制所有选中层。连续从同一层复制两次，第二份会落在第一份**下面**，需要的话显式 `layer.moveTo` 调整 | 08 23 |
 | `layer.delete` | `layer` | 文档至少要留一层 | — |
-| `layer.renameLayer` | `layer` `name` | 没有 `layer.rename`（不是引擎命令）；改名用 `layer.renameLayer` 或 `layer.setProps {name}` | 07 13 34 |
+| `layer.renameLayer` | `layer` `name` | 没有 `layer.rename`（不是引擎命令）；改名用 `layer.renameLayer` 或 `layer.setProps {name}`。省略 `layer` 时改的是**活动层**（实测 0.18），批量改名务必显式给 `layer` | 07 13 34 |
 | `layer.new.layerFromBackground` / `layer.new.backgroundFromLayer` | `ifPresent` `select`；`layer` | 背景层转普通层（加蒙版、写带路径的分层 TIFF 之前要做）；反过来要求文档里还没有 Background | 17 23 |
 | `layer.moveTo` | `layer` 或 `layers` `target` `position`（`above`/`below`/`into`）`copy` | 改层序和父级，不改坐标；`into` 放到已有组的最上面 | 34 |
 | `layer.groupLayers` / `layer.new.groupFromLayers` | `layer` `name` | `{layer}`，把选中层包进一个新组 | 13 16 34 |
@@ -154,6 +154,7 @@
 |---|---|---|---|
 | `layer.smartObjects.convertToSmartObject` / `filter.convertForSmartFilters` | `layer`（不给时把选中层合成一个） | `{layer:<新 id>}`，旧 id 失效 | 19 |
 | `layer.smartObjects.convertToLayers` | `layer` | 展开内容，智能滤镜丢弃 | — |
+| `layer.smartObjects.replaceContents` | `layer`（省略时用活动层）`path` | `{layer, instances:[…], warnings}`；换图保留图层 transform，bounds = 新源像素 × 图层缩放，不会自动适配旧框；复制实例共享内容源，替换一个会连带改掉 `instances` 里的全部 | — |
 | `layer.smartObjects.editContents` → `layer.smartObjects.saveContents` | `layer` | `editContents` 把内容打开成新文档并激活（`{document, parentLayer}`），之后的命令都落在内容文档上；`saveContents` 写回父文档（`{updated:true}`），再 `document.activate` 回去 | 19 |
 | `layer.smartFilter.setParams` / `layer.smartFilter.setVisible` | `layer` `index` `params`（合并）；`visible` | 对智能对象执行的滤镜自动成为智能滤镜，`info` 里列在 `smartFilters` | 19 |
 | `layer.smartFilter.disableSmartFilters` / `disableFilterMask` / `deleteFilterMask` / `clearSmartFilters` | `layer` `enabled?`；`layer`；`layer`；`layer` | 开关整套智能滤镜/滤镜蒙版、删蒙版、清空 | 19 |
@@ -176,11 +177,11 @@
 |---|---|---|---|
 | `type.create` | `x` `y`（点文字的基线位置）或 `box:[x,y,w,h]`（段落文字），`text` `font` `size` `color` `align` `name`，以及 `type.setStyle` 的全部字符属性 | `{bounds, layer}`，字体没装时多 `warnings` | 13 16 32 38 |
 | `type.edit` | `layer` `text`（整段替换，保留样式）`replace:{start,end,text}` `runs` `box` `point` `antialias` | | 15 32 38 |
-| `type.setStyle` | `layer` / `layers` `range` `font` `fontStyle` `size` `color` `tracking` `leading` `align`… | 不校验未知键 | 13 |
+| `type.setStyle` | `layer` / `layers` `range` `font` `fontStyle` `size` `color` `tracking` `leading` `align`… | 不校验未知键；回执是整份 `type.info`（`runs`/`lines`/`bounds` 都在里面），改完可当场核对，不必再查一次 | 13 |
 | `type.info` | `layer` 只认数字 id；传图层名被静默忽略、回落到活动层（实测 0.18，0.14 未复核）。目标不是文字层时报 `not a type layer` | `text`、`runs[].style`（含 `font_family`、`font_style`、`postscript_name`、`size_pt`、`weight`）、`paragraphs`、`lines`（图层坐标）、`transform`、`bounds` | 32 38 |
 | `type.warpText` | `style`（`arc`/`flag`/`wave`…）`bend` | | 13 |
 | `type.fonts` | `family` | `{families:[…]}`，不需要打开文档 | 13 |
-| `type.resolveMissingFonts` | `map` | 不给 `map` 列出缺失字体，给了就替换 | 15 34 |
+| `type.resolveMissingFonts` | `map` | 不给 `map` 列出缺失字体，给了就替换。映射只换家族名，不校验目标家族有没有同名字面：原 `font_style` 字符串会保留，但目标字面没装时 `postscript_name` 仍为 `null`、渲染回退。替换后逐层读 `type.info`，需要特定字重时再用 `type.setStyle {font, fontStyle}` 指到已装字面。命令没有 layer 参数，会作用于全文档；母版含必须保留的隐藏版本时改用逐层 `type.setStyle` | 15 34 |
 | `edit.findAndReplaceText` | `find` `replace` `action:"changeAll"` `caseSensitive`（默认不分大小写）`wholeWord` | `{count}` | 15 |
 | `edit.checkSpelling` | `action:"list"` `layer` | 只有英文词典，中文词会被列为拼写错误 | 15 |
 

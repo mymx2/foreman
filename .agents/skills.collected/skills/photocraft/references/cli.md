@@ -1,6 +1,6 @@
 # photocraft-cli 参考
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 (ff4738810) 复核；行为描述写于 0.14.0。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为描述写于 0.14.0。
 
 任何子命令加 `--help` 都打印同一份总帮助。入口选择见 entrypoints.md；serve、MCP、桌面控制通道见 automation.md；动作文件的写法、`file.automate.batch`、变量数据组见 actions-batch.md；各格式的读写与警告见 formats.md。
 
@@ -17,7 +17,7 @@
 
 （执行）`python <skill-dir>/scripts/find_cli.py --check` 按这个顺序查找，并跑 `--version` 和一次注册表查询；`--json` 列出查过的每个位置。
 
-安装检查就是用绝对路径跑 `--version`，输出形如 `photocraft-cli <版本> (<hash>, <日期>)` 的一行即可，只校验格式和能否执行，本技能文档的核对基线（0.14.0）与实际装机版本（如 0.18.0）不同是正常的，不要求 CLI 在 PATH 上。找不到时请用户给出路径，不要猜。
+安装检查就是用绝对路径跑 `--version`，输出形如 `photocraft-cli <版本> (<hash>, <日期>)` 的一行即可，不要求 CLI 在 PATH 上。`--check` 还会读取 `references/version.json`：退出 0 表示命令/参数面覆盖当前版本；行为是否复核看版本与 `behavior_tested` 是否一致，不一致标 `unverified`。退出 3 表示 CLI 可用但版本超出命令/参数面范围，不阻断任务，结论标 `unverified` 并按 `maintenance.md` 更新文档；退出 4 表示 version.json 缺失或损坏。找不到时请用户给出路径，不要猜。
 
 ## 子命令与参数
 
@@ -127,7 +127,7 @@ photocraft-cli run poster.psd \
 
 注册表也有不全的地方：`file.export.renderVideo` 写着 `{} → {}`，实际接受 `dir` 和 `format`（`png`/`gif`）。
 
-未知键的处理因命令而异。0.10.0 时对当时全部 918 条命令各传一次 `{"bogusKey":1}` 的扫描结果（0.14.0 未重扫；以当前注册表和 `params.py` 为准）：36 条报 `unknown parameter`（下表，含全部 36 条），336 条静默忽略并按默认值执行，323 条先因前置条件失败（没有文字层、没有选区等）而没测出未知键的处理，其余 223 条因缺少必填参数等其它原因报错。换一份测试文档重扫，后三类的数字会变；报错的那 36 条是命令自身的校验，不随文档变。
+未知键的处理因命令而异：有的报 `unknown parameter`（下表列出这些命令），有的静默忽略并按默认值执行，还有的因前置条件（没有文字层、没有选区等）或缺少必填参数而没法测出未知键。数量随版本和测试文档变，以 `probe_gotchas.py` 的扫描、当前注册表和 `params.py` 为准，正文不写死。
 
 | 报 `unknown parameter \`bogusKey\`` 的命令 | 范围 |
 |---|---|

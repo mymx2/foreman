@@ -5,9 +5,12 @@
   python <skill-dir>/scripts/check_docs.py --json          machine-readable findings
   python <skill-dir>/scripts/check_docs.py --root DIR --include 'examples/*/README.md'
 
-Scans SKILL.md, references/*.md, examples/README.md, examples/*.py, examples/actions/*.json,
+Scans SKILL.md, references/*.md (top-level), examples/README.md, examples/*.py, examples/actions/*.json,
 examples/clients/*.py (string literals and comments) and the docstrings of scripts/*.py
-(--include adds globs; .md/.json/.py/.mjs are understood). Checks, against live
+(--include adds globs; .md/.json/.py/.mjs are understood). references/history/ is counted
+and filename-checked but not linted; the run fails when it exceeds version.json's
+history_max. version.json is checked against the upgrading.md heading and the history chain.
+Checks, against live
 baselines read from photocraft-cli (`commands --json`, serve `methods`, MCP `tools/list`)
 plus the desktop control dispatch set of the release:
 
@@ -135,6 +138,114 @@ PY_LANGS = {"python", "py", "python3", "pycon"}
 JSON_LANGS = {"json", "jsonl", "json5", "jsonc"}
 DEFAULT_GLOBS = ("SKILL.md", "references/*.md", "examples/README.md", "examples/*.py",
                  "examples/actions/*.json", "examples/clients/*.py", "scripts/*.py")
+HISTORY_NAME = re.compile(r"\d+\.\d+(?:\.\d+)?\.md$")
+HISTORY_HEADING = re.compile(r"#\s*(\d+\.\d+(?:\.\d+)?)\s*→\s*(\d+\.\d+(?:\.\d+)?)")
+VERSION_HEADING = re.compile(r"#\s*(\d+\.\d+(?:\.\d+)?)\s*→\s*(\d+\.\d+(?:\.\d+)?)\s*升级指南")
+DEFAULT_HISTORY_MAX = 5
+
+
+def _minor(value) -> tuple[int, int] | None:
+    match = re.match(r"(\d+)\.(\d+)", str(value or ""))
+    return (int(match.group(1)), int(match.group(2))) if match else None
+
+
+def _full_version(value) -> tuple[int, int, int] | None:
+    match = re.match(r"(\d+)\.(\d+)(?:\.(\d+))?", str(value or ""))
+    return tuple(int(part or 0) for part in match.groups()) if match else None
+
+
+def _history_sort_key(path: Path) -> tuple[int, ...]:
+    return tuple(int(x) for x in re.findall(r"\d+", path.stem))
+
+
+def history_limit(root: Path) -> int:
+    path = root / "references" / "version.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return DEFAULT_HISTORY_MAX
+        value = int(data.get("history_max", DEFAULT_HISTORY_MAX))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return DEFAULT_HISTORY_MAX
+    return value if value > 0 else DEFAULT_HISTORY_MAX
+
+
+def history_status(root: Path, limit: int) -> dict:
+    history_dir = root / "references" / "history"
+    entries = list(history_dir.iterdir()) if history_dir.is_dir() else []
+    files = [p for p in entries if p.is_file() and HISTORY_NAME.fullmatch(p.name)]
+    files.sort(key=_history_sort_key)
+    bad = sorted(p.name for p in entries if not (p.is_file() and HISTORY_NAME.fullmatch(p.name)))
+    return {"count": len(files), "limit": limit, "files": [p.name for p in files],
+            "bad": bad, "ok": len(files) <= limit and not bad}
+
+
+def version_status(root: Path) -> dict:
+    errors: list[str] = []
+    path = root / "references" / "version.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        return {"ok": False, "errors": [f"references/version.json unreadable: {exc}"]}
+    if not isinstance(data, dict):
+        return {"ok": False, "errors": ["references/version.json must be an object"]}
+    baseline = data.get("params_baseline")
+    tested = data.get("behavior_tested")
+    supported = data.get("supported")
+    if not isinstance(supported, dict):
+        errors.append("references/version.json: supported must be an object")
+    else:
+        low, high = supported.get("min"), supported.get("max")
+        low_minor, high_minor = _minor(low), _minor(high)
+        if low_minor is None or high_minor is None:
+            errors.append("references/version.json: supported.min/max must be versions")
+        elif low_minor > high_minor:
+            errors.append("references/version.json: supported.min must be <= supported.max")
+        if _minor(baseline) != low_minor:
+            errors.append(f"params_baseline {baseline!r} != supported.min {low!r}")
+        if _minor(tested) != high_minor:
+            errors.append(f"behavior_tested {tested!r} != supported.max {high!r}")
+    history_max = data.get("history_max")
+    if history_max is not None and (isinstance(history_max, bool) or not isinstance(history_max, int) or history_max <= 0):
+        errors.append("references/version.json: history_max must be a positive integer")
+    upgrading = root / "references" / "upgrading.md"
+    try:
+        text = upgrading.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        errors.append(f"references/upgrading.md unreadable: {exc}")
+    else:
+        match = VERSION_HEADING.search(text)
+        if not match:
+            errors.append("references/upgrading.md: heading must be '# X → Y 升级指南'")
+        else:
+            if _minor(match.group(1)) != _minor(baseline):
+                errors.append(f"upgrading.md starts at {match.group(1)}, params_baseline is {baseline}")
+            if _minor(match.group(2)) != _minor(tested):
+                errors.append(f"upgrading.md ends at {match.group(2)}, behavior_tested is {tested}")
+    history = history_status(root, history_limit(root))
+    if not history["files"]:
+        errors.append("references/history is empty; keep at least one frozen transition")
+    chain: list[tuple[str, str, str]] = []
+    for name in history["files"]:
+        try:
+            frozen = (root / "references" / "history" / name).read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            errors.append(f"references/history/{name} unreadable: {exc}")
+            continue
+        match = HISTORY_HEADING.search(frozen)
+        if not match:
+            errors.append(f"references/history/{name}: heading must be '# X → Y ...'")
+            continue
+        source, target = match.group(1), match.group(2)
+        if _full_version(target) != _full_version(Path(name).stem):
+            errors.append(f"references/history/{name}: filename target != heading target {target}")
+        chain.append((name, source, target))
+    for previous, current in zip(chain, chain[1:]):
+        if _minor(current[1]) != _minor(previous[2]):
+            errors.append(f"history chain break: {previous[0]} ends at {previous[2]}, {current[0]} starts at {current[1]}")
+    if chain and _minor(chain[-1][2]) != _minor(baseline):
+        errors.append(f"history ends at {chain[-1][2]}, params_baseline is {baseline}")
+    return {"ok": not errors, "errors": errors}
 STEP_CALLS = {"step", "execute", "exec", "maybe_exec"}
 TOOL_CALLS = {"call_tool", "call_json"}
 
@@ -777,6 +888,9 @@ def main(argv: list[str] | None = None) -> int:
 
     lint = Linter(base, {p.stem for p in root.rglob("*") if p.is_file()})
     files = collect(root, args.include)
+    if not files:
+        print(f"check_docs: no files to lint under {root}", file=sys.stderr)
+        return 1
     for path in files:
         rel = path.relative_to(root).as_posix()
         kind = kind_of(path, rel)
@@ -788,10 +902,24 @@ def main(argv: list[str] | None = None) -> int:
     counts: dict[str, int] = {}
     for f in findings:
         counts[f.kind] = counts.get(f.kind, 0) + 1
+    skill_root = Path(__file__).resolve().parent.parent
+    has_version = (root / "references" / "version.json").is_file()
+    has_version_docs = ((root / "references" / "upgrading.md").is_file()
+                        or (root / "references" / "history").is_dir()
+                        or (root / "SKILL.md").is_file())
+    if root == skill_root or has_version or has_version_docs:
+        history = history_status(root, history_limit(root))
+        version = version_status(root)
+    else:
+        history = {"count": 0, "limit": 0, "files": [], "bad": [], "ok": True, "skipped": True}
+        version = {"ok": True, "errors": [], "skipped": True}
+    history_ok = history["ok"]
+    version_ok = version["ok"]
     summary = {"root": str(root), "files": len(files), "id_tokens": lint.tokens, "param_sets": lint.param_sets,
                "baseline": {"commands": len(base.reg), "serve_methods": len(base.serve),
                             "gui_methods": len(base.gui), "mcp_tools": len(base.tools),
                             "gui_methods_source": "static snapshot (0.10.0), not runtime-verified"},
+               "version": version, "history": history,
                "counts": counts, "findings": [asdict(f) for f in findings]}
     if args.json:
         print(json.dumps(summary, indent=2, ensure_ascii=False))
@@ -803,9 +931,24 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{f.file}:{f.line}: {f.kind} `{f.token}`" + (f" ({f.detail})" if f.detail else ""))
         if findings:
             print("FAIL: " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())))
+        if history.get("skipped"):
+            print("history check skipped (no references/version.json)")
         else:
-            print("OK: no findings")
-    return 1 if findings else 0
+            if history["bad"]:
+                print(f"FAIL: unexpected history filenames: {', '.join(history['bad'])}")
+            if history["count"] > history["limit"]:
+                print(f"FAIL: references/history has {history['count']} files; keep at most {history['limit']} "
+                      f"(delete the oldest): {', '.join(history['files'])}")
+        if not version_ok:
+            for error in version["errors"]:
+                print(f"FAIL: {error}")
+        elif version.get("skipped"):
+            print("version metadata skipped (no references/version.json)")
+        if not findings and history_ok and version_ok:
+            history_text = "history skipped" if history.get("skipped") else f"history {history['count']}/{history['limit']}"
+            version_text = "version metadata skipped" if version.get("skipped") else "version metadata consistent"
+            print(f"OK: no findings; {history_text}; {version_text}")
+    return 1 if findings or not history_ok or not version_ok else 0
 
 
 if __name__ == "__main__":

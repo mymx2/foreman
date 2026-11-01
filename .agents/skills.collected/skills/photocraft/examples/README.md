@@ -1,6 +1,6 @@
 # PhotoCraft 案例
 
-41 个场景，每个都是可直接运行的 Python 脚本，跑完用 `info`、`type.info`、像素取样和命令返回值核对产出。不带参数时使用内置素材；带参数时处理你自己的文件（原文件只读，产出写到 `$PCX_WORK/out/<场景>/`）。0.14.0 实跑：40 PASS、0 FAIL、1 SKIP（案例 31 需要桌面窗口）。0.18.0 也已适配到同样的 40 PASS / 0 FAIL / 1 SKIP。
+每个场景都是可直接运行的 Python 脚本，跑完用 `info`、`type.info`、像素取样和命令返回值核对产出。不带参数时使用内置素材；带参数时处理你自己的文件（原文件只读，产出写到 `$PCX_WORK/out/<场景>/`）。场景数量和通过率以 `scripts/run_examples.py` 的输出为准；案例 31 需要桌面窗口，默认跳过。
 
 ```sh
 python <skill-dir>/scripts/run_examples.py            # 全部；案例 31 默认 SKIP，设 PCX_DESKTOP=1 才运行

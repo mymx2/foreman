@@ -447,6 +447,34 @@ def mcp_batch_rejects_camel_case():
 
 
 @probe
+def smart_object_replace_keeps_layer_scale():
+    """换智能对象内容保留图层缩放，不按源图 DPI 换算；复制实例共享内容源"""
+    assert_ok(pc_run([], new={"width": 64, "height": 32, "resolution": 72, "background": "#ff0000"},
+                     out="so-base.png"), "base png")
+    assert_ok(pc_run([], new={"width": 128, "height": 64, "resolution": 300, "background": "#00ff00"},
+                     out="so-rep.png"), "replacement png")
+    p = pc_run([
+        ("file.placeEmbedded", {"path": "so-base.png", "smartObject": True, "scale": 100}),
+        ("layer.select", {"name": "so-base"}),
+        ("edit.transform", {"scaleX": 50, "scaleY": 50}),
+        ("layer.list", {"flat": True}),
+        ("layer.duplicate", {}),
+        ("layer.smartObjects.replaceContents", {"path": "so-rep.png"}),
+        ("layer.list", {"flat": True}),
+    ], new={"width": 200, "height": 200, "resolution": 72, "background": "#ffffff"}, out="so-out.psd")
+    assert_ok(p, "smart object run")
+    rows = json_lines(p)
+    lists = [r["result"]["layers"] for r in rows if r.get("command") == "layer.list"]
+    rep = next(r["result"] for r in rows if r.get("command") == "layer.smartObjects.replaceContents")
+    before = [l for l in lists[0] if l["kind"] == "Smart Object"]
+    after = [l for l in lists[1] if l["kind"] == "Smart Object"]
+    assert len(before) == 1 and before[0]["bounds"][2:] == [32, 16], before
+    assert len(after) == 2, after
+    assert all(l["bounds"][2:] == [64, 32] for l in after), after
+    assert len(rep.get("instances", [])) >= 2, rep
+
+
+@probe
 def scan_unknown_keys():
     """全量扫描：对每条命令传一个未知键，统计报错/静默/前置条件失败（慢，约 2 分钟）"""
     reg = pclib.registry()

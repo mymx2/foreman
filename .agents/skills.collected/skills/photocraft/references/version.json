@@ -1,0 +1,9 @@
+{
+  "params_baseline": "0.14.0",
+  "behavior_tested": "0.18.0",
+  "supported": {
+    "min": "0.14.0",
+    "max": "0.18.0"
+  },
+  "history_max": 5
+}

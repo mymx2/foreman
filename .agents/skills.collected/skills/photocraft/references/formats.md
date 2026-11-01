@@ -1,6 +1,6 @@
 # 格式与色彩
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 (ff4738810) 复核；行为描述写于 0.14.0。RAW 见 `raw.md`；打印/PDF 见 `printing.md`；只读格式与 XCF 的详细限制见 book 的 formats 文档。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为描述以 0.14.0 为基线，0.18.0 的补充实测在文中标注。RAW 见 `raw.md`；打印/PDF 见 `printing.md`；只读格式与 XCF 的详细限制见 book 的 formats 文档。
 
 打开时按文件内容识别格式，保存时按输出扩展名选编码器（CLI 可用 `--format` 覆盖）。导出损失了什么，CLI 写在 stderr 的 `warning:` 里，serve/MCP 写在回复的 `warnings` 里；下文引号里的都是原文。quality 刻度见 cli.md。
 
@@ -20,7 +20,7 @@
 
 | 格式 | 位深 | 透明 | 要点 |
 |---|---|---|---|
-| PNG | 8 / 16 | 是 | 无损，写入 ICC、XMP、DPI。32 位文档写成 16 位：`32-bit float will be reduced to 16-bit`。调色板 PNG 重新打开是 Indexed。有透明的文档存出来是 RGBA（透明区 `0,0,0,0`），要白底请先铺白色填充层或改存 JPEG |
+| PNG | 8 / 16 | 是 | 无损，写入 ICC、XMP、DPI。32 位文档写成 16 位：`32-bit float will be reduced to 16-bit`。调色板 PNG 重新打开是 Indexed。有透明的文档存出来是 RGBA（透明区 `0,0,0,0`），要白底优先导出后用 Pillow 合成（见 `entrypoints.md`）；只在副本或导出件上铺白色填充层，不要加到母版；存 JPEG 也会合到白底但有损 |
 | JPEG | 8 | 否 | 透明区域合到白底：`transparency composited over white for Jpeg`；高位深降到 8 位：`16-bit will be reduced to 8-bit`；每次都提示 `lossy compression`。CMYK 文档写成 CMYK JPEG。`--jpeg-format baseline\|optimized\|progressive` 或 `jpegFormat` 设扫描方式；optimized 只对 Gray/CMYK 缩表，RGB 仍是 4:2:0 标准表 |
 | WebP | 8 | 是 | 不带 quality 无损，带了有损；DPI 会保留（实测 0.18，300 ppi 往返一致，早期"不存 DPI"的记录已失效）；32 位文档：`32-bit float will be reduced to 8-bit`。有损 WebP 的 Alpha 按每像素 1 字节不压缩存储，带透明的图有损反而更大，用无损 WebP 或 PNG |
 | GIF | 8，256 色调色板 | 1 位 | `colours will be quantized to a 256-colour palette`；`alpha will be reduced to on/off transparency`。重新打开是 `Indexed`（实测 0.18），不是 RGB。动图用 `file.export.renderVideo {"dir":…,"format":"gif"}` |

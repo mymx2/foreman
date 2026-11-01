@@ -1,6 +1,6 @@
 # 字体：查缺失、选替代、安装、授权
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 (ff4738810) 复核；行为记录来自 0.10.0–0.14.0 的实测，0.14 未逐条重验的条目保留原文。文字排版本身见 `text-layout.md`；随稿交付字体副本的规则见 `psd-workflow.md`。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为记录来自 0.10.0–0.14.0 的实测，0.18.0 的补充实测在文中标注；0.14 未逐条重验的条目保留原文。文字排版本身见 `text-layout.md`；随稿交付字体副本的规则见 `psd-workflow.md`。
 
 ## 查现状
 
@@ -57,14 +57,14 @@ for layer in layers:
 
 这段循环会把活动层挪到最后一个被检查的文字层上。如果后面还要 `doc.place` / 新建层 / 依赖"活动层"的命令，核对完先显式 `layer.select` 回目标层，否则新层落点会跟着变。
 
-**`postscript_name` 为 null 有两种成因**（实测 0.18，0.14 未复核）：会话内新建或改过样式，序列化时还没解析出字面；或者这个 face 压根解析不到（缺字体、缺字重）。实测 `font:"NoSuchFontXYZ"` 的层回 `postscript_name:null`、`font_style:""`，`type.create` 的 `warnings` 里会写 `font 'X' is not installed; text may render using a fallback face`。所以不能见到 null 就跳过——`font_style` 为空时至少记一条"face 未解析"，再配合 `type.create` / `info --compact` 的 `warnings` 交叉确认。存盘重开后 `postscript_name` 可能会补成回退字体的名字，那时候的通过也不算数。
+**`postscript_name` 为 null 有两种成因**（实测 0.18，0.14 未复核）：会话内新建或改过样式、且字面还没解析出来（缺字体或缺字重）；或者这个 face 压根解析不到。已装且能解析的字面会立即回填（实测 0.18：Calibri 新建即回 `Calibri`，改 Bold 回 `Calibri-Bold`）。实测 `font:"NoSuchFontXYZ"` 的层回 `postscript_name:null`、`font_style:""`，`type.create` 的 `warnings` 里会写 `font 'X' is not installed; text may render using a fallback face`。所以不能见到 null 就跳过——`font_style` 为空时至少记一条"face 未解析"，再配合 `type.create` / `info --compact` 的 `warnings` 交叉确认。存盘重开后 `postscript_name` 可能会补成回退字体的名字，那时候的通过也不算数。
 
 **`type.edit`、`type.setStyle` 的 layer 参数也认 id 不认名字**：传图层名同样静默回落到活动层，会改错层。按名操作先 `layer.select {name}`，后续命令省略 layer。
 
 ## 替换的规矩
 
-1. 缺失字体阻止交付。先列候选（同风格、同字重的已装字体），把候选交给用户选，不自动换近似字体。
-2. 用户确认后用 `type.resolveMissingFonts {"map":{"旧家族":"新家族"}}` 替换，回执是 `{missing, replaced}`。
+1. 缺失字体阻止交付，但按**可见交付面**算：母版保留的隐藏历史版本里缺字，登记说明即可，不计入交付面。
+2. 用户确认后用 `type.resolveMissingFonts {"map":{"旧家族":"新家族"}}` 替换，回执是 `{missing, replaced}`。**映射只改家族名，不保证目标家族有同名字面**：实测把缺失家族映射到 `Source Han Serif CN` 后，原 `font_style` 字符串保留（如 `Bold`/`SemiBold`），但目标家族没装这个字面时 `postscript_name` 仍是 `null`，渲染会回退。映射后逐层读 `type.info`；要落到 SemiBold/Bold 等字面，用 `type.setStyle {font, fontStyle}` 显式指定，确认 `postscript_name` 非空且在该家族已装列表里。**母版含必须保留的隐藏版本时，不要用这个全文档映射**（命令没有 layer 参数，会改到隐藏层）；只对可见层逐层 `type.setStyle`。
 3. 记录替换：原字体、实际字体、授权、视觉差（字宽、行高变化可能让排版跑位）。
 4. **禁用 `type.replaceAllMissingFonts`**：它把所有缺失字体无提示地映射到 Inter，绕过逐族确认，是有损操作。它可用，但不要用。
 
