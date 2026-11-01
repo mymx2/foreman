@@ -17,7 +17,7 @@
 
 （执行）`python <skill-dir>/scripts/find_cli.py --check` 按这个顺序查找，并跑 `--version` 和一次注册表查询；`--json` 列出查过的每个位置。
 
-安装检查就是用绝对路径跑 `--version`，输出形如 `photocraft-cli <版本> (<hash>, <日期>)` 的一行即可，不要求 CLI 在 PATH 上。`--check` 还会读取 `references/version.json`：退出 0 表示命令/参数面覆盖当前版本；行为是否复核看版本与 `behavior_tested` 是否一致，不一致标 `unverified`。退出 3 表示 CLI 可用但版本超出命令/参数面范围，不阻断任务，结论标 `unverified` 并按 `maintenance.md` 更新文档；退出 4 表示 version.json 缺失或损坏。找不到时请用户给出路径，不要猜。
+安装检查就是用绝对路径跑 `--version`，输出形如 `photocraft-cli <版本> (<hash>, <日期>)` 的一行即可，不要求 CLI 在 PATH 上。`--check` 还会读取 `references/version.json`：退出 0 表示命令/参数面覆盖当前版本；行为是否复核看版本与 `behavior_tested` 是否一致，不一致标 `unverified`。退出 3 表示 CLI 可用但版本超出命令/参数面范围，不阻断任务，结论标 `unverified`；CLI 更新频率高于技能维护频率，不要因此刷新技能，技能检查按 `update.md` 的节奏或管理器通知进行；退出 4 表示 version.json 缺失或损坏，同样先按 `update.md` 处理。找不到时请用户给出路径，不要猜。
 
 ## 子命令与参数
 

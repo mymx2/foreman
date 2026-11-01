@@ -2,6 +2,10 @@
 name: photocraft
 description: 驱动 PhotoCraft（开源、离线、兼容 Photoshop 的图像编辑器）完成可复现的修图与 PSD 自动化：通过 photocraft-cli、批处理与动作、serve 会话、MCP 或桌面控制通道执行注册表命令，覆盖调色、抠图换底、文字与形状、滤镜修复、模板批量出图、格式转换与切图导出、打印与打印 PDF、相机 RAW 显影、只读格式导入，以及 PSD 规范化、栅格排版和分层稿交付。当用户要用 PhotoCraft 或 photocraft-cli 处理图片或 PSD、批量处理一个目录、打印/出 PDF、显影 RAW、或把 PhotoCraft 接给 agent 与 MCP 客户端时使用。不适用于生成式 AI 绘图、RAW 图库管理（单张 RAW 显影是支持的）、网页 CSS 或 Figma 设计稿，以及没有安装 PhotoCraft 的环境。
 when_to_use: photocraft, photocraft-cli, PSD 自动化, 批量修图, 图片批处理, 抠图换背景, 电商白底图, 加水印, 调色与 LUT, 格式转换, 打印, 打印 PDF, 相机 RAW, RAW 显影, XCF 导入, 图层 XMP, 轮廓库, 切图导出, 多倍图, 文字居中, 栅格排版, PSD 规范化, PSD 复刻, 分层稿交付, 缺失字体, 动作与 Droplet, 模板批量出图, 截图打码, serve 会话, MCP 修图, 桌面控制通道
+version: 1.0.0
+updated: 2026-11-01
+metadata:
+  update: references/update.json
 ---
 
 # PhotoCraft
@@ -13,6 +17,10 @@ when_to_use: photocraft, photocraft-cli, PSD 自动化, 批量修图, 图片批�
 **版本基线**：`references/version.json` 是唯一版本清单（`params_baseline` / `behavior_tested` / `supported`），支持窗口以它为准；`history/` 上限见 `version.json` 的 `history_max`，超出删最旧。当前文档只写当前行为；0.14→0.18 的迁移差异见 `references/upgrading.md`，0.12→0.14 冻结在 `references/history/0.14.md`，升级/核对流程见 `references/maintenance.md`。低于 supported 下限不保证；正文标「0.14 未复核」或 `unverified` 的规则，在 0.14 上先验证再用。
 
 PhotoCraft 的绝大多数菜单动作、工具和对话框都对应注册表里的一条命令（条数随版本变，少数桌面菜单项不在注册表里）。CLI、`serve`、MCP、桌面控制通道调用的是同一份注册表，差别在文件权限、可用的方法和启动成本：CLI 每次 `run` 都是新进程并重新打开文档，`serve` 只打开一次、后续查询和编辑都在会话内完成。本技能负责：选对入口、查准参数、在副本上执行、逐项核对产出。`examples/` 里的 Python 场景脚本可以照着改；数量与结果以 `run_examples.py` 输出为准（案例 31 需要真实窗口，默认跳过）。PSD 工程类任务另有审计、比对、切图脚本。入口决策树与质量尺度见 `references/entrypoints.md`；打印见 `references/printing.md`；相机 RAW 见 `references/raw.md`；0.14→0.18 的变化见 `references/upgrading.md`，旧版本见 `references/history/`（仅用于升级旧稿）。
+
+## 更新技能
+
+下游只更新整个技能包：任务开始跑 `python scripts/update.py --status`（或读 `.state/update.json`），按 `check_interval_days`（默认 7）判断是否到期；到期再 `update.py --check`（总预算约 6 秒，失败/超时直接用本地，不阻塞任务）。`stale` 时：`normal` 任务结束后 `--apply --yes`，`security`/`breaking` 任务前更新；`--apply` 退 0 只代表 staged，用 `--status` 读到 `last_apply` 不是 `pending` 才算完成；退 11 表示 backoff/hold，不要立刻重试。`--rollback` 后会对坏版本留 hold，除非 `--force` 否则不装回。CLI 版本不匹配不等于技能过期，按技能自己的节奏检查，不要追每个 PhotoCraft 版本。不要跑 `maintenance.md`，也不要就地改 `references/`。状态在 `.state/update.json`，更新细节见 `references/update.md`；`maintenance.md` 只给上游维护者。
 
 ## Outcome Contract
 
@@ -36,7 +44,7 @@ PhotoCraft 的绝大多数菜单动作、工具和对话框都对应注册表里
 
 ## Process
 
-1. **定位 CLI**：执行 `python <skill-dir>/scripts/find_cli.py --check`。它依次看 `PHOTOCRAFT_CLI`、`PATH`、安装目录（Windows MSI 装在 `C:\Program Files\PhotoCraft\`，不进 PATH），并输出 `docs` 覆盖范围。完成标准：有可执行路径和 `--version` 输出即可用。退出码 0 且 `docs_in_range: true` 表示命令/参数面覆盖当前版本；行为是否复核看版本与 `behavior_tested` 是否一致，不一致标 `unverified`；退出码 3 表示 CLI 可用但版本超出文档范围，不阻断任务，结论标 `unverified` 并按 `references/maintenance.md` 更新文档；退出码 4 / `docs_config_error` 表示 version.json 缺失或损坏，按 `references/maintenance.md` 处理；退出码 1 表示 CLI/注册表检查失败。找不到就请用户提供路径，不要猜。
+1. **定位 CLI**：执行 `python <skill-dir>/scripts/find_cli.py --check`。它依次看 `PHOTOCRAFT_CLI`、`PATH`、安装目录（Windows MSI 装在 `C:\Program Files\PhotoCraft\`，不进 PATH），并输出 `docs` 覆盖范围。完成标准：有可执行路径和 `--version` 输出即可用。退出码 0 且 `docs_in_range: true` 表示命令/参数面覆盖当前版本；行为是否复核看版本与 `behavior_tested` 是否一致，不一致标 `unverified`；退出码 3 表示 CLI 可用但版本超出文档范围，不阻断任务，结论标 `unverified`；PhotoCraft 更新频率高于技能维护频率，不要因为 CLI 版本不匹配就刷新技能，技能检查按 `references/update.md` 的节奏或管理器通知进行；退出码 4 / `docs_config_error` 表示 version.json 缺失或损坏，同样先按 `references/update.md` 处理；上游维护者才看 `references/maintenance.md`；退出码 1 表示 CLI/注册表检查失败。找不到就请用户提供路径，不要猜。
 2. **看输入**：`photocraft-cli info <文件> --compact`。完成标准：知道尺寸、模式、位深、分辨率、有无文字层与智能对象、`warnings`（缺字体等）。
 3. **查命令**：先在 `references/commands.md` 找候选 id，再执行 `python <skill-dir>/scripts/params.py --exact <id>` 取已安装版本的参数文本；不知道 id 时传关键词（如 `curves`）。完成标准：要用的每个命令都核对过参数名、范围和默认值。
 4. **选入口**：按 `references/entrypoints.md` 的五问决策树（要不要窗口、要不要状态、单文件/目录、是否 MCP、是否并发/远程），再对照下方"入口选择"和"入口能力差异"确认要用的命令在该入口没有被拒。重复查询结构/字体、看预览再决定、交互式多步编辑时优先 `serve`；不要把同一文档拆成多次 `run`，每次都会重新冷启动并打开文件。完成标准：确定用 `run`、`convert`、`batch`、`droplet`、`serve`、`mcp` 还是桌面控制通道，并知道文件权限和认证方式。
@@ -211,7 +219,7 @@ quality 有三套刻度，别混：CLI `--quality` 和 serve/MCP `doc.save` 是 
 
 ## Verification
 
-- 交付前至少跑 `python <skill-dir>/scripts/find_cli.py --check`（确认 CLI 可用；`docs_in_range` 为 false 不阻断任务，结论标 `unverified`）和 `params.py --exact <id>`。维护/升级时再跑：`run_examples.py`（案例 31 需设 `PCX_DESKTOP=1`）、`check_docs.py`（命令 id/参数/方法与注册表一致，并校验 version.json、upgrading 头和 history 链；计数以脚本输出为准）、`test_docs.py`（版本/历史检查自测）、`probe_gotchas.py`（逐条复验坑点）、`test_workflow.py`、`test_control.py`（fake server；加 `--live` 再对真实 `photocraft-cli serve` 跑一遍）。全部通过后再更新文档。升级 PhotoCraft 后按 `references/maintenance.md` 重跑，并更新 `references/version.json` 与 `references/upgrading.md`；运行结果与文档冲突时以运行结果为准。
+- 交付前至少跑 `python <skill-dir>/scripts/find_cli.py --check`（确认 CLI 可用；`docs_in_range` 为 false 不阻断任务，结论标 `unverified`）和 `params.py --exact <id>`。维护/升级时再跑：`run_examples.py`（案例 31 需设 `PCX_DESKTOP=1`）、`check_docs.py`（命令 id/参数/方法与注册表一致，并校验 version.json、upgrading 头和 history 链；计数以脚本输出为准）、`test_docs.py`（版本/历史检查自测）、`test_update.py`（更新器自测）、`probe_gotchas.py`（逐条复验坑点）、`test_workflow.py`、`test_control.py`（fake server；加 `--live` 再对真实 `photocraft-cli serve` 跑一遍）。全部通过后再更新文档。上游维护者升级 PhotoCraft 后按 `references/maintenance.md` 重跑并更新 `references/version.json` / `references/upgrading.md`；下游只按 `references/update.md` 整包更新，不跑 maintenance。运行结果与文档冲突时以运行结果为准。
 - 用户任务：Process 第 6 步的每项检查都要有输出可查；批处理以成功计数和逐个文件的断言为准，不以“命令跑完了”为准。打印任务检查 PDF/`sent`/纸张/标记；RAW 任务检查 16 位/ProPhoto 与 preview fallback；XMP 任务回读 `rawData` 和 `hasXmp`。
 
 ## Output

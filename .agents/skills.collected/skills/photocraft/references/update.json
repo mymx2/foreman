@@ -1,0 +1,16 @@
+{
+  "skill": "photocraft",
+  "version": "1.0.0",
+  "updated": "2026-11-01",
+  "check_interval_days": 7,
+  "severity": "normal",
+  "cli_supported": {
+    "min": "0.14.0",
+    "max": "0.18.0"
+  },
+  "source": "https://github.com/mymx2/foreman",
+  "branch": "master",
+  "path": ".agents/skills.collected/skills/photocraft",
+  "manifest": "https://raw.githubusercontent.com/mymx2/foreman/master/.agents/skills.collected/skills/photocraft/references/update.json",
+  "mirrors": ["https://ghfast.top/"]
+}

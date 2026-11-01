@@ -11,6 +11,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import re
 import sys
 import tempfile
 import types
@@ -106,6 +107,23 @@ def main() -> int:
             assert check_docs.history_limit(root) == 5
             (root / "references" / "version.json").write_text("{", encoding="utf-8")
             assert check_docs.history_limit(root) == 5
+
+    def update_metadata():
+        root = Path(__file__).resolve().parent.parent
+        data = json.loads((root / "references" / "update.json").read_text(encoding="utf-8"))
+        version_data = json.loads((root / "references" / "version.json").read_text(encoding="utf-8"))
+        assert data["skill"] == "photocraft"
+        assert re.fullmatch(r"\d+\.\d+\.\d+", data["version"]), data["version"]
+        assert data["source"] and data["path"] and data["branch"]
+        assert isinstance(data.get("check_interval_days"), int) and 3 <= data["check_interval_days"] <= 30
+        assert data.get("severity") in ("normal", "security", "breaking")
+        assert data.get("cli_supported") == version_data.get("supported"), data.get("cli_supported")
+        text = (root / "SKILL.md").read_text(encoding="utf-8")
+        front = text.split("---", 2)[1]
+        version = re.search(r"^version:\s*(\S+)", front, re.M)
+        updated = re.search(r"^updated:\s*(\S+)", front, re.M)
+        assert version and version.group(1) == data["version"], (version, data["version"])
+        assert updated and updated.group(1) == data["updated"], (updated, data["updated"])
 
     def version_metadata():
         with tempfile.TemporaryDirectory() as tmp:
@@ -290,6 +308,7 @@ def main() -> int:
         ("config errors", config_rules),
         ("exit codes", exit_codes),
         ("real version file", real_version_file),
+        ("update metadata", update_metadata),
         ("main flow 0/1/3/4", main_flow),
         ("history count/order/names", history_entries),
         ("history_max from version.json", history_limit_file),

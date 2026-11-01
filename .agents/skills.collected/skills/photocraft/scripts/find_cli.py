@@ -55,20 +55,25 @@ def _version_tuple(value: str | None) -> tuple[int, int, int] | None:
 def _docs_report(installed: str | None) -> tuple[dict | None, str | None, str | None]:
     info = _read_version_file()
     if info is None:
-        return None, "references/version.json is missing or unreadable", "config"
+        return None, ("references/version.json is missing or unreadable; downstream read references/update.md, "
+                      "maintainers read references/maintenance.md"), "config"
     supported = info.get("supported")
     if not isinstance(supported, dict):
-        return info, "references/version.json: supported must be an object with min/max", "config"
+        return info, ("references/version.json: supported must be an object with min/max; downstream read "
+                      "references/update.md"), "config"
     low = _version_tuple(str(supported.get("min")))
     high = _version_tuple(str(supported.get("max")))
     have = _version_tuple(installed)
     if not (low and high and have):
-        return info, "cannot compare the installed version with references/version.json", "config"
+        return info, ("cannot compare the installed version with references/version.json; downstream read "
+                      "references/update.md"), "config"
     if low > high:
         return info, "references/version.json: supported.min is greater than supported.max", "config"
     if have[:2] < low[:2] or have[:2] > high[:2]:
         return info, (f"installed {installed} is outside the documented range "
-                      f"{supported.get('min')}-{supported.get('max')}; read references/maintenance.md"), "range"
+                      f"{supported.get('min')}-{supported.get('max')}; CLI newer than docs is expected, "
+                      f"mark unverified and keep using the local skill; downstream update cadence in "
+                      f"references/update.md, maintainers in references/maintenance.md"), "range"
     return info, None, None
 
 
