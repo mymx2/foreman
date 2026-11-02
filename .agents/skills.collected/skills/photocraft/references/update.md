@@ -5,7 +5,7 @@
 ## 什么时候查
 
 - 任务开始先跑 `python scripts/update.py --status`，看上次检查/更新结果；缓存未过期且本地版本没变就不联网。
-- 需要检查时跑 `python scripts/update.py --check`；周期由 `references/update.json` 的 `check_interval_days` 决定（默认 7，范围 3–30），`--refresh` 强制刷新。
+- 需要检查时跑 `python scripts/update.py --check`；周期由 `update.json` 的 `check_interval_days` 决定（默认 7，范围 3–30），`--refresh` 强制刷新。
 - `find_cli.py --check` 报版本不匹配只说明 CLI 比文档新，先标 `unverified` 继续，不要因此刷新技能。只有用户明确要求查新版，或管理器提示技能版本更新时，才用 `--refresh`。
 
 ## 命令
@@ -30,7 +30,7 @@ python scripts/update.py --rollback --yes # 恢复最近一次备份
 - 状态在 `.state/update.json`、`.state/last_apply.json`、`.state/hold.json`；不存 token、账号或 header。
 - 检查失败会进入负缓存/退避（首次约 30 分钟，之后递增到 24 小时），不会每个任务重复联网；apply 失败也会退避，`--force` 可跳过。
 - `--check` 总预算约 6 秒（直连/镜像分摊）；`--apply` 每个下载/git 最多 60 秒。超时就放弃，不在任务中途等。
-- 直连 GitHub 失败会自动试 `references/update.json` 的 `mirrors`；镜像只用于公开仓库，私有仓库不要走镜像，也不要把 token 发给第三方。
+- 直连 GitHub 失败会自动试 `update.json` 的 `mirrors`；镜像只用于公开仓库，私有仓库不要走镜像，也不要把 token 发给第三方。
 - 只读安装：`--check`/`--status` 可用；`--apply` 报权限，交给技能管理器或管理员。
 - 无网络/上游不可达：继续用本地版本；版本不匹配时结论标 `unverified`。同一任务里不要反复重试，下次任务再查。
 - 私有 GitHub：直连时用 `GITHUB_TOKEN` 或 `PHOTOCRAFT_UPDATE_TOKEN` 环境变量，令牌不写进文件、日志或缓存。

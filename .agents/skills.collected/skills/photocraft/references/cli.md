@@ -1,6 +1,6 @@
 # photocraft-cli 参考
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为描述写于 0.14.0。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.19.0 实测（`check_docs.py`）；行为描述来自 0.10.0–0.18.0 的实测记录，0.19.0 的复核项见 `upgrading.md`。
 
 任何子命令加 `--help` 都打印同一份总帮助。入口选择见 entrypoints.md；serve、MCP、桌面控制通道见 automation.md；动作文件的写法、`file.automate.batch`、变量数据组见 actions-batch.md；各格式的读写与警告见 formats.md。
 

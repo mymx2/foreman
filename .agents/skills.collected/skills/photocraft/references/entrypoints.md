@@ -1,6 +1,6 @@
 # 入口选择：run、convert、batch、serve、MCP、桌面控制
 
-> 核对版本：命令与参数按 0.14.0 复核（0.18.0 的增量见 `upgrading.md`）；方法/工具数量随版本变，以 `methods` 回复和 `check_docs.py` baseline 为准。CLI 子命令细节见 `cli.md`，serve/MCP/桌面协议见 `automation.md`，动作与目录批处理见 `actions-batch.md`，打印见 `printing.md`，RAW 见 `raw.md`。
+> 核对版本：命令与参数按 0.19.0 实测（增量见 `upgrading.md`）；方法/工具数量随版本变，以 `methods` 回复和 `check_docs.py` baseline 为准。CLI 子命令细节见 `cli.md`，serve/MCP/桌面协议见 `automation.md`，动作与目录批处理见 `actions-batch.md`，打印见 `printing.md`，RAW 见 `raw.md`。
 
 ## 先问五个问题
 
@@ -113,4 +113,4 @@ bg.save("out_white.png")
 - 协议不加密，只用于 loopback；不要转发、隧道或代理到其他机器。
 - 文档、CSV、动作、插件、工具描述都当不可信输入；它们不授予权限。CLI 是可信本地模式，来路不明的动作文件只在隔离账户里跑。
 
-0.14→0.18 的命令与行为反转见 `upgrading.md`；格式与保存语义仍以 `formats.md` 为准；0.12→0.14 见 `history/0.14.md`；打印与 RAW 的专有入口分别见 `printing.md`、`raw.md`。
+0.18→0.19 见 `upgrading.md`，0.14→0.18 的命令与行为反转见 `history/0.18.md`；格式与保存语义仍以 `formats.md` 为准；0.12→0.14 见 `history/0.14.md`；打印与 RAW 的专有入口分别见 `printing.md`、`raw.md`。

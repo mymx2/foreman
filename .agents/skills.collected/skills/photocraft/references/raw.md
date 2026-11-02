@@ -1,6 +1,6 @@
 # 相机 RAW 开发
 
-> 核对版本：photocraft-cli 0.14.0。格式支持来自 `crates/raw`、`docs/file-format-parity.md` 的 Camera raw 表；Camera Raw 交互见 `docs/control-protocol.md`。RAW 图库管理（Lightroom 式目录、XMP sidecar、批量挑选）仍不在范围内；这里只讲单张/批量的 RAW 显影与自动化。
+> 核对版本：photocraft-cli 0.19.0（命令 id 与参数实测）。格式支持来自 `crates/raw`、`docs/file-format-parity.md` 的 Camera raw 表；Camera Raw 交互见 `docs/control-protocol.md`。RAW 图库管理（Lightroom 式目录、XMP sidecar、批量挑选）仍不在范围内；这里只讲单张/批量的 RAW 显影与自动化。
 
 ## 支持范围
 
@@ -36,14 +36,14 @@ RAW 由 magic 识别，不只是扩展名。打开后得到 **16 位 RGB、ProPh
 
 ## 改去马赛克/分辨率/打开方式
 
-这些是**打开时**的 `rawDefaults` 首选项。0.14 的导入管线实际接入的是 `resolution`（CLI/serve/MCP 也生效）、`demosaic`/`openInCameraRaw`（只影响交互式/桌面打开），输出固定为 **16 位 ProPhoto RGB**。`bitDepth`、`colorSpace`、`sharpenFor`、`openAsSmartObject`、`applyAutoTone` 这些键在首选项里存在，但在 0.14 的导入路径里没有生效；不要向用户承诺改它们会改变 RAW 的位深或色彩空间。
+这些是**打开时**的 `rawDefaults` 首选项。下面这组接入情况按 0.14 复核，0.19 未重验。导入管线实际接入的是 `resolution`（CLI/serve/MCP 也生效）、`demosaic`/`openInCameraRaw`（只影响交互式/桌面打开），输出固定为 **16 位 ProPhoto RGB**。`bitDepth`、`colorSpace`、`sharpenFor`、`openAsSmartObject`、`applyAutoTone` 这些键在首选项里存在，但在 0.14 的导入路径里没有生效（0.19 未重验）；不要向用户承诺改它们会改变 RAW 的位深或色彩空间。
 
-| 首选项 | 值 | 0.14 是否影响导入 |
+| 首选项 | 值 | 是否影响导入（0.14 复核） |
 |---|---|---|
 | `rawDefaults.resolution` | 1..10000（默认 300） | 是；CLI/serve/MCP 也应用，影响文档 ppi，不重采样传感器数据 |
-| `rawDefaults.demosaic` | `ahd`（默认）/`mhc`/`bilinear` | 只影响交互式/桌面打开；CLI/serve/MCP 的 `doc.open` 固定 AHD，没有按调用传 demosaic 的参数 |
+| `rawDefaults.demosaic` | `ahd`（默认）/`mhc`/`bilinear` | 0.18/0.19 源码显示所有打开路径都经 `jobs::import_options` 读这个首选项，CLI 可能同样生效；与旧文档「只影响桌面」冲突，未用 RAW 样本实测 |
 | `rawDefaults.openInCameraRaw` | bool（默认 true） | 只影响交互式打开是否先弹 Camera Raw |
-| `rawDefaults.bitDepth` / `colorSpace` / `sharpenFor` / `openAsSmartObject` / `applyAutoTone` | — | 0.14 未接入导入路径；输出仍 16 位 ProPhoto |
+| `rawDefaults.bitDepth` / `colorSpace` / `sharpenFor` / `openAsSmartObject` / `applyAutoTone` | — | 未接入导入路径；输出仍 16 位 ProPhoto |
 | `rawDefaults.writeXmpSidecars` | bool（0.18 实测默认 true） | 0.18 首选项里新增；实测打开 NEF 不产出 sidecar，是否接入导入路径未验证 |
 
 自动化里要改 `resolution`，可以在 **打开之前** 执行 `prefs.set`（serve/MCP 的 `engine.execute`），或使用带临时配置目录的桌面实例。`demosaic` 在 CLI/serve/MCP 里没有 per-open 参数；要换只能在桌面的交互式 Camera Raw/Preferences 里选，或接受默认 AHD。CLI `run` 是先打开文件再执行命令，改 `rawDefaults` 对当前文件已经太晚。`prefs.set` 属于需要用户同意的操作。Camera Raw 对话框里的 `demosaic` 只对当前这次打开有效，且在提交时重新显影。

@@ -1,6 +1,6 @@
 # 命令速查
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为描述以 0.14.0 为基线，0.18.0 的补充实测在文中标注。参数以运行时注册表为准。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.19.0 实测（`check_docs.py`）；行为描述以 0.18.0 为基线，旧版本实测保留原标注。参数以运行时注册表为准。
 
 ## 怎么查
 
@@ -8,7 +8,8 @@
 - 查参数：（执行）`python <skill-dir>/scripts/params.py --exact <id>`；不知道 id 时传关键词（`curves`、`blur`）；也可以 `photocraft-cli commands --json --filter <关键词>`。参数文本的读法、哪些命令校验未知键、拼错的枚举会怎样，见 cli.md。
 - 同一条命令在各入口的写法：`run --cmd <id> --params '<json>'`；serve `engine.execute {"command":"<id>","params":{…}}`；MCP `command_run {"id":"<id>","params":{…}}`；动作步骤 `["<id>", {…}]`。哪个入口能用哪些命令见 automation.md。
 - "案例"列是 `examples/` 里的脚本编号；32–41 是新增场景。
-- 0.14 新增/变更：`layer.layerStyle.contours.*`、`layer.xmpMetadata`、`file.print*`、`channel.options`、`document.activate {offset}`、`layer.translate {selection}`、`file.new {profile}`、`file.saveACopy` 的 `jpegFormat`/`tiffCompression`/DDS 选项。汇总见 `upgrading.md` 与 `history/0.14.md`。
+- 0.14 新增/变更：`layer.layerStyle.contours.*`、`layer.xmpMetadata`、`file.print*`、`channel.options`、`document.activate {offset}`、`layer.translate {selection}`、`file.new {profile}`、`file.saveACopy` 的 `jpegFormat`/`tiffCompression`/DDS 选项。汇总见 `history/0.14.md`。
+- 0.19 新增/变更：`layer.smartObjects.exportSvg`/`updateSvg`/`updateVectorSource`、`path.addToSelection`/`subtractFromSelection`、通道路由白名单扩容。汇总见 `upgrading.md`。
 
 ## 回执形状
 
@@ -156,6 +157,7 @@
 | `layer.smartObjects.convertToLayers` | `layer` | 展开内容，智能滤镜丢弃 | — |
 | `layer.smartObjects.replaceContents` | `layer`（省略时用活动层）`path` | `{layer, instances:[…], warnings}`；换图保留图层 transform，bounds = 新源像素 × 图层缩放，不会自动适配旧框；复制实例共享内容源，替换一个会连带改掉 `instances` 里的全部 | — |
 | `layer.smartObjects.editContents` → `layer.smartObjects.saveContents` | `layer` | `editContents` 把内容打开成新文档并激活（`{document, parentLayer}`），之后的命令都落在内容文档上；`saveContents` 写回父文档（`{updated:true}`），再 `document.activate` 回去 | 19 |
+| `layer.smartObjects.exportSvg` → `updateSvg` / `updateVectorSource` | `exportSvg` 的 `layer` 可省（用活动层）；两个 update 都要 `document` `layer` `fingerprint` `contentsId`，`updateSvg` 另给 `svg`（只接 SVG 源，AI/PDF/EPS 会报错让你改用 `updateVectorSource`），后者另给 `sourceBase64` `extension`（`ai`/`pdf`/`eps`）`previewSvg` | 外部矢量编辑器交接，目标必须是图层合成（`channel.target {channel:"mask"}` 下 `exportSvg` 报 `SVG contents editing requires the layer composite target`）。导出回 `{document, svg 或 sourceBase64, extension, sourceSize, fingerprint, contentsId}`，新放置的 SVG 没有 PSD 描述符时 `sourceSize` 是 `null`；写回时把原 `fingerprint`/`contentsId` 带上做乐观并发校验，过期报 `smart-object contents changed since external editing started`；回执 `{layer, contentsId, fingerprint, updated}`，里面的 `fingerprint` 是新值。两个 update 各写一步撤销历史，`journal:false` 只表示不进动作录制。`exportSvg` / `updateSvg` 已实跑，`updateVectorSource` 未实跑 | — |
 | `layer.smartFilter.setParams` / `layer.smartFilter.setVisible` | `layer` `index` `params`（合并）；`visible` | 对智能对象执行的滤镜自动成为智能滤镜，`info` 里列在 `smartFilters` | 19 |
 | `layer.smartFilter.disableSmartFilters` / `disableFilterMask` / `deleteFilterMask` / `clearSmartFilters` | `layer` `enabled?`；`layer`；`layer`；`layer` | 开关整套智能滤镜/滤镜蒙版、删蒙版、清空 | 19 |
 | `layer.smartFilter.blendingOptions` / `delete` / `move` / `transfer` | `layer` `index` `blend` `opacity`；`index`；`index` `to`；`from` `to` `filter` `copy` | 智能滤镜的混合/顺序/转移；index 0 = 最底层 | 19 |
@@ -178,7 +180,7 @@
 | `type.create` | `x` `y`（点文字的基线位置）或 `box:[x,y,w,h]`（段落文字），`text` `font` `size` `color` `align` `name`，以及 `type.setStyle` 的全部字符属性 | `{bounds, layer}`，字体没装时多 `warnings` | 13 16 32 38 |
 | `type.edit` | `layer` `text`（整段替换，保留样式）`replace:{start,end,text}` `runs` `box` `point` `antialias` | | 15 32 38 |
 | `type.setStyle` | `layer` / `layers` `range` `font` `fontStyle` `size` `color` `tracking` `leading` `align`… | 不校验未知键；回执是整份 `type.info`（`runs`/`lines`/`bounds` 都在里面），改完可当场核对，不必再查一次 | 13 |
-| `type.info` | `layer` 只认数字 id；传图层名被静默忽略、回落到活动层（实测 0.18，0.14 未复核）。目标不是文字层时报 `not a type layer` | `text`、`runs[].style`（含 `font_family`、`font_style`、`postscript_name`、`size_pt`、`weight`）、`paragraphs`、`lines`（图层坐标）、`transform`、`bounds` | 32 38 |
+| `type.info` | `layer` 只认数字 id；传图层名被静默忽略、回落到活动层（实测 0.18）。目标不是文字层时报 `not a type layer` | `text`、`runs[].style`（含 `font_family`、`font_style`、`postscript_name`、`size_pt`、`weight`）、`paragraphs`、`lines`（图层坐标）、`transform`、`bounds` | 32 38 |
 | `type.warpText` | `style`（`arc`/`flag`/`wave`…）`bend` | | 13 |
 | `type.fonts` | `family` | `{families:[…]}`，不需要打开文档 | 13 |
 | `type.resolveMissingFonts` | `map` | 不给 `map` 列出缺失字体，给了就替换。映射只换家族名，不校验目标家族有没有同名字面：原 `font_style` 字符串会保留，但目标字面没装时 `postscript_name` 仍为 `null`、渲染回退。替换后逐层读 `type.info`，需要特定字重时再用 `type.setStyle {font, fontStyle}` 指到已装字面。命令没有 layer 参数，会作用于全文档；母版含必须保留的隐藏版本时改用逐层 `type.setStyle` | 15 34 |
@@ -194,7 +196,8 @@
 | `layer.combineShapes.unite` / `subtractFrontShape` / `intersectShapeAreas` / `excludeOverlappingShapes` / `mergeShapeComponents` | `layer` `subpath` | 选中两个以上形状层时合并进最上面那个 | 13 |
 | `path.set` | `name`（默认 `work`）`path:{subpaths:[{closed, op, knots}], fillRule, inverted}` `op` | 锚点写 `[x,y]` 或 `{anchor, in, out, smooth}`；`subpaths` 必须包在 `path` 里，直接写报 `missing \`path\`` | 17 |
 | `path.rename` | `name` `to` | 给工作路径改名就是存成命名路径 | 17 |
-| `path.toSelection` / `path.fill` / `path.stroke` | `name`（`work`/`layer`/路径名）`feather` `mode`；`color` `opacity`；`tool` `size` `hardness` `opacity` | 有选区时 `fill`、`stroke` 只作用在选区里 | 17 |
+| `path.toSelection` / `path.fill` / `path.stroke` | `name`（`work`/`layer`/路径名）`feather` `antiAlias` `mode`；`color` `opacity`；`tool` `size` `hardness` `opacity` | 有选区时 `fill`、`stroke` 只作用在选区里 | 17 |
+| `path.addToSelection` / `path.subtractFromSelection` | 同 `path.toSelection`：`name` `feather` `antiAlias` | `path.toSelection {mode:"add"}` / `{mode:"subtract"}` 的专用写法 | — |
 | `path.clippingPath.set` | `name` `flatness` | PSD / TIFF 的剪贴路径 | 17 |
 | `path.transform` / `path.list` / `path.info` | `name` `matrix` `quad` `translateX` `scaleX`…；—；`name` | | 17 |
 | `select.toWorkPath` / `select.convertToShape` | `tolerance` | 选区转工作路径 / 转形状层 | 17 |
@@ -227,6 +230,8 @@
 | `channel.target` / `channel.options` | target：`composite`/`mask`/`vectorMask`/颜色/索引/名字；options：`channel`（索引/名字/`quickMask`/`mask`）`name` `indicates` `color` `opacity` `solidity` | `channel.options {channel:"mask"}` 是 Layer Mask Display Options（rubylith 颜色/不透明度），存首选项、不产生历史步，回 `layerMaskOverlay` | 17 27 |
 | `image.calculations` | `source1` `source2` `blending` `opacity` `result`（`newChannel`/`newDocument`/`selection`） | | 27 |
 | `image.applyImage` | `source:{document, layer, channel, invert}` `blending` `opacity` `mask` | | 27 |
+
+通道目标只对名单里的命令生效，名单不等于行为。0.19 的 `routed()` 新增 `edit.stroke`、`edit.cut`、`edit.clear`、`paint.magicEraser`、`paint.backgroundEraser`、`paint.colorReplacement`、`paint.patch`、`paint.contentAwareMove`、`path.fill`、`path.stroke`，实测有出入：蒙版目标下 `edit.clear`、`edit.cut` 改的是蒙版（删掉蒙版后图层像素还在）；`edit.stroke`、`paint.magicEraser`、`paint.backgroundEraser` 仍落在图层像素上；`path.fill` / `path.stroke` 源码直接写图层 surface。`paint.colorReplacement`、`paint.patch`、`paint.contentAwareMove` 未逐一验证。要往通道或蒙版写，先小样验证落点，别按名单推断；取样按目标通道，不按合成图。`paint.mixerLoad` 和对称类不在名单里。
 
 ## 调整（直接改像素）
 

@@ -2,8 +2,8 @@
 name: photocraft
 description: 驱动 PhotoCraft（开源、离线、兼容 Photoshop 的图像编辑器）完成可复现的修图与 PSD 自动化：通过 photocraft-cli、批处理与动作、serve 会话、MCP 或桌面控制通道执行注册表命令，覆盖调色、抠图换底、文字与形状、滤镜修复、模板批量出图、格式转换与切图导出、打印与打印 PDF、相机 RAW 显影、只读格式导入，以及 PSD 规范化、栅格排版和分层稿交付。当用户要用 PhotoCraft 或 photocraft-cli 处理图片或 PSD、批量处理一个目录、打印/出 PDF、显影 RAW、或把 PhotoCraft 接给 agent 与 MCP 客户端时使用。不适用于生成式 AI 绘图、RAW 图库管理（单张 RAW 显影是支持的）、网页 CSS 或 Figma 设计稿，以及没有安装 PhotoCraft 的环境。
 when_to_use: photocraft, photocraft-cli, PSD 自动化, 批量修图, 图片批处理, 抠图换背景, 电商白底图, 加水印, 调色与 LUT, 格式转换, 打印, 打印 PDF, 相机 RAW, RAW 显影, XCF 导入, 图层 XMP, 轮廓库, 切图导出, 多倍图, 文字居中, 栅格排版, PSD 规范化, PSD 复刻, 分层稿交付, 缺失字体, 动作与 Droplet, 模板批量出图, 截图打码, serve 会话, MCP 修图, 桌面控制通道
-version: 1.0.0
-updated: 2026-11-01
+version: 1.1.0
+updated: 2026-11-02
 metadata:
   update: references/update.json
 ---
@@ -14,9 +14,9 @@ metadata:
 
 ## Overview
 
-**版本基线**：`references/version.json` 是唯一版本清单（`params_baseline` / `behavior_tested` / `supported`），支持窗口以它为准；`history/` 上限见 `version.json` 的 `history_max`，超出删最旧。当前文档只写当前行为；0.14→0.18 的迁移差异见 `references/upgrading.md`，0.12→0.14 冻结在 `references/history/0.14.md`，升级/核对流程见 `references/maintenance.md`。低于 supported 下限不保证；正文标「0.14 未复核」或 `unverified` 的规则，在 0.14 上先验证再用。
+**版本基线**：`references/version.json` 是唯一版本清单（`params_baseline` / `behavior_tested` / `supported`），支持窗口以它为准；`history/` 上限见 `version.json` 的 `history_max`，超出删最旧。当前文档只写当前行为；0.18→0.19 的迁移差异见 `references/upgrading.md`，0.14→0.18 与 0.12→0.14 冻结在 `references/history/`，升级/核对流程见 `references/maintenance.md`。低于 supported 下限不保证；正文标 `unverified` 的规则，先在支持窗口内验证再用。
 
-PhotoCraft 的绝大多数菜单动作、工具和对话框都对应注册表里的一条命令（条数随版本变，少数桌面菜单项不在注册表里）。CLI、`serve`、MCP、桌面控制通道调用的是同一份注册表，差别在文件权限、可用的方法和启动成本：CLI 每次 `run` 都是新进程并重新打开文档，`serve` 只打开一次、后续查询和编辑都在会话内完成。本技能负责：选对入口、查准参数、在副本上执行、逐项核对产出。`examples/` 里的 Python 场景脚本可以照着改；数量与结果以 `run_examples.py` 输出为准（案例 31 需要真实窗口，默认跳过）。PSD 工程类任务另有审计、比对、切图脚本。入口决策树与质量尺度见 `references/entrypoints.md`；打印见 `references/printing.md`；相机 RAW 见 `references/raw.md`；0.14→0.18 的变化见 `references/upgrading.md`，旧版本见 `references/history/`（仅用于升级旧稿）。
+PhotoCraft 的绝大多数菜单动作、工具和对话框都对应注册表里的一条命令（条数随版本变，少数桌面菜单项不在注册表里）。CLI、`serve`、MCP、桌面控制通道调用的是同一份注册表，差别在文件权限、可用的方法和启动成本：CLI 每次 `run` 都是新进程并重新打开文档，`serve` 只打开一次、后续查询和编辑都在会话内完成。本技能负责：选对入口、查准参数、在副本上执行、逐项核对产出。`examples/` 里的 Python 场景脚本可以照着改；数量与结果以 `run_examples.py` 输出为准（案例 31 需要真实窗口，默认跳过）。PSD 工程类任务另有审计、比对、切图脚本。入口决策树与质量尺度见 `references/entrypoints.md`；打印见 `references/printing.md`；相机 RAW 见 `references/raw.md`；0.18→0.19 的变化见 `references/upgrading.md`，旧版本见 `references/history/`（仅用于升级旧稿）。
 
 ## 更新技能
 
@@ -151,7 +151,8 @@ quality 有三套刻度，别混：CLI `--quality` 和 serve/MCP `doc.save` 是 
 | 选入口、并发、权限、quality 尺度 | `references/entrypoints.md` | — |
 | 打印、打印 PDF、裁切标记、出血 | `references/printing.md` | — |
 | 相机 RAW 显影、Camera Raw、ProPhoto/16 位 | `references/raw.md` | — |
-| 0.14→0.18 的命令/格式/协议变化 | `references/upgrading.md` | — |
+| 0.18→0.19 的命令/协议变化 | `references/upgrading.md` | — |
+| 0.14→0.18 的冻结差异（仅用于升级旧稿） | `references/history/0.18.md` | — |
 | 0.12→0.14 的冻结差异（仅用于升级旧稿） | `references/history/0.14.md` | — |
 | 升级、版本核对、旧差异归档 | `references/maintenance.md` | — |
 | 报错文本速查 | `references/troubleshooting.md` | — |
@@ -189,8 +190,8 @@ quality 有三套刻度，别混：CLI `--quality` 和 serve/MCP `doc.save` 是 
 | `document.pixel {sampleLayer:"current"}` 读到的是合成色 | `document.pixel` 只读合成结果、忽略 `sampleLayer`，回 0..1 的 `[r,g,b,a]`；单个图层用 `document.sampleColor {sampleLayer:"current"}` |
 | 结果里的图层 id 存盘再打开就变了 | id 只在当前会话有效：serve 里关掉再打开同一 PSD 会重新编号，CLI 每次新进程也从 1 数起。`layer.*` 命令的 `layer` 参数接受图层名，跨进程按名字寻址；但 `type.*` 系列只认数字 id（见下两行） |
 | `type.info {layer:"T1"}` 回的是别的层 | `type.info` 的 `layer` 实际**只认数字 id**；传图层名（哪怕名字存在）会被静默忽略、回落到活动层，只有不存在的 id 才报 `no such layer`（实测 0.18：T1 存在时查 `"T1"` 回来的是活动层 T2）。`type.edit` 实测同样；`type.setStyle` 属同一参数族。错误信息里的 `takes an id or a name` 不可信。按名操作先 `layer.select {name}`，后续命令省略 `layer`；或从 `layer.list` 取 id 传 id。用名字批量查会全部得到同一层，字面核对会假通过 |
-| 刚改过字的层，字面核对说"没缺" | 会话内新建或改样式后，如果字面还没解析出来（缺字体或缺字重），`type.info` 的 `runs[].style.postscript_name` 会是 `null`，存盘重开才可能补回来；已装且能解析的字面会立即回填（实测 0.18：Calibri 新建即回 `Calibri`，改 Bold 回 `Calibri-Bold`；0.14 未复核）。只查这个字段会得到全部通过的假结论；退回 `font_family` + `font_style` 推断，或存副本重开再核 |
-| 裁剪越界了，批次还是全绿 | `image.crop` 越界不报错，静默输出纯白小图并计入成功（实测 0.18，0.14 未复核）。裁剪、缩放类几何命令要抽查尺寸和像素 |
+| 刚改过字的层，字面核对说"没缺" | 会话内新建或改样式后，如果字面还没解析出来（缺字体或缺字重），`type.info` 的 `runs[].style.postscript_name` 会是 `null`，存盘重开才可能补回来；已装且能解析的字面会立即回填（实测 0.18：Calibri 新建即回 `Calibri`，改 Bold 回 `Calibri-Bold`）。只查这个字段会得到全部通过的假结论；退回 `font_family` + `font_style` 推断，或存副本重开再核 |
+| 裁剪越界了，批次还是全绿 | `image.crop` 越界不报错，静默输出纯白小图并计入成功（实测 0.18）。裁剪、缩放类几何命令要抽查尺寸和像素 |
 | 连续复制两层，顺序反了 | `layer.duplicate` 的副本落在**源层**正上方，不是在上一次副本上方；同一源层连复制两次，第二份在下面（实测 0.18）。频率分离、多通道合成这类要显式 `layer.moveTo {target, position:"above"}` 定序，光看命令没报错发现不了 |
 | 想回读混合模式，`layer.list` 里没有 | `layer.list` / `layer.list {flat:true}` 不回 `blend`，写进去了也读不到；要用 `document.inspect` 的逐层 `blend` 核对，否则"设了模式但没生效"查不出来 |
 | 新建的图层没进想要的组 | 新层插在活动层上方、同一父级里。选中**组本身**再新建时落点随版本变：0.12–0.14 记录为落在组外，0.18 实测落进组内（`parent` 指向该组、`depth` 加一）。选中组内某个子层则两版都进组。要精确控制就用 `layer.moveTo {position:"into"}`（`target` 必填）或 `layer.groupLayers`，别靠活动层推断 |

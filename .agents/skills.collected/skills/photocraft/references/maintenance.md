@@ -1,6 +1,6 @@
 # 维护与升级
 
-> 上游维护者专用。下游运营 AI 不要运行本文件，更新整个技能见 `references/update.md` / `scripts/update.py`。
+> 上游维护者专用。下游运营 AI 不要运行本文件，更新整个技能见 `update.md` / `../scripts/update.py`。
 > 只在用户明确要求升级/核对文档、`find_cli.py --check` 返回退出码 3 或 4（`docs_in_range: false` / `docs_config_error`）、或文档与实跑连续两次不符时加载。普通任务不需要读本文件。
 
 ## 触发条件
@@ -17,7 +17,7 @@
 4. 跑快闸：`check_docs.py`、`probe_gotchas.py`、`test_docs.py`、`test_update.py`。通过判据：全部退出 0，`check_docs` 的 `history` 计数不超过 `history_max`，且 version.json 与 upgrading 头一致。
 5. 跑慢闸：跨 minor、升级说明里有行为变化、或快闸失败时跑 `run_examples.py`、`test_workflow.py`、`test_control.py`；全部通过后再继续。
 6. 归档与改写：
-   - 先把现有 `upgrading.md` 重命名为 `history/<它的到达版本>.md`（当前 0.14→0.18 归档为 `history/0.18.md`）；目标已存在时停止，不要覆盖；
+   - 先把现有 `upgrading.md` 重命名为 `history/<它的到达版本>.md`（当前 0.18→0.19 归档为 `history/0.19.md`）；目标已存在时停止，不要覆盖；
    - 归档即提升基线：`params_baseline = supported.min = 归档目标 Y`；新的 `upgrading.md` 从 Y 写到新核对版本（先写 `.tmp` 再替换，覆盖重写，不追加）；
    - 当前行为写进对应 reference，旧版本标注改成陈述句或 `unverified`；按住 `version.json` 的 `supported.min` 改写正文的可用性标记；
    - 同步各 reference 头部的核对版本（不写构建 hash），更新 `version.json` 的 `params_baseline` / `behavior_tested` / `supported`；同步 `SKILL.md` frontmatter 与 `references/update.json` 的 `version` / `updated` / `check_interval_days` / `severity` / `cli_supported`（`cli_supported` 与 `version.json` 的 `supported` 一致），下游 updater 按 `update.json` 比较新版。安全或破坏性修复把 `severity` 标成 `security` / `breaking`，下游会在任务前更新。

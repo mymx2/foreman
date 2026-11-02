@@ -1,6 +1,6 @@
 # 格式与色彩
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为描述以 0.14.0 为基线，0.18.0 的补充实测在文中标注。RAW 见 `raw.md`；打印/PDF 见 `printing.md`；只读格式与 XCF 的详细限制见 book 的 formats 文档。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.19.0 实测（`check_docs.py`）；行为描述来自 0.10.0–0.18.0 的实测记录，0.19.0 的复核项见 `upgrading.md`。RAW 见 `raw.md`；打印/PDF 见 `printing.md`；只读格式与 XCF 的详细限制见 book 的 formats 文档。
 
 打开时按文件内容识别格式，保存时按输出扩展名选编码器（CLI 可用 `--format` 覆盖）。导出损失了什么，CLI 写在 stderr 的 `warning:` 里，serve/MCP 写在回复的 `warnings` 里；下文引号里的都是原文。quality 刻度见 cli.md。
 

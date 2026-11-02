@@ -1,6 +1,6 @@
 # 自动化入口：serve、MCP、桌面控制通道
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为描述以 0.14.0 为基线，0.18.0 的补充实测在文中标注。入口决策树与质量尺度见 `entrypoints.md`；CLI 子命令、标志和退出码见 `cli.md`；动作、批处理、Droplet、变量数据组见 `actions-batch.md`；打印见 `printing.md`；RAW 见 `raw.md`。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.19.0 实测（`check_docs.py`）；行为描述来自 0.10.0–0.18.0 的实测记录，0.19.0 的复核项见 `upgrading.md`。入口决策树与质量尺度见 `entrypoints.md`；CLI 子命令、标志和退出码见 `cli.md`；动作、批处理、Droplet、变量数据组见 `actions-batch.md`；打印见 `printing.md`；RAW 见 `raw.md`。
 
 ## 选哪个入口
 

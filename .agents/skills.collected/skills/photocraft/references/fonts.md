@@ -1,6 +1,6 @@
 # 字体：查缺失、选替代、安装、授权
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.14.0 复核；行为记录来自 0.10.0–0.14.0 的实测，0.18.0 的补充实测在文中标注；0.14 未逐条重验的条目保留原文。文字排版本身见 `text-layout.md`；随稿交付字体副本的规则见 `psd-workflow.md`。
+> 核对版本：命令 id 与参数按 photocraft-cli 0.19.0 实测（`check_docs.py`）；行为描述来自 0.10.0–0.18.0 的实测记录，0.19.0 的复核项见 `upgrading.md`。文字排版本身见 `text-layout.md`；随稿交付字体副本的规则见 `psd-workflow.md`。
 
 ## 查现状
 
@@ -15,7 +15,7 @@ photocraft-cli info <文件> --compact                           # warnings 里�
 - `type.fonts` 不需要文档也能跑；faces 里的 `postscriptName` 是 PSD 里实际存储的名字。
 - PhotoCraft 写的 PSD 只保存 PostScript 名（如 `Inter-Regular`），家族名和样式字段为空。核对字体装没装要按 PostScript 名比对，别拿家族名直接比，否则会对不上。
 - **字族没缺不代表字面没缺**：`type.resolveMissingFonts` 按字族判定，返回 `{"missing": []}` 时，实际 PostScript 字面可能仍缺——例如本机只装了 Medium，PSD 要的是 Bold，可能静默回落到 Medium，字宽和排版全变。交付前必须逐文字层从 `type.info` 读实际 PostScript 名（`runs[].style.postscript_name`），对照 `type.fonts` 已装列表里的 `postscriptName`；不只看 `resolveMissingFonts` 的 `missing` 是否为空。注意：`type.info` 用蛇形 `postscript_name`，`type.fonts` 用驼峰 `postscriptName`，比对时要统一大小写。
-- **逐层核对必须按 id 或先 select**：`type.info` 的 `layer` 只认数字 id，传图层名会被静默忽略、回落到活动层（实测 0.18，0.14 未复核：查 `T1` 回来的是 `T2` 的 id 和文本）。批量核对时要先 `layer.select {name}` 再不带 `layer` 调 `type.info`，或从 `layer.list` 取 id 后传 id；按名字遍历会全部得到同一层，结果是假通过。
+- **逐层核对必须按 id 或先 select**：`type.info` 的 `layer` 只认数字 id，传图层名会被静默忽略、回落到活动层（实测 0.18：查 `T1` 回来的是 `T2` 的 id 和文本）。批量核对时要先 `layer.select {name}` 再不带 `layer` 调 `type.info`，或从 `layer.list` 取 id 后传 id；按名字遍历会全部得到同一层，结果是假通过。
 - **按字面名严格比对会误拦可变字体**：实测 103 个已装字族里有 7 个对不上——可变字体通常只登记一个字面（如只有 Thin），稿里写 Regular 就会对不上。字面名查不到时先看该字族的 faces `axes` 是否非空、`style` 是否与实际请求的样式不符，别直接判缺失。家族名本身也要用准确写法（`Noto Sans SC` 带空格，写成 `NotoSansSC` 会回空 faces，见下条）。
 - **`type.fonts` 传不存在的 family 也回 `{"faces":[]}`、退出码 0**，和"字族存在但没装"分不出来。字族名先按 `type.fonts {}` 的 `families` 列表核对拼写，再查 faces。
 - `psd_audit.py --installed-fonts` 接受 `type.fonts` 的输出，会从每个条目里收集 `family`、`postscriptName`、`postscript_name`。
@@ -57,7 +57,7 @@ for layer in layers:
 
 这段循环会把活动层挪到最后一个被检查的文字层上。如果后面还要 `doc.place` / 新建层 / 依赖"活动层"的命令，核对完先显式 `layer.select` 回目标层，否则新层落点会跟着变。
 
-**`postscript_name` 为 null 有两种成因**（实测 0.18，0.14 未复核）：会话内新建或改过样式、且字面还没解析出来（缺字体或缺字重）；或者这个 face 压根解析不到。已装且能解析的字面会立即回填（实测 0.18：Calibri 新建即回 `Calibri`，改 Bold 回 `Calibri-Bold`）。实测 `font:"NoSuchFontXYZ"` 的层回 `postscript_name:null`、`font_style:""`，`type.create` 的 `warnings` 里会写 `font 'X' is not installed; text may render using a fallback face`。所以不能见到 null 就跳过——`font_style` 为空时至少记一条"face 未解析"，再配合 `type.create` / `info --compact` 的 `warnings` 交叉确认。存盘重开后 `postscript_name` 可能会补成回退字体的名字，那时候的通过也不算数。
+**`postscript_name` 为 null 有两种成因**（实测 0.18）：会话内新建或改过样式、且字面还没解析出来（缺字体或缺字重）；或者这个 face 压根解析不到。已装且能解析的字面会立即回填（实测 0.18：Calibri 新建即回 `Calibri`，改 Bold 回 `Calibri-Bold`）。实测 `font:"NoSuchFontXYZ"` 的层回 `postscript_name:null`、`font_style:""`，`type.create` 的 `warnings` 里会写 `font 'X' is not installed; text may render using a fallback face`。所以不能见到 null 就跳过——`font_style` 为空时至少记一条"face 未解析"，再配合 `type.create` / `info --compact` 的 `warnings` 交叉确认。存盘重开后 `postscript_name` 可能会补成回退字体的名字，那时候的通过也不算数。
 
 **`type.edit`、`type.setStyle` 的 layer 参数也认 id 不认名字**：传图层名同样静默回落到活动层，会改错层。按名操作先 `layer.select {name}`，后续命令省略 layer。
 
