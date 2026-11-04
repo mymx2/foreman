@@ -10,7 +10,7 @@ description: |
   "自动编排", "showcase", "评审展示", "布局适配", "文本适配",
   "响应式适配", "翻译适配", "打开 Ardot", "Ardot 文件".
 metadata:
-  version: "0.1.2"
+  version: "0.1.3"
   author: rbz-one
   modules: [grid, showcase, layout-adapt, design-to-code, ui-design]
 ---
@@ -23,8 +23,8 @@ metadata:
 ## Outcome Contract
 
 - **Outcome**：用户的 Ardot 意图被路由到正确的子模块，且整个调用过程遵循共享 MCP 规约。
-- **Done when**：用户描述的需求命中能力地图中**唯一一个**模块；该模块的 SKILL.md 被加载并执行；执行结果符合本 SKILL.md 的共用硬约束（batch_edit 语法、locate_available_space、读写顺序、命名空间回退、padding 语法、失败处理）。
-- **Evidence**：`fetch_editor_state` 成功返回 file + page + selection；`batch_edit` 调用使用 `operations` 字符串；`batch_edit` 后有 `batch_read` 校验；放置新画板前调过 `locate_available_space`。
+- **Done when**：用户描述的需求命中能力地图中**唯一一个**模块；该模块的 SKILL.md 被加载并执行；执行结果符合本 SKILL.md 的共用硬约束（batch_edit 语法、locate_available_space、读写顺序、命名空间回退、padding 语法、失败处理）；命中视觉交付模块时，按 `shared/verification.md` 的适用条款留痕（ui-design 只适用「命中非空」「属性不等于渲染」与设计时配方）。
+- **Evidence**：`fetch_editor_state` 成功返回 file + page + selection；`batch_edit` 调用使用 `operations` 字符串；`batch_edit` 后有 `batch_read` 校验；放置新画板前调过 `locate_available_space`；视觉交付模块另按 `shared/verification.md` 留痕，ui-design 留 `batch_read` 实测值。
 - **Output**：路由决策说明（命中模块 + 关键词）+ 模块执行结果。
 - **Authorization**：只路由，不实现具体画板操作；具体创建/修改由命中的模块自己负责。
 
@@ -117,6 +117,10 @@ Ardot MCP 工具可能暴露在多个命名空间（`mcp__ardot__*` /
 - 环境排查：先查 `shared/troubleshooting.md` 的对照表
 - 任何 MCP 工具连续 3 次报错 → 停下来诊断，不要继续操作
 
+## 验证纪律
+
+产出视觉交付物的模块遵守 `shared/verification.md`；ui-design 只适用「命中非空」「属性不等于渲染」与设计时配方，grid / design-to-code 用各自的自验证。
+
 ## 共享底座（Shared References）
 
 模块共用，**模块自己的 SKILL.md 会按需引用**：
@@ -124,6 +128,7 @@ Ardot MCP 工具可能暴露在多个命名空间（`mcp__ardot__*` /
 - `shared/mcp-cheatsheet.md` — Ardot MCP 工具速查（每个工具的用途 / 参数 / 常见坑）
 - `shared/dependencies.md` — 环境依赖、命名空间回退、阻塞条件
 - `shared/troubleshooting.md` — 常见故障对照表（症状 → 原因 → 处置）
+- `shared/verification.md` — 验证纪律（红证、命中非空、属性不等于渲染）
 
 ## 模块文档索引
 
@@ -135,7 +140,7 @@ Ardot MCP 工具可能暴露在多个命名空间（`mcp__ardot__*` /
 | showcase | `modules/showcase/SKILL.md` | 10 个 references + `assets/preset-config.json` |
 | layout-adapt | `modules/layout-adapt/SKILL.md` | `modules/layout-adapt/scripts/layout-adaptation.js` + `modules/layout-adapt/scripts/ardot-client.js` |
 | design-to-code | `modules/design-to-code/SKILL.md` | 4 个 references（workflow ×2 + code/tailwind 规则） |
-| ui-design | `modules/ui-design/SKILL.md` | 4 个 references（web-app / landing-page / mobile-app / table 规范） |
+| ui-design | `modules/ui-design/SKILL.md` | 5 个 references（web-app / landing-page / mobile-app / table 规范 + mobile-additions 本地补充） |
 
 ## 出错时
 
@@ -163,6 +168,13 @@ Ardot MCP 工具可能暴露在多个命名空间（`mcp__ardot__*` /
 ## 版本历史
 
 按日期倒序，最新版本在前。
+
+### v0.1.3 (2026-11-04)
+
+- 新增 `shared/verification.md` 验证纪律：红证、命中非空、属性不等于渲染（适用视觉交付模块）
+- showcase 接入容差口径 §6.1、三段式 smoke 证据与门禁自检
+- layout-adapt 接入验证前置与属性/渲染终判口径
+- ui-design 补表格文字不外溢与移动端命中区规范
 
 ### v0.1.2 (2026-09-28)
 

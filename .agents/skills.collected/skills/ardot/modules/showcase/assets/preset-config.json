@@ -1,6 +1,6 @@
 {
   "$schema": "ardot-showcase-autolayout preset config v1",
-  "$version": "1.0.9",
+  "$version": "1.1.0",
   "$themeAliases": {
     "dark-review": [
       "深色",

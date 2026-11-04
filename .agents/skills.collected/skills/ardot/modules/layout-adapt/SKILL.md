@@ -9,7 +9,7 @@ description: |
   Triggers: "适配设计稿", "布局适配", "文本适配", "自动布局",
   "响应式布局", "翻译适配", "国际化适配", "防溢出", "layout adaptation".
 metadata:
-  version: "1.0.0"
+  version: "1.0.2"
   absorbed_from: "layout-adaptation (repros snapshot 2026-09-28)"
 ---
 
@@ -235,6 +235,10 @@ AI 合并多批结果的 Phase A/B 操作后统一执行 `batch_edit`。
 > - `grandparentAvailableW` = 祖父容器宽度 - paddingLeft - paddingRight
 > - 检测含 1px 容差，避免浮点精度误判。
 
+> **判定边界**：`textW` / `parentW` 是节点属性，只做初筛，不是绘制结果。INSTANCE 锁定、字体回退、取整或截断都会让两者偏离。TEXT 的 `width` 可能是 `hug_contents` 字符串；数值比较前必须回退到 `absoluteBoundingBox`（脚本已在 `getNodeNumericWidth` 处理），否则 `textW=0` 会把溢出误判 SAFE。算术判 SAFE 但截图仍有压字/截断时，按 `../../shared/verification.md` 的「属性不等于渲染」处理：截图判红，`absoluteBoundingBox` 只作辅助；不要只复跑脚本。截图红优先于算术 SAFE，进入策略匹配；无法修复的记入报告的跳过节点及原因，不静默放过。
+
+> **bounds 语义探针（2026-11-04 实测）**：自动宽 TEXT（`WIDTH_AND_HEIGHT`）的 `width` 是字符串 `hug_contents`，`absoluteBoundingBox.width` 是渲染宽（第一次探针父 260 / 文本 1279；脚本复验 1139）；固定宽 TEXT（`HEIGHT`）在 220px 内换行，宽度保持 220、高度随行数增长。`absoluteBoundingBox` 可作初筛辅助，截图仍是终判；墨迹级外溢仍以截图为准。
+
 ### 4.2.1 容器级溢出扫描（补充检测）
 
 > **本章由脚本 `scripts/layout-adaptation.js` 的 `scanFixedContainerOverflow` 自动完成。AI 禁止手动推理，只需运行脚本读取结果。**
@@ -453,6 +457,10 @@ paddingTop = paddingBottom = (容器原 FIXED 高度 - hug 后内容高度) / 2
 
 ## 七、验证流程
 
+**验证前置**：分类表为空时按三种情况处理：`totalTexts > 0` → 读失败，先修 nodeIds / readDepth 后重跑；`totalTexts = 0` 且截图无可见文字 → 记「未执行」，不算通过；`totalTexts = 0` 但截图有文字 → 继续修读取。修复后截图须同区域、同尺寸。
+
+**终判口径**：目标值只用于定位；截图与数值冲突时以渲染为准，见 `../../shared/verification.md` 的「属性不等于渲染」。
+
 1. **修复后分模块截图**：禁止单张全页截图（大尺寸超时 + 细节丢失）。按受影响节点区域分模块 `capture_screenshot`，每批 ≤10 个 nodeId
 2. **逐区域对比**：对比基线图，检查截断、溢出、塌陷
 3. **问题修正**（最多 2 轮）：定位问题节点 → 重新修复 → 再截图验证
@@ -465,12 +473,23 @@ paddingTop = paddingBottom = (容器原 FIXED 高度 - hug 后内容高度) / 2
 - `../../shared/mcp-cheatsheet.md` — Ardot MCP 工具速查
 - `../../shared/dependencies.md` — 环境依赖与命名空间回退
 - `../../shared/troubleshooting.md` — 跨模块排障对照表
+- `../../shared/verification.md` — 验证纪律（红证、命中非空、属性不等于渲染）
 
 ---
 
 ## 版本历史
 
 按时间倒序。
+
+### v1.0.2 (2026-11-04)
+
+- 修复 `getNodeNumericWidth` / `getNodeNumericHeight` 对 `hug_contents` 字符串的回退，`batch_read` 补 `absoluteBoundingBox`
+- bounds 探针实测：自动宽 TEXT 1279 / 脚本复验 1139 vs 父 260；固定宽 TEXT 在 220 内换行、高度增长
+
+### v1.0.1 (2026-11-04)
+
+- 接入共享验证纪律 `../../shared/verification.md`：验证前置、分类表空值处理、截图终判
+- 新增判定边界：属性只做初筛，截图与数值冲突时以渲染为准
 
 ### absorbed (2026-09-28)
 

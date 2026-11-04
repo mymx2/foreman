@@ -121,7 +121,7 @@
 ### 分割线只显示上半段、没拉通到底
 
 - **可能原因**：divider 用了 `LINE + 写死 length`，length 小于实际行高
-- **修复步骤**：改用 `RECTANGLE + height:"fill_container"`；生成后 `batch_read` 确认高度 ≥ 相邻 cell 最大高度 95%
+- **修复步骤**：改用 `RECTANGLE + height:"fill_container"`；生成后 `batch_read` 确认高度达到 `modules/showcase/references/skeleton-spec.md` §6.1 的比例下限
 
 ### 网格线看不到
 
@@ -134,6 +134,11 @@
 
 - **可能原因**：目标文件没有指定 `fontName`
 - **修复步骤**：调 `get_available_fonts` 后选择可用字体；**不要猜 style 名称**
+
+### 属性已是目标值但截图仍溢出 / 截断
+
+- **可能原因**：属性和绘制不等价（INSTANCE 锁定、字体回退、取整、截断）
+- **修复步骤**：以截图复判，`absoluteBoundingBox` 只作辅助；见同目录 `verification.md` 的「属性不等于渲染」
 
 ---
 

@@ -73,13 +73,15 @@ function getNumericProp(node, key) {
 
 function getNodeNumericWidth(node) {
   if (!node) return null;
-  const w = node.width ?? node.absoluteBoundingBox?.width;
+  if (isFiniteNumber(node.width)) return node.width;
+  const w = node.absoluteBoundingBox?.width;
   return isFiniteNumber(w) ? w : null;
 }
 
 function getNodeNumericHeight(node) {
   if (!node) return null;
-  const h = node.height ?? node.absoluteBoundingBox?.height;
+  if (isFiniteNumber(node.height)) return node.height;
+  const h = node.absoluteBoundingBox?.height;
   return isFiniteNumber(h) ? h : null;
 }
 

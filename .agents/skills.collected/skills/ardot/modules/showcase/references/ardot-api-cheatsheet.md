@@ -159,7 +159,7 @@ divider=I(cellRow, {
 })
 ```
 
-实测：相邻 cell 高度 600/500/550 时，fill_container 分割线自动撑到 600，完整拉通。生成后仍应 `batch_read` 读 divider `absoluteBoundingBox.height`，确认 ≥ 相邻 cell 最大高度的 95%。
+实测：相邻 cell 高度 600/500/550 时，fill_container 分割线自动撑到 600，完整拉通。生成后仍应 `batch_read` 读 divider `absoluteBoundingBox.height`，确认达到 `skeleton-spec.md` §6.1 的比例下限。
 
 ---
 
@@ -177,10 +177,12 @@ batch_read({
 
 校验重点：
 
-- outer width / height 是否符合公式（允许 ±32px）。
-- title row / subtitle / group label / cell row 左边缘是否一致（`absoluteBoundingBox.x` 容差 ±1px）。
+- outer width / height 是否符合公式（容差见 `skeleton-spec.md` §6.1）。
+- title row / subtitle / group label / cell row 左边缘是否一致（`absoluteBoundingBox.x`，容差见 `skeleton-spec.md` §6.1）。
 - titlebar 是否是 FIXED width = computedOuterWidth。
 - cell row / UI region 是否保持 hug。
+
+以上为初筛；终判按 `../../../shared/verification.md` 的「属性不等于渲染」，截图与数值冲突时以截图为准。
 
 ---
 
@@ -233,7 +235,7 @@ capture_screenshot({
 | 生成后 Ardot 看不到内容 | 客户端视图缓存 | 让用户按 Cmd+R 或点击画布空白处刷新 |
 | 坐标与空位返回不一致 | batch_edit 中手写或偏移了 x/y | 原样使用 locate 返回的 x/y |
 | 字体缺失 | 目标文件没有指定 fontName | 调 `get_available_fonts` 后选择可用字体 |
-| 分割线只显示上半段、没拉通到底 | divider 用了 `LINE + 写死 length`，length 小于实际行高 | 改用 `RECTANGLE + height:"fill_container"`；生成后 `batch_read` 确认高度 ≥ 相邻 cell 最大高度 95% |
+| 分割线只显示上半段、没拉通到底 | divider 用了 `LINE + 写死 length`，length 小于实际行高 | 改用 `RECTANGLE + height:"fill_container"`；生成后 `batch_read` 确认高度达到 `skeleton-spec.md` §6.1 的比例下限 |
 
 ---
 

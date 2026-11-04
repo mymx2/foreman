@@ -24,7 +24,7 @@ MCP 写入成功后 Ardot 视图有时不自动刷新。在 Ardot 中按 `Cmd+R`
 
 ## Q5：标题歪掉、和内容不对齐？
 
-使用最新版并套用 `references/skeleton-spec.md` 的「对齐硬契约」：titlebar、title row、subtitle、group label、cell row 必须共享同一左基准线。复验 `absoluteBoundingBox.x`，容差 ±1px。
+使用最新版并套用 `skeleton-spec.md` 的「对齐硬契约」：titlebar、title row、subtitle、group label、cell row 必须共享同一左基准线。复验 `absoluteBoundingBox.x`，容差见 `skeleton-spec.md` §6.1；数值为初筛，终判按 `../../../shared/verification.md` 的「属性不等于渲染」。
 
 ## Q6：想用白底或灰底怎么说？
 

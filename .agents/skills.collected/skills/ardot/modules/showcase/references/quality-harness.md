@@ -8,6 +8,7 @@
 - 必须用户参与的，只问一次选择题。
 - 真正阻塞的，停止并给清晰操作指引。
 - 发布前用 smoke tests 防止回归。
+- 三条验证纪律见 `../../../shared/verification.md`。
 
 ## 不可触犯契约
 
@@ -21,6 +22,7 @@
 | 不打散用户原结构 | 用户手动竖排/网格/分组是强信号 | 保持原结构或提问确认 |
 | 不交付未校验结果 | 必须 `batch_read` 复验尺寸、对齐、圆角、主题、divider，并截图预览 | 失败自动修复；修不了则说明原因 |
 | 不交付不可读标题 | subtitle 使用「客户端 · 链路/设计稿说明」，不写数量信息 | 重新生成标题文案 |
+| 不交付未执行的门禁 | 被检对象非空；新增或改口径的门禁有一次失败记录，报告里能贴出失败断言名与失败消息 | 补齐读取后重验；仍无法验证则停止并请用户确认，报告中单列「未机械校验项」 |
 
 ## 运行时恢复策略
 
@@ -33,7 +35,7 @@
 ## 自动修复清单
 
 - outer 尺寸塌陷：检查 UI region / group / row sizing，改回 hug；titlebar 固定为 computedOuterWidth。
-- 标题与内容左边缘不齐：套用 skeleton-spec 的「对齐硬契约」，复验 `absoluteBoundingBox.x`，容差 ±1px。
+- 标题与内容左边缘不齐：套用 skeleton-spec 的「对齐硬契约」，复验 `absoluteBoundingBox.x`，容差见 `skeleton-spec.md` §6.1。
 - 字体不可用：调用 `get_available_fonts`，按目标文件可用中文字体降级，并在结果说明中标 TODO。
 - 主题对比度不达标：重新应用 preset，背景与主前景色成对切换。
 
@@ -62,6 +64,8 @@
 
 ## 发布前 Smoke Tests
 
+每条 smoke test 必须留下证据：读字段类检查用 nodeId + 字段 + 期望值/实测值（从 `batch_read` 原样贴 JSON 片段）；视觉类用截图路径 + 覆盖 nodeId/bounds + 区域与尺寸；错误路径用错误文本 + 复现步骤。红证另贴失败断言名与失败消息；缺对应形式的证据记「未执行」。读字段类检查是初筛，冲突时以截图复判（`../../../shared/verification.md` 的「属性不等于渲染」）。
+
 | 测试 | 成功标准 |
 |---|---|
 | 选中 3 个 mobile 整页 | ROW 横排；不覆盖已有画板；返回截图和链接 |
@@ -70,10 +74,11 @@
 | 说「灰底」 | 背景浅灰、文字近黑，对比度可读 |
 | 同一链路 5 状态 | 单 group；按智能评分选择 ROW/COLUMN/MATRIX；不插 column divider |
 | 不同模块并列 | 只在模块边界插 column divider |
-| column divider 拉通 | divider 用 `RECTANGLE + height:"fill_container"`；`batch_read` 高度 ≥ 相邻 cell 最大高度 95%，无「只显示上半段」 |
-| 标题对齐 | title row / subtitle / group label / cell row 左边缘一致（±1px） |
+| column divider 拉通 | divider 用 `RECTANGLE + height:"fill_container"`；`batch_read` 高度达到 `skeleton-spec.md` §6.1 的比例下限，无「只显示上半段」 |
+| 标题对齐 | title row / subtitle / group label / cell row 左边缘一致（容差见 `skeleton-spec.md` §6.1） |
 | outer 圆角 | outer frame 默认 100px 圆角，不是方角 |
 | MCP 错误 | 不抛原始 API 错误；给用户下一步操作 |
+| 门禁自检 | 自上次发布以来新引入或改口径的门禁有一次失败记录，记录含失败断言名、失败消息、预期失败判据（期望值 vs 实测值）、截图路径或 nodeId + 字段实测值；本版无新增/改口径门禁时记 N/A，并列出上次红证的门禁名与版本 |
 
 ## 发包检查命令
 
@@ -82,6 +87,35 @@
 ```bash
 python3 -m json.tool assets/preset-config.json >/dev/null
 find . -name .DS_Store -print
+python3 - <<'PY'
+import json, re
+from pathlib import Path
+root = Path('.').resolve()
+skill = (root / 'SKILL.md').read_text(encoding='utf-8')
+front = re.search(r'^\s*version:\s*"([^"]+)"', skill, re.M).group(1)
+history = re.search(r'^### v([0-9.]+) \(', skill, re.M).group(1)
+preset = json.loads((root / 'assets/preset-config.json').read_text(encoding='utf-8'))['$version']
+assert front == history == preset, (front, history, preset)
+layout_path = root.parent / 'layout-adapt' / 'SKILL.md'
+if layout_path.exists():
+    layout = layout_path.read_text(encoding='utf-8')
+    layout_front = re.search(r'^\s*version:\s*"([^"]+)"', layout, re.M).group(1)
+    layout_history = re.search(r'^### v([0-9.]+) \(', layout, re.M).group(1)
+    assert layout_front == layout_history, (layout_front, layout_history)
+    layout_version = layout_front
+else:
+    layout_version = 'skipped (layout-adapt not found)'
+umbrella_path = root.parent.parent / 'SKILL.md'
+if umbrella_path.exists():
+    umbrella = umbrella_path.read_text(encoding='utf-8')
+    umbrella_front = re.search(r'^\s*version:\s*"([^"]+)"', umbrella, re.M).group(1)
+    umbrella_history = re.search(r'^### v([0-9.]+) \(', umbrella, re.M).group(1)
+    assert umbrella_front == umbrella_history, (umbrella_front, umbrella_history)
+    umbrella_version = umbrella_front
+else:
+    umbrella_version = 'skipped (umbrella not found)'
+print('version ok:', front, layout_version, umbrella_version)
+PY
 ```
 
 若第二条有输出，先删除 `.DS_Store` 再打包。

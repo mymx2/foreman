@@ -57,7 +57,7 @@ const WS_FETCH_TIMEOUT = 60000; // WebSocket 数据获取超时 60 秒
 
 // batch_read 需要的属性列表（HTTP 和 WebSocket 共用）
 const BATCH_READ_PROPERTIES = [
-  'width', 'height', 'type', 'name',
+  'width', 'height', 'absoluteBoundingBox', 'type', 'name',
   'layoutMode', 'layoutSizingHorizontal', 'layoutSizingVertical',
   'primaryAxisSizingMode', 'counterAxisSizingMode',
   'primaryAxisAlignItems', 'counterAxisAlignItems',

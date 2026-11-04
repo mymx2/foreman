@@ -56,7 +56,7 @@
 2. **Titlebar 自身子节点左对齐**：`counterAxisAlignItems = MIN`。不设或设成 CENTER → title row 与 subtitle 会整体居中，相对下方内容偏移。
 3. **Title row 内部文字靠左聚拢**：`primaryAxisAlignItems = MIN` + `layoutAlign = MIN`。不设 → 三段文字可能被拉成两端对齐或居中，日期段跑到右侧。
 
-> 历史教训："标题和内容没按规则排、歪掉"几乎都是上面第 2/3 条缺失导致的。生成后必须用 `batch_read` 复查 title row 与第一个 group label 的 `absoluteBoundingBox.x` 是否一致（容差 ±1px）。
+> 历史教训："标题和内容没按规则排、歪掉"几乎都是上面第 2/3 条缺失导致的。生成后必须用 `batch_read` 复查 title row 与第一个 group label 的 `absoluteBoundingBox.x` 是否一致（容差见 §6.1）。
 
 ### L1 — Titlebar FRAME
 
@@ -362,7 +362,7 @@ outerHeight = 450 + 50 + 60 + 40
 
 其他颜色应走 token。目标文件没有 token 时，用 preset raw color 兜底并标 TODO。
 
-## 6. Responsive Backbone
+## 6. Responsive Backbone 与容差口径
 
 必须保持以下 sizing 规则：
 
@@ -383,6 +383,22 @@ Ardot API 不接受 `primaryAxisSizingMode: "AUTO"`。需要 hug 时，用 `widt
 2. UI region 是否写死 width，而不是 hug。
 3. Titlebar 是否没有按 computed outerWidth 写 FIXED。
 
+### 6.1 容差口径
+
+| 断言类型 | 例子 | 容差 |
+|---|---|---|
+| 确定性预算 | titlebar 固定宽度 = computed outerWidth、100px 圆角 | 0 |
+| 内容驱动预算 | outer 宽高按 §4 公式（hug） | ±32，仅吸收 hug 波动 |
+| 相对位置等式 | title / subtitle / group label / cell row 左边缘 | 0；滚动、夹取、取整场景 ±1 |
+| 比例下限 | divider ≥ 相邻 cell 最大高度的 95% | 只判下限，不按 0 容差 |
+| 方向 / 比例 | 宽高比、divider 是否拉通 | 只判方向与区间 |
+
+不跨维度借容差。每类给边界样本：±32 用 +31 / -31 / +32 / -32 pass、+33 / -33 fail；相对位置默认 0（0.5px 必须失败；默认值是严格口径，实测出现亚像素取整时按 ±1 例外逐条声明），只有声明为滚动 / 夹取 / 取整的节点才用 ±1（1.0px pass、1.4px fail、0.6px pass）；95% 用 94.9 fail / 95.0 pass / 95.1 pass；100px 圆角用 99/101 fail、100 pass。
+
+本表是初筛口径；终判按 `../../../shared/verification.md` 的「属性不等于渲染」，截图与数值冲突时以截图为准。
+
+使用 ±1 的节点必须在验收报告里逐条列出并说明原因；未列出的按 0 处理。若 `absoluteBoundingBox` 只有整像素精度，用 1px 错位代替 0.5px 样本。
+
 ## 7. Reject Signals
 
 出现以下任一情况，修复后再交付。Reject signal 是可修复问题，不要把半成品报成完成。尺寸类硬约束同时见 `quality-harness.md`「不可触犯契约」。
@@ -393,17 +409,17 @@ Ardot API 不接受 `primaryAxisSizingMode: "AUTO"`。需要 hug 时，用 `widt
 4. **轴向错误**：只按内容类型拍板，没有评估原始排布、候选尺寸和超长风险；或用户已手动竖排仍强行 ROW；或最终 `outerWidth > 3200` / `outerHeight > 2400` 却未重排或确认。
 5. **未调用 `locate_available_space`**：手写坐标放置 outer frame，必须改为自动寻位。
 6. **颜色未走 preset**：可绑定 token 的颜色被直接写成 `#000000` / `rgba(...)`。
-7. **尺寸塌陷**：outer 宽高与 §4 公式偏差超过 ±32，通常是某层 sizing 错用了 FIXED。
+7. **尺寸塌陷**：outer 宽高与 §4 公式偏差超过 §6.1 的内容驱动预算，通常是某层 sizing 错用了 FIXED。
 8. **缺 mini-title**：cell 裸放，没有顶部小标题。
 9. **titlebar 日期位置或格式错误**：标题栏必须按 product / topic / date 排列，日期放最后，格式为 `YYYY.M.D`。
 10. **展示区互相贴边或重叠**：`locate_available_space` 的 padding 低于 400，或没有使用返回坐标。
 11. **outer 命名或外观错误**：不符合 `<team>_<business>·<scene>·衍生展示区`，或末尾不是 `衍生展示区`；outer 未设置 100px 圆角。
 12. **mini-title 样式错误**：含 `新增` / `修改` / `废弃` / `灰度` 等状态词，但没有用状态色 Style C/D。
 13. **column divider 使用错误**：同一链路/场景多状态间加了分隔线；或同一 group 内不同能力/模块并列（N≥3）却没在模块边界加线；或 divider 用了 `LINE + 写死 length` 旧写法而非 `RECTANGLE + height:"fill_container"`。
-    - **divider 高度未拉通**：生成后 `batch_read` 读 divider 的 `absoluteBoundingBox.height`，若低于相邻 cell 最大高度的 95%，即为「只显示上半段」bug，必须改用 `fill_container` 重生成。
+    - **divider 高度未拉通**：生成后 `batch_read` 读 divider 的 `absoluteBoundingBox.height`，若低于 §6.1 的比例下限，即为「只显示上半段」bug，必须改用 `fill_container` 重生成。
 14. **subtitle 首段错误**：仍使用 `screens` / `cards` / `flows` 等类型词，而不是 `mobile` / `desktop` / `web` / 多端组合。
 15. **subtitle 信息密度错误**：写了 `3 屏对照` / `5 个状态` 等数量信息，或全英文，未写链路/设计稿说明。
 16. **subtitle 重复标题**：说明段与 `<topic>` / 大标题重复，应省略或换成更具体的链路说明。
 17. **日期仍写旧格式**：不要写 `5.20` 或 `2026-05-20`，应写 `2026.5.20`。
-18. **标题与内容左边缘不齐**：title row / subtitle / group label / cell row 的左边缘 `absoluteBoundingBox.x` 不一致（容差 ±1px）。常见根因是 titlebar 未设 `counterAxisAlignItems: MIN` 或 title row 误用 `SPACE_BETWEEN`。
+18. **标题与内容左边缘不齐**：title row / subtitle / group label / cell row 的左边缘 `absoluteBoundingBox.x` 不一致（容差见 §6.1）。常见根因是 titlebar 未设 `counterAxisAlignItems: MIN` 或 title row 误用 `SPACE_BETWEEN`。
 19. **主题对比度不达标**：切换主题后只改背景没改文字，或主前景色与背景明度差不足以阅读。背景与主前景必须成对取色。

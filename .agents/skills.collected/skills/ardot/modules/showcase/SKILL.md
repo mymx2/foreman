@@ -1,7 +1,7 @@
 ---
 name: showcase
 metadata:
-  version: "1.0.9"
+  version: "1.1.0"
   absorbed_from: "ardot-showcase-autolayout-1.0.9"
 agent_created: true
 description: |
@@ -94,12 +94,14 @@ Step 3   生成骨架 + 校验 + 截图 + 返回链接
 
    | 校验项 | 读取字段 | 通过条件 |
    |---|---|---|
-   | 尺寸 | `width` / `height` / `absoluteBoundingBox` | 与 `skeleton-spec.md` §4 公式值一致（容差 ±32px） |
-   | 对齐 | `absoluteBoundingBox.x` | title row / subtitle / group label / cell row 左边缘一致（容差 ±1px） |
+   | 尺寸 | `width` / `height` / `absoluteBoundingBox` | 与 `references/skeleton-spec.md` §4 公式值一致（容差见 `references/skeleton-spec.md` §6.1） |
+   | 对齐 | `absoluteBoundingBox.x` | title row / subtitle / group label / cell row 左边缘一致（容差见 `references/skeleton-spec.md` §6.1） |
    | token | `fills` / `strokes` 内的 `boundVariables` | 优先使用 preset 绑定的 token；raw 值兜底时与设计 token 语义一致 |
-   | divider | divider 节点的 `absoluteBoundingBox.height` | ≥ 相邻 cell 最大高度的 95% |
+   | divider | divider 节点的 `absoluteBoundingBox.height` | 达到 `references/skeleton-spec.md` §6.1 的比例下限 |
    | 主题对比度 | titlebar 与 outer 的 `fills` 配对色 | 按 `presets.md` 当前 preset 的 background/foreground 配对，不是任意取色 |
    | sizing | `primaryAxisSizingMode` / `counterAxisSizingMode` | titlebar 是 FIXED width = computedOuterWidth；cell row / UI region 是 hug |
+
+   容差分类见 `references/skeleton-spec.md` §6.1：确定性预算、内容驱动预算与相对位置不共用尺寸容差。`batch_read` 数值是初筛；终判按 `../../shared/verification.md` 的「属性不等于渲染」，截图与数值冲突时以截图为准。
 
    调用示例：
 
@@ -149,10 +151,17 @@ Step 3   生成骨架 + 校验 + 截图 + 返回链接
 - `../../shared/mcp-cheatsheet.md`：覆盖更多 MCP 工具；冲突时以本模块 `references/ardot-api-cheatsheet.md` 为准。
 - `../../shared/dependencies.md`：跨模块的依赖与阻塞条件；本模块特有依赖见 `references/dependencies.md`。
 - `../../shared/troubleshooting.md`：跨模块的环境排查对照表。
+- `../../shared/verification.md`：验证纪律（红证、命中非空、属性不等于渲染）。
 
 ## 版本历史
 
 版本号以本章为单一来源，须与 `assets/preset-config.json` 的 `$version` 保持一致。
+
+### v1.1.0 (2026-11-04)
+
+- 接入共享验证纪律 `../../shared/verification.md`：门禁红证、命中非空、属性不等于渲染
+- 新增容差口径 §6.1：确定性预算 / 内容驱动预算 / 相对位置 / 比例下限分开
+- smoke tests 要求三段式证据；新增门禁自检行
 
 ### v1.0.9 (2026-06-24)
 
@@ -162,4 +171,4 @@ Step 3   生成骨架 + 校验 + 截图 + 返回链接
 
 更早版本历史（v1.0.2 – v1.0.8）已被本伞技能吸收时截断，详见原始技能包。
 
-> 当前版本由伞技能 `ardot` 吸收，保留 1.0.9 版本号以维持与 `assets/preset-config.json.$version` 的一致性。
+> 当前版本与 `assets/preset-config.json.$version` 保持一致。
