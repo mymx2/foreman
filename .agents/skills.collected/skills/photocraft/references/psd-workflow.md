@@ -197,6 +197,8 @@
 - **固定内容用 Box 文本框，可变内容用点文字**：固定说明（标语、品牌信息）用 Box 文本框保持自动换行；可变标题、姓名用点文字，换字后用 `type.info` 重读墨迹 `bounds`（会随缩放即时刷新），按 `min(区域宽/墨迹宽, 区域高/墨迹高)` 改 `size` 再复验，反复到落入区域。不要用 `edit.transform` 缩放文字层——缩完 `size_pt` 仍报原值，且与「点文字被压扁要重打」的规范冲突。多字段一行不塞一个框，拆成独立文字层各自固定选区。
 - **每版留同引擎对比**：画布一致时用 `psd_compare.py`（第 4 节）逐像素比对，并确认差异只在变量区域；画布尺寸变化时用 `doc.save` 或 CLI `convert` 出全尺寸图（`doc.render` 有 2048 上限，长图会失败）拼并排图 + `info --compact` 存尺寸表。
 - **构建脚本要幂等、产物要原子落盘**：源哈希固定，同一输入重跑得到同一结果；输出先写成同目录的 `.tmp`（`.psd`、`.json` 都算），过了 `info` 断言 + `psd_audit --strict` + `warnings` 检查再 `os.replace` 成正式名。中断只会留下 tmp，不会留下半截正式产物。Windows 上 `os.replace` 撞到读者占用会抛 `PermissionError`（WinError 5），做几次短退避重试再放弃，不要吞掉这个错。
+- **验收断言要接线，并且先见红**：新检查先在已知坏样本上跑出失败再接进流水线，只写“应该会拦”等于没拦。接线测试要 mock 到产出函数、断言它真抛错，且不 patch 掉检查函数本身；删掉调用点，测试必须变红。真实夹具缺失让用例失败，不 skip——skip 会把“没验”记成“通过”。失败输出与断言名留在验收记录里，缺记录按未接线处理。反例：门禁看着在跑，实际参数没传或规则默认关闭，口径根本没生效。
+- **成品区固定内容校验**：模板里不随工单变的固定元素（品牌角标、认证字样、固定标语、印章）按 `actions-batch.md` 的「成品区固定内容校验」建锚点表，并在 2.7 的产出路径上校验。
 
 ## 2.7 槽位放图与落位验收
 
@@ -222,6 +224,28 @@ x2, y2 = x + (w - w2) / 2, y + (h - h2) / 2
 session.execute("edit.transform", {"layer": layer,
     "quad": [[x2, y2], [x2 + w2, y2], [x2 + w2, y2 + h2], [x2, y2 + h2]]})
 ```
+
+**渲染前先对账模板**：把「成品区固定内容校验」表里的层名、类型、bounds 与当前模板逐项核，delta 超 `template_tolerance`、层缺失、类型变了（智能对象被换成像素层）都在出图前失败；锚点窗口与相邻层 bounds 重叠也要报——相邻层挪进窗口会同时搞坏外侧带与外接框，画面看着只是“文字近了点”。对账和像素校验挂在同一条产出路径上，失败消息带表版本与模板 SHA256，这两点见 `actions-batch.md` 的「成品区固定内容校验」。
+
+**对账失败矩阵**（code 词表见 `actions-batch.md` 的「成品区固定内容校验」）：
+
+| 样本 | 期望 status | 期望 code |
+|---|---|---|
+| 层缺失 | missing | layer-missing |
+| `layer` 的 `type` 与当前层 kind 不一致（如 Smart Object 被换成像素层） | error | kind-changed |
+| bounds 漂移超 `template_tolerance` | bbox | bounds-drift |
+| 相邻层缺失 | missing | adjacent-missing |
+| 相邻层漂移 | bbox | adjacent-drift |
+| 锚点与相邻层重叠 | bbox | overlap |
+| 模板 SHA256 ≠ 表内值 | error | sha-mismatch |
+| 表缺 `template_sha256` | error | config |
+| disjoint | pass | ok |
+
+SHA 不一致时失败消息必须同时带表内与当前模板的 SHA；消息固定前缀 `[<stage>/<status>/<code>]`，并带 `版本=<v> 模板=<sha12> 表内=<sha12>`；表缺字段按 `error` / `config`。`sha-mismatch` 样本用两个不同的已知 SHA，断言完整字面且两者不相等。
+
+`template_tolerance` 边界：drift = `template_tolerance` pass、+1 fail；用 `template_tolerance=2 / bbox_tolerance=1` 的表验证两者独立。
+
+模板 bounds 用未裁切的层树；只能用 `document.inspect` / `layer.list` 时，它们的 bounds 会裁在画布内（完全移出画布的层报 `[0,0,0,0]`），先确认目标层完全在画布内再对账。
 
 模板侧的三个坑：
 

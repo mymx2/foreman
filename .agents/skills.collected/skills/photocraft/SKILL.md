@@ -2,8 +2,8 @@
 name: photocraft
 description: 驱动 PhotoCraft（开源、离线、兼容 Photoshop 的图像编辑器）完成可复现的修图与 PSD 自动化：通过 photocraft-cli、批处理与动作、serve 会话、MCP 或桌面控制通道执行注册表命令，覆盖调色、抠图换底、文字与形状、滤镜修复、模板批量出图、格式转换与切图导出、打印与打印 PDF、相机 RAW 显影、只读格式导入，以及 PSD 规范化、栅格排版和分层稿交付。当用户要用 PhotoCraft 或 photocraft-cli 处理图片或 PSD、批量处理一个目录、打印/出 PDF、显影 RAW、或把 PhotoCraft 接给 agent 与 MCP 客户端时使用。不适用于生成式 AI 绘图、RAW 图库管理（单张 RAW 显影是支持的）、网页 CSS 或 Figma 设计稿，以及没有安装 PhotoCraft 的环境。
 when_to_use: photocraft, photocraft-cli, PSD 自动化, 批量修图, 图片批处理, 抠图换背景, 电商白底图, 加水印, 调色与 LUT, 格式转换, 打印, 打印 PDF, 相机 RAW, RAW 显影, XCF 导入, 图层 XMP, 轮廓库, 切图导出, 多倍图, 文字居中, 栅格排版, PSD 规范化, PSD 复刻, 分层稿交付, 缺失字体, 动作与 Droplet, 模板批量出图, 截图打码, serve 会话, MCP 修图, 桌面控制通道
-version: 1.1.0
-updated: 2026-11-02
+version: 1.2.0
+updated: 2026-11-04
 metadata:
   update: references/update.json
 ---
@@ -54,6 +54,8 @@ PhotoCraft 的绝大多数菜单动作、工具和对话框都对应注册表里
    **改动类操作要做前后差异证明**：改字、换图、调色这类"看起来执行了"的操作，命令回 `null` 或成功不等于画面变了。模板里的文案恰好等于目标值时，`type.edit` 是空操作；图层被上层样例挡住时，换的图像根本看不见。做法：改动前后各渲一张，逐像素求差，确认差异集中在预期区域；差异为 0 就说明这次改动没生效，别当成做完了。
 
    **规范里的排版约束要逐条变成断言**：居中、同字号、间距、不越界分别算数值判通过/失败，别只查"在区域内"；算法见 `references/text-layout.md` 的「规范验收」。
+
+   模板批量出图的固定品牌元素另做成品区校验，见 `references/actions-batch.md` 的「成品区固定内容校验」。
 7. **交付**：按 Output 格式汇报。
 
 ## 入口选择
@@ -141,6 +143,7 @@ quality 有三套刻度，别混：CLI `--quality` 和 serve/MCP `doc.save` 是 
 | 不规范 PSD 的规范化与复刻、分层稿交付 | `references/psd-workflow.md` | `scripts/psd_audit.py`、`scripts/psd_compare.py` |
 | 模板槽位换图、把素材放进指定区域 | `references/psd-workflow.md` 第 2.7 节 | — |
 | 模板版本链（母版/变量/占位/生产） | `references/psd-workflow.md` 第 2.6 节 | — |
+| 模板出图的固定品牌元素、成品区验算 | `references/actions-batch.md` 的「成品区固定内容校验」 | — |
 | 工作母文件、隐藏版本、历史版本交付 | `references/psd-workflow.md` 第 2.8 节 | — |
 | 栅格排版、对齐分布、参考线 | `references/layout.md` | `scripts/layout_design.py` |
 | 抠图、裁边、切图、多倍图与资产导出 | `references/cutout-export.md` | `scripts/trim_export.py` |
@@ -217,6 +220,7 @@ quality 有三套刻度，别混：CLI `--quality` 和 serve/MCP `doc.save` 是 
 | `ui.gpu.simulateLoss` 之后应用关了 | 带 `{destroy:true}` 会真销毁窗口 GPU、保存 Recovery 后关闭应用；只用于测试，正常会话用 `{error:true}` 或 `{}` |
 | Windows Git Bash 里 JSON 内的路径找不到 | 位置参数会自动转换，JSON 字符串里的不会：写相对路径或 `cygpath -m` 得到的 `C:/…` |
 | PowerShell 里 `--params '{"a":1}'` 报 bad JSON | Windows PowerShell 5.1 会吃掉引号；写成 `'{\"a\":1}'`、在参数前加 `--%`，或把 JSON 写进文件 |
+| 导出的 PNG 尺寸对、能打开，却是半截或纯色 | 自建校验脚本里 `Image.open` 后必须 `im.load()` 完整解码，只读头拿不到截断；再用 `getcolors(maxcolors=2)`，只有一种颜色判“纯色，疑似渲染失败”。无 CLI 探针，人工复验 |
 
 ## Verification
 

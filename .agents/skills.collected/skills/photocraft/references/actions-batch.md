@@ -87,6 +87,67 @@ PhotoCraft 的各种批处理都不是事务：失败的文件、步骤留在目
 
 以上四条是包装层纪律，不改变引擎行为：PhotoCraft 的批处理本身仍会静默覆盖同名文件、失败文件仍留在目录里；纪律的价值是让这些行为在交付前被拦住。
 
+## 成品区固定内容校验
+
+模板批量出图每单都是新产物，没有 before 可 diff：`info`、文件哈希、预览图能证明生成了、没退回旧版，证明不了固定区域里画的是对的；预览图还得靠人看，不能当可重复门禁。全图 diff 对无关变化过敏，也定位不到具体区域。内容由模板决定、每单必须一致的区域（品牌角标、认证字样、固定标语、印章）另做一层墨迹校验，不做全图相似度。
+
+**选区域**：只选不随工单变的固定内容，一两处就够。窗口默认取模板图层 bounds；人工框定必须在标定前冻结并记 `window_source: hand-fixed`，不允许按产物重算窗口——按产物重算会让 `bbox` 检查恒为过。金标墨迹框只在标定时用来记 `ink_bbox_baseline`，不能当窗口。
+
+每条记录固定字段（形状写死）：`name`、`layer`（`{name, type, bounds}`，`type` 用于模板对账）、`bbox`（窗口，`[x,y,w,h]`）、`window_source`（`template-layer | hand-fixed`）、`ink_bbox_baseline`（四边内缩量 `[left,top,right,bottom]`，非负；紧贴墨迹为 `[0,0,0,0]`）、`bbox_tolerance`（默认 1）、`template_tolerance`（默认 1，模板对账用）、`fill_range`（`[low,high]`）、`saturated_above`、`reference_rgb`（`[r,g,b]`）、`color_threshold`、`ink_threshold`、`quadrants`（四象限金标 `[q1,q2,q3,q4]`）、`quadrant_min_ratio`（由金标两向实测取得，不设默认）、`adjacent_layers[]`（`{name, bounds}`）；表级带 `version`、`template_sha256`；每条可选 `canvas`（`[w,h]`，多个非空值必须一致）。失败消息固定前缀 `[<stage>/<status>/<code>]`，并带 `版本=<v> 模板=<sha12> 表内=<sha12>`，才分得清“图错了”和“表过期了”。
+
+`observed` 定义：`[ink_left-win_x, ink_top-win_y, (win_x+win_w)-ink_right, (win_y+win_h)-ink_bottom]`；四边都是内缩量，越大表示墨迹离边越远。
+
+**判定**：先跑自建 `assert_png(png, canvas?)`：`im.load()` + `getcolors(maxcolors=2)`；给了 `canvas` 时再比 `[w,h]` 与 `RGB` 模式。失败直接 `error`，不进墨迹状态机。`canvas` 省略时只做解码与纯色，跳过尺寸与模式；尺寸/模式样本必须带 `canvas`。墨点按亮度掩膜取（`ink_threshold`，通道加权求和低于阈值即算墨，不按精确色相等——抗锯齿和压缩会让边缘变异）。状态闭集合，非 `pass` 即失败，调用方只认一个失败谓词。判定顺序固定：error → missing → saturated → bbox → spread → fill → color → quadrant → pass。对账与像素共用闭集，但 findings 带 `stage: reconcile | pixel`；同一 status 在两阶段含义不同，报告必须带 stage。
+
+| status | 判据 | 抓什么 |
+|---|---|---|
+| error | 解码失败、画布不符、锚点窗口越出画布、表为空或缺字段、整幅纯色 | 半截文件、配错模板 |
+| missing | 像素阶段：窗口内墨点为 0；对账阶段：层/相邻层缺失（`stage=reconcile`） | 漏层、被整块盖住 |
+| saturated | 墨点占比高于 `saturated_above` | 只剩色块、内容被顶掉 |
+| bbox | 墨迹四边内缩量与 `ink_bbox_baseline` 的逐边差 > `bbox_tolerance` | 整体位移、缩放 |
+| spread | 窗口外 1px 带三面以上有墨，且每面至少 2 个墨点 | 外发光、描边漂移、遮罩错位 |
+| fill | 墨点占比不在 `fill_range`；高于上限但未到 `saturated_above` 也算 fill | 描边变细、内容被部分擦掉、墨块变厚 |
+| color | 墨点平均色与参考色的欧氏距离超阈值 | 换色、滤镜、模式错 |
+| quadrant | 2×2 象限墨点低于金标 × `quadrant_min_ratio` | 角部被裁、被遮一角 |
+| pass | 以上都不命中 | 成品通过 |
+
+表加载校验：`fill_range` 下限 < 上限 < `saturated_above`，违反即 `error` / `config`；`window_source=template-layer` 时 `bbox` 必须等于 `layer` 的 `bounds`，否则 `error` / `config`；表内 `layer` 的 `type` 与当前层 kind 不一致即 `error` / `kind-changed`。`saturated_above < 实心块 fill` 在标定阶段确认，不在加载期。
+
+code 词表（status 内的细分，不扩 status）：missing = ink-missing | layer-missing | adjacent-missing；saturated = ink-saturated；bbox = bbox-shift | bounds-drift | adjacent-drift | overlap；spread = effect-spread；fill = fill-out-of-range；color = color-drift；quadrant = quadrant-crop；error = config | decode | size | image-blank | bbox-range | kind-changed | sha-mismatch；pass = ok。
+
+外侧带按四边分别统计，只有三面以上有墨、且每面至少 2 个墨点才判 `spread`——整体平移 1px 只沾两侧，单像素抗锯齿不算一面，与 `bbox` 容差互补。带内排除已冻结的相邻层 bounds（`adjacent_layers`），按冻结值排除，不靠放宽窗口解决。
+
+**标定**（表里的数一律来自实测）：拿一份人工确认合格的产物当金标，记下每处 fill、墨点平均色、四象限与四边带墨数、四边 `ink_bbox_baseline` → `ink_threshold` 取背景亮度与墨色亮度的中点并记录 → 参考色取实测均值，不用设计稿名义色（名义色与实测色可能差出可观色距，按名义色定阈值余量很容易一次吃完）→ 色距阈值取“实测 + 余量”，同时拿一份明显偏色的坏样本反证仍能判失败 → `saturated_above` 定在 `fill_range` 上限之上、实心块 fill 之下（建议留 0.02 间隔；与 `saturated_above < 实心块 fill` 冲突时以后者优先），并确认 `saturated_above < 实心块 fill`；`quadrant_min_ratio` 由“1px 抖动不误报、裁掉一角必报”两向实测取得，不设默认值 → `bbox_tolerance` / `template_tolerance` 默认 1，记录实测取整误差 → 逐条造样本验红。
+
+**测试矩阵分两栏**：
+
+- 必须通过（假阳性哨兵）：基线（含非零 `ink_bbox_baseline` `[3,4,3,4]`）、dx=1、dy=1、1px 抖动、相邻层墨迹落在窗口外 1px 带内（排除后 pass）、外侧带 2 面有墨、3 面各 1 个孤立墨点、空白相邻区、全部省略 `canvas`。
+- 必须失败（每条写期望 status / code）：dx = `bbox_tolerance` + 1、dy = `bbox_tolerance` + 1、负 dx/dy、只移一处、缺墨、明显偏色、色距 = 阈值 + 2、fill 略低于下限、fill 略高于上限、fill = `saturated_above` + 0.01、空锚点表、缺 `version` / `template_sha256`、画布尺寸少 1px（带 `canvas`）、锚点间 `canvas` 不一致、半截 PNG（有效 IHDR + 截断 IDAT，`open` 成功、`load` 失败）、纯色 PNG、四角内侧挖除（保持墨迹外接框不动，挖除量小于 fill 下限余量）、外侧带 3 面 / 4 面有墨、shift=1 + halo、非零 `ink_bbox_baseline` + dx=2。
+- 边界样本留在套件里：色距 = 阈值 ± 2（分别断言 color / pass）；fill = 下限 ± 0.01（下方 fill、上方 pass）、上限 ± 0.01（下方 pass、上方 fill，前提是未到 `saturated_above`）；`saturated_above` ± 0.01（上方 saturated、下方 fill）；`quadrant_min_ratio` ± 0.01（让 ±0.01 至少对应 1 个墨点，即金标该象限 ≥ 100；下方 quadrant、上方 pass）；`bbox_tolerance`：容差 pass、容差 + 1 fail；`ink_threshold` 掩膜单测：同一窗口，阈值 `T+1` 时 ink 计数 1，`T-1` 时 0；锚点级 pass/missing 另用 2×2 合成窗口，配套给出 `fill_range`、`reference_rgb`、`quadrants`。只放“明显偏色”“实心块”钉不住阈值，阈值放宽后仍然全绿。
+
+| 样本 | 期望 status | 期望 code |
+|---|---|---|
+| 基线（含非零 baseline）、dx=1、dy=1、1px 抖动、相邻层带内排除后、外侧带 2 面、3 面各 1 个孤立墨点、空白相邻区、全部省略 `canvas` | pass | ok |
+| 缺墨 | missing | ink-missing |
+| fill = `saturated_above` + 0.01 | saturated | ink-saturated |
+| dx/dy = `bbox_tolerance` + 1、负向、只移一处、非零 baseline + dx=2 | bbox | bbox-shift |
+| 外侧带 3 面 / 4 面有墨、shift=1 + halo | spread | effect-spread |
+| fill 低于下限、fill = 上限 + 0.01（未到 `saturated_above`） | fill | fill-out-of-range |
+| 色距 = 阈值 + 2 | color | color-drift |
+| 四角内侧挖除 | quadrant | quadrant-crop |
+| 空锚点表、缺字段 | error | config |
+| 缺 `version` / `template_sha256` | error | config（消息用 `版本=? 模板=? 表内=?`） |
+| 画布少 1px、模式不是 RGB（均带 `canvas`） | error | size |
+| 锚点窗口越出画布（带 `canvas`） | error | bbox-range |
+| `canvas` 不一致 | error | config |
+| 半截 PNG、纯色 PNG | error | decode / image-blank |
+
+这套矩阵是技能文档里的验收口径；落地第一处实现时必须逐条转成用例，只留在文档里会被跳过。
+
+**断言口径**：`fill` 落在 `fill_range`、色距 ≤ `color_threshold`、`|observed_inset - ink_bbox_baseline| ≤ bbox_tolerance`，不只断言“无失败项”。失败文本固定前缀 `[<stage>/<status>/<code>]`，并带 `版本=<v> 模板=<sha12> 表内=<sha12>`；接线测试断言这些片段。`sha-mismatch` 样本用两个不同的已知 SHA，断言完整字面且两者不相等；缺字段时用 `版本=? 模板=? 表内=?`。
+
+**插在哪**：在 stage 文件上验过再搬进交付目录（第 2 条），坏图不落成品路径、不进验收拼图；校验挂在产出成品的那个函数上，不要只挂某个入口的预检——同一模板常有预检、单张、场景子命令几套入口，绕过预检的照样产成品。通用接线纪律见 `psd-workflow.md` 2.6 的「验收断言要接线，并且先见红」；本检查额外要求：每条产出路径一条用例、`assert not out.exists()`、非空锚点表 + 真实坏图、`match` 到具体 status/code；模板对账同理。逐张跑，不抽样；耗时不可接受时先优化实现，不改判定频率。
+
 ## 动作录制与回放
 
 | 命令 | 参数 | 回复 |
