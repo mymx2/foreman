@@ -97,6 +97,12 @@
       "skillPath": "skills/design-postgres-tables/SKILL.md",
       "computedHash": "08663a63354a5c8f8893eaf4f62c6cef54182a7cce2a4c3a0dab4ce387ef055a"
     },
+    "diagram-design": {
+      "source": "cathrynlavery/diagram-design",
+      "sourceType": "github",
+      "skillPath": "skills/diagram-design/SKILL.md",
+      "computedHash": "fd4df2f34ebd780c1f36c75d8c49439f06b5e78aada0c655450c6a000d8b8965"
+    },
     "display-glasses-with-jetpack-compose-glimmer": {
       "source": "android/skills",
       "sourceType": "github",

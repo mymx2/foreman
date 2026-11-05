@@ -46,6 +46,7 @@ const GROUPS: SkillGroup[] = [
       "ardot",
       "photocraft",
       "ai-visual-design",
+      "diagram-design",
     ],
   },
   {

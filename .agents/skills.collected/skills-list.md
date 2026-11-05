@@ -78,6 +78,9 @@ vpx skills add anthropics/skills \
 vpx skills add https://github.com/standardagents/arrow-js/blob/main/packages/skill/resources/skill --agent openclaw -p -y
 
 vpx skills add slidevjs/slidev --skill slidev --agent openclaw -p -y
+
+# cathrynlavery/diagram-design
+vpx skills add cathrynlavery/diagram-design --skill diagram-design --agent openclaw -p -y
 ```
 
 > `storyset` 为个人创建，无 skills.sh 安装命令。
@@ -106,6 +109,7 @@ vpx skills add slidevjs/slidev --skill slidev --agent openclaw -p -y
 | `ardot` | 本仓（repros + 插件技能吸收） | Ardot 设计工具 MCP 伞技能：像素网格 / 衍生展示区 / 文本布局适配 / 设计稿转代码 / UI 领域规范 |
 | `photocraft` | mroxso/artcraft-skills | PhotoCraft 图像编辑自动化：CLI/serve/MCP/control，打印 PDF、RAW 显影、图层选区文字与批处理 |
 | `ai-visual-design` | 本地维护 | AI 视觉生成方法论：图像/品牌资产/系列一致性锚点链/电商详情图/视频镜头语言 + 交付质量门 |
+| `diagram-design` | cathrynlavery/diagram-design | 编辑级技术图表：45 种图型，自包含 HTML+SVG，支持品牌配色与 draw.io/Mermaid 重绘 |
 
 ---
 
