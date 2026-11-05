@@ -5,8 +5,6 @@ description: |
   不适用于幻灯片与海报（另属排版类）、纯设计稿转代码（走 design-to-code 模块）。
   Triggers: "设计页面", "创建界面", "生成网站", "设计后台", "做落地页",
   "设计 App", "移动端", "小程序界面", "设计系统", "组件库规范", "design system", "design token".
-metadata:
-  source: 本仓
 ---
 
 # UI 界面设计规范
@@ -29,13 +27,13 @@ metadata:
 | 3 | 表格、带表格的后台 | `references/guidelines-table.md` |
 | 4 | Web App、设计系统、通用 UI（默认） | `references/guidelines-web-app.md` |
 
-- **设计系统 / 组件库 / design token** 类任务以 `guidelines-web-app.md` 为基座，在库的层次上应用同一套组件、字体、色彩纪律：建立 token 集、组件状态、间距刻度。
+- **设计系统 / 组件库 / design token** 类任务以 `references/guidelines-web-app.md` 为基座，在库的层次上应用同一套组件、字体、色彩纪律：建立 token 集、组件状态、间距刻度。
 - **图转 UI**（照着参考图还原界面）：走同样的规范，但把参考图当作布局与视觉的真相源，先忠实复现结构，再调整风格。
-- `fetch_guidelines` 的 `mobile-app` / `table` topic 不能替代本地 refs；以 `references/guidelines-mobile-app.md` + `guidelines-mobile-additions.md` / `guidelines-table.md` 为准。
+- `fetch_guidelines` 的 `mobile-app` / `table` topic 不能替代本地 refs；以 `references/guidelines-mobile-app.md` + `references/guidelines-mobile-additions.md` / `references/guidelines-table.md` 为准。
 
 ## 通用原则（适用于所有交付类型）
 
-摘自 `guidelines-web-app.md`，是跨品类的结构性法则：
+摘自 `references/guidelines-web-app.md`，是跨品类的结构性法则：
 
 - **目的优先**：一个界面回答一个主导问题、支撑一个主动作。多个目标竞争就拆成不同界面，不做多目的杂糅界面。
 - **主导区域**：每个界面必须有一个主导视觉区域，视觉权重反映重要性，次要区域从属。
@@ -48,10 +46,17 @@ metadata:
 1. 判断交付类型：先从用户描述和画板内容确定是移动端、网站、表格还是通用 Web App。
 2. 按上表优先级选中该行对应的规范文件并全部加载。
 3. 读规范里的结构法则（目的优先、主导区域），在动手前先确认每个界面的主目的与主动作。
-4. 需要同时出代码时，叠加加载 design-to-code 模块的规则文件。
-5. 完成后逐项核对：主操作唯一、主导区域明确、层级与间距符合所选规范；并按 `../../shared/verification.md` 的「命中非空」「属性不等于渲染」留 `batch_read` 实测值，按 design-time 配方核对几何规则。
+4. 按任务叠加加载：
+   - 画布操作流程 → `references/canvas-workflow.md`
+   - 组件实例、变体、实例覆盖 → `../../shared/component-instance.md`
+   - token / 样式绑定 → `../../shared/token-binding.md`
+5. 需要同时出代码时，叠加加载 design-to-code 模块的规则文件。
+6. 完成后逐项核对：主操作唯一、主导区域明确、层级与间距符合所选规范；并按 `../../shared/verification.md` 的「命中非空」「属性不等于渲染」留 `batch_read` 实测值，按 design-time 配方核对几何规则。
 
 ## 与其他模块的关系
 
-- 需要同时产代码时，叠加读 `modules/design-to-code` 的 `guidelines-code.md` 与 `guidelines-tailwind.md`。
+- 需要同时产代码时，叠加读 `modules/design-to-code/references/guidelines-code.md` 与 `modules/design-to-code/references/guidelines-tailwind.md`。
 - 画布读取与编辑调用见 `../../shared/mcp-cheatsheet.md`。
+- 节点属性字段见 `../../shared/ardot-schema.md`；布局、文本、图标、表格的语义规则见 `../../shared/design-rules.md`。
+- 节点命名、分组层级、组件/状态命名见 `../../shared/naming-and-structure.md`。
+- 复合效果参数见 `../../shared/effects-guide.md`。

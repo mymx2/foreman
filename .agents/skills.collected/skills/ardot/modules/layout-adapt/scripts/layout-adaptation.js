@@ -19,7 +19,8 @@
  *   node layout-adaptation.js --detect
  *     两步探活检测可用接口
  *
- *   node layout-adaptation.js --fetch --fileId <文件ID> --nodeIds <id1,id2> [--output <out.json>] [--report <report.md>]
+ *   node layout-adaptation.js --fetch --fileId <fileId> --nodeIds <id1,id2> [--output <out.json>] [--report <report.md>]
+ *     <fileId> 是纯数字文件 ID（fetch_file_info 返回的 fileId），不是 fileUrl / 文件链接
  *     未指定 --mcpUrl 时，脚本自动两步探活选择可用接口获取数据
  *     指定 --mcpUrl <url> 时，直接使用该 URL
  *
@@ -1414,7 +1415,8 @@ function executeLayoutAdaptation(batchReadResult) {
       classification: [],
       gate: { passed: true, issues: [] },
       chainCheck: [],
-      operations: { phaseA: [], phaseB: [], containerFixes: [], textFixes: [] }
+      operations: { phaseA: [], phaseB: [], containerFixes: [], textFixes: [] },
+      stats: { total: 0, byStrategy: {}, byGrade: {} }
     };
   }
 
@@ -1755,8 +1757,14 @@ async function runCLI() {
   // ===== --fetch 模式：脚本直接从 Ardot API 获取数据 =====
   if (args.fetch) {
     if (!args.fileId || !args.nodeIds || !args.nodeIds.length) {
-      console.error('fetch 模式需要: --fileId <文件ID> --nodeIds <节点ID1,节点ID2,...>');
-      console.error('用法: node layout-adaptation.js --fetch --fileId <id> --nodeIds <id1,id2> [--readDepth 5] [--output <out.json>] [--report <report.md>]');
+      console.error('fetch 模式需要: --fileId <fileId> --nodeIds <节点ID1,节点ID2,...>');
+      console.error('用法: node layout-adaptation.js --fetch --fileId <fileId> --nodeIds <id1,id2> [--readDepth 5] [--output <out.json>] [--report <report.md>]');
+      console.error('--fileId 取 fetch_file_info 返回的纯数字 fileId，不是 fileUrl 或文件链接。');
+      process.exit(1);
+    }
+    if (!/^\d+$/.test(String(args.fileId))) {
+      console.error(`✗ --fileId 需要纯数字文件 ID，当前值: ${args.fileId}`);
+      console.error('取 fetch_file_info 返回的 fileId（如 735986316186026），不要传 fileUrl 或文件链接。');
       process.exit(1);
     }
 
@@ -1816,8 +1824,8 @@ async function runCLI() {
     } catch (e) {
       console.error(`✗ --fetch 模式失败: ${e.message}`);
       console.error('');
-      console.error('可能原因：两步探活均失败（端口 50501 和 19501 health 接口均不可达）。');
-      console.error('请确认 Ardot 编辑器或沙箱服务是否运行，然后重试。');
+      console.error('可能原因：文件 ID / 节点 ID 不对、目标文件未打开、桥接服务未运行，或响应里没有可处理的节点。');
+      console.error('先跑 --detect 确认 50501 / 19501 可达，再用 fetch_file_info 核对 fileId。');
       process.exit(1);
     }
     return;
@@ -1826,7 +1834,8 @@ async function runCLI() {
   // 未指定 --fetch 或 --detect → 显示用法
   console.error('用法:');
   console.error('  环境检测: node layout-adaptation.js --detect');
-  console.error('  fetch 模式: node layout-adaptation.js --fetch --fileId <id> --nodeIds <id1,id2> [--output <out.json>] [--report <report.md>]');
+  console.error('  fetch 模式: node layout-adaptation.js --fetch --fileId <fileId> --nodeIds <id1,id2> [--output <out.json>] [--report <report.md>]');
+  console.error('    --fileId 取 fetch_file_info 返回的纯数字 fileId，不是 fileUrl 或文件链接。');
   console.error('');
   console.error('提示: 可先运行 --detect 检测当前环境，--fetch 模式会自动两步探活选择可用接口');
   process.exit(1);

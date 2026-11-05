@@ -9,7 +9,7 @@ description: |
   Triggers: "适配设计稿", "布局适配", "文本适配", "自动布局",
   "响应式布局", "翻译适配", "国际化适配", "防溢出", "layout adaptation".
 metadata:
-  version: "1.0.2"
+  version: "1.0.3"
   absorbed_from: "layout-adaptation (repros snapshot 2026-09-28)"
 ---
 
@@ -76,7 +76,7 @@ metadata:
 
    node scripts/layout-adaptation.js \
      --fetch \
-     --fileId  <文件ID> \
+     --fileId  <fileId> \
      --nodeIds <节点ID1,节点ID2,...> \
      --readDepth 5 \
      --output <output.json 的绝对路径> \
@@ -84,6 +84,9 @@ metadata:
 
    > 未指定 --mcpUrl 时，--fetch 会自动两步探活选择可用接口。
    > 第一步通了用 50501 HTTP mcp 数据接口；第一步不通则用 19501 WebSocket 沙箱数据接口获取数据。
+   >
+   > `--fileId` 取 `fetch_file_info` 返回的 `fileId`（纯数字，如 `735986316186026`），不是 `fileUrl`，也不是文件链接。
+   > 脚本走本地桥接，参数名与 MCP 工具的 `fileUrl` 不同，不要混用。
 
 4. AI 读取 output.json（或 report.md），获取：
    → 分类表（4.4）
@@ -113,8 +116,8 @@ metadata:
 
 设计稿节点数多时，单次读取可能返回不全（超过 500 子节点会压缩）。处理方式：多次运行，每次指定不同的节点 ID：
 ```bash
-node scripts/layout-adaptation.js --fetch --fileId <id> --nodeIds <id1,id2> --output <output1.json 路径>
-node scripts/layout-adaptation.js --fetch --fileId <id> --nodeIds <id3,id4> --output <output2.json 路径>
+node scripts/layout-adaptation.js --fetch --fileId <fileId> --nodeIds <id1,id2> --output <output1.json 路径>
+node scripts/layout-adaptation.js --fetch --fileId <fileId> --nodeIds <id3,id4> --output <output2.json 路径>
 ```
 
 AI 合并多批结果的 Phase A/B 操作后统一执行 `batch_edit`。
@@ -480,6 +483,12 @@ paddingTop = paddingBottom = (容器原 FIXED 高度 - hug 后内容高度) / 2
 ## 版本历史
 
 按时间倒序。
+
+### v1.0.3 (2026-11-05)
+
+- 明确 `--fileId` 取 `fetch_file_info` 返回的纯数字 `fileId`，不是 `fileUrl` 或文件链接；脚本对非数字值直接报错
+- 修复无文本节点时 `stats` 缺失导致 `byStrategy` 崩溃，空页面也能正常出报告
+- 失败提示改为列出实际可能原因，不再固定归因于两步探活失败
 
 ### v1.0.2 (2026-11-04)
 

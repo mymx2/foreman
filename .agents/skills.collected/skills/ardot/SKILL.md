@@ -10,7 +10,7 @@ description: |
   "自动编排", "showcase", "评审展示", "布局适配", "文本适配",
   "响应式适配", "翻译适配", "打开 Ardot", "Ardot 文件".
 metadata:
-  version: "0.1.3"
+  version: "0.1.7"
   author: rbz-one
   modules: [grid, showcase, layout-adapt, design-to-code, ui-design]
 ---
@@ -125,10 +125,17 @@ Ardot MCP 工具可能暴露在多个命名空间（`mcp__ardot__*` /
 
 模块共用，**模块自己的 SKILL.md 会按需引用**：
 
-- `shared/mcp-cheatsheet.md` — Ardot MCP 工具速查（每个工具的用途 / 参数 / 常见坑）
-- `shared/dependencies.md` — 环境依赖、命名空间回退、阻塞条件
-- `shared/troubleshooting.md` — 常见故障对照表（症状 → 原因 → 处置）
-- `shared/verification.md` — 验证纪律（红证、命中非空、属性不等于渲染）
+- `shared/mcp-cheatsheet.md` — Ardot MCP 工具速查（用途 / 参数 / 常见坑 / 属性命名对照）｜全部模块
+- `shared/ardot-schema.md` — 节点属性字段字典（读回模型）｜全部模块
+- `shared/design-rules.md` — 画布编辑语义规则（布局、文本、图标、表格）｜ui-design / showcase / layout-adapt
+- `shared/effects-guide.md` — 复合效果配方（毛玻璃、金属、新拟态、虹彩）｜ui-design
+- `shared/token-binding.md` — 变量、变量模式、shared styles、`apply_variables`｜ui-design / design-to-code
+- `shared/component-instance.md` — 组件实例、变体、属性覆盖｜ui-design
+- `shared/naming-and-structure.md` — 节点命名、分组层级、组件/状态命名、token 命名、页面/导出约定｜ui-design / design-to-code（showcase、grid、layout-adapt 沿用各自模块规则）
+- `shared/scripts/verify-*.js` — 结构校验（`verify-structure.js`）、导出 mapping 校验（`verify-export-mapping.js`）、token 基线差分（`verify-token-diff.js`）｜ui-design / design-to-code
+- `shared/dependencies.md` — 环境依赖、命名空间回退、阻塞条件｜全部模块
+- `shared/troubleshooting.md` — 常见故障对照表（症状 → 原因 → 处置）｜全部模块
+- `shared/verification.md` — 验证纪律（红证、命中非空、属性不等于渲染、T1–T5 分级）｜全部模块
 
 ## 模块文档索引
 
@@ -140,7 +147,7 @@ Ardot MCP 工具可能暴露在多个命名空间（`mcp__ardot__*` /
 | showcase | `modules/showcase/SKILL.md` | 10 个 references + `assets/preset-config.json` |
 | layout-adapt | `modules/layout-adapt/SKILL.md` | `modules/layout-adapt/scripts/layout-adaptation.js` + `modules/layout-adapt/scripts/ardot-client.js` |
 | design-to-code | `modules/design-to-code/SKILL.md` | 4 个 references（workflow ×2 + code/tailwind 规则） |
-| ui-design | `modules/ui-design/SKILL.md` | 5 个 references（web-app / landing-page / mobile-app / table 规范 + mobile-additions 本地补充） |
+| ui-design | `modules/ui-design/SKILL.md` | 6 个 references（web-app / landing-page / mobile-app / table 规范 + mobile-additions + canvas-workflow） |
 
 ## 出错时
 
@@ -168,6 +175,42 @@ Ardot MCP 工具可能暴露在多个命名空间（`mcp__ardot__*` /
 ## 版本历史
 
 按日期倒序，最新版本在前。
+
+### v0.1.7 (2026-11-05)
+
+- 新增 `shared/scripts/verify-structure.js`：深度、默认名、单子 Frame、omitted、allowlist
+- 新增 `shared/scripts/verify-export-mapping.js`：nodeId 集合、文件存在/大小/路径/重名/覆盖
+- 新增 `shared/scripts/verify-token-diff.js`：前后快照差分、新变量 kebab 校验
+- `naming-and-structure.md` 的对应条目从 `[人工]` / `[待工具]` 升为 `[可查]`
+- 复审加固：allowlist 必填 scope/owner/reason/added_at/expires，未传 scope 时只认 `all`；导出映射用 realpath 防 symlink 逃逸；token 差分拒绝未知顶层结构
+
+### v0.1.6 (2026-11-05)
+
+- 新增 `shared/naming-and-structure.md`：节点命名、分组层级、组件/状态命名、token 命名、页面与导出约定
+- 规则按执行方式标注 `[可查]` / `[人工]` / `[待工具]`，未实现的自动化不写成门禁
+- showcase 的展示区命名保持模块专名规范，不纳入通用命名规则
+- `shared/design-rules.md` 的命名条款改为指向新文档；组件与 token 示例标注为示例数据
+
+### v0.1.5 (2026-11-05)
+
+- 按真实 MCP 实测校正文件门禁：移除不存在的 `create_design` / `open_design`，改为 `fetch_file_info` + `create_new_page`
+- 工具参数统一为 `fileUrl`（单文件可省略），修正 `locate_available_space` 的 `pageId` / `nodeId` 用法
+- 补 `capture_layout` 用法：`parentId` 必须是容器，不能传 Page
+- 按实测更新布局默认值：无 `layout` → `none` + 100×100 FIXED；只给 `layout` → 双向 hug；`clipsContent` 默认 `true`
+- 命名说明改为实测口径：`batch_read` 同时返回 `layout`/`layoutMode`、`gap`/`itemSpacing`
+- 修正 `get_available_fonts` 的 `keywords` 参数、`capture_screenshot` 的 `screenShotDir` 用法、`apply_variables` 仅有 `variables` + `replace`
+- layout-adapt 的 `--fileId` 明确为纯数字 `fileId` 并加校验；修复空页面下 `byStrategy` 崩溃
+
+### v0.1.4 (2026-11-05)
+
+- 新增 `shared/ardot-schema.md`：节点属性字段字典，明确读回侧命名
+- 新增 `shared/design-rules.md`：坐标、自动布局、文本、颜色、表格、图标、效果语义规则
+- 新增 `shared/effects-guide.md`：毛玻璃、金属、新拟态、虹彩配方
+- 新增 `shared/token-binding.md`：变量引用、变量模式、shared styles、`apply_variables`
+- 新增 `shared/component-instance.md` 与 `modules/ui-design/references/canvas-workflow.md`
+- `mcp-cheatsheet` 补属性命名对照、文件门禁、binding 与 Copy 边界、属性速查；修正 `apply_variables` 语义
+- `verification` 补 T1–T5 分级验证、收敛阈值与修复协议
+- `extract-style-guide-from-web` 清除宿主指令残留，改为通用文件门禁
 
 ### v0.1.3 (2026-11-04)
 

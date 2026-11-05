@@ -5,8 +5,6 @@ description: |
   不适用于纯画板编辑（走 grid / showcase 模块）、UI 视觉品味审计（走 ui 技能）。
   Triggers: "设计稿转代码", "转前端代码", "生成HTML", "导出网页", "一比一还原",
   "设计稿出码", "提取设计 token", "网站风格转设计稿", "提取设计风格", "design to code".
-metadata:
-  source: 本仓
 ---
 
 # 设计稿转代码 / 网站风格提取
@@ -38,8 +36,11 @@ metadata:
 | 网站 → 设计规范 / design token 提取 | `references/extract-style-guide-from-web.md` |
 | 实现细节规则（组件拆分、样式组织） | `references/guidelines-code.md` |
 | Tailwind v4 实现细节 | `references/guidelines-tailwind.md` |
+| 提取或绑定 design token、变量模式、shared styles | `../../shared/token-binding.md` |
+| 节点属性字段 | `../../shared/ardot-schema.md` |
+| 节点命名、分组层级、页面命名 | `../../shared/naming-and-structure.md` |
 
-生成代码时同时读 `guidelines-code.md` +（用 Tailwind 时）`guidelines-tailwind.md`。
+生成代码时同时读 `references/guidelines-code.md` +（用 Tailwind 时）`references/guidelines-tailwind.md`。
 
 ## 前置检查
 
@@ -59,4 +60,4 @@ metadata:
 
 ## 协作边界
 
-本模块假设调用方已在 Ardot 里打开目标文件、MCP 可连通。画布读取与编辑的具体调用见 `shared/mcp-cheatsheet.md`。
+本模块假设调用方已在 Ardot 里打开目标文件、MCP 可连通。画布读取与编辑的具体调用见 `../../shared/mcp-cheatsheet.md`。

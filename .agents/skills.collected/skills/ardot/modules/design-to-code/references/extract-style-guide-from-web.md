@@ -32,14 +32,11 @@ Phase 4: Verification (screenshot each section)
 
 ## Phase 0: Ensure Design File Is Open
 
-**Follow `ardot-design-core` SKILL.md → Step 0** for the full file-open rule — including the injected
-`<ardot_file_directive action="create|open">` main path, the **at-most-one** `create_design` / `open_design`
-idempotency hard rule, and the async-load wait gate (never re-issue to "confirm"). Do not re-derive create vs. open here.
+文件由 Ardot 客户端打开。`fetch_file_info` 确认当前文件（`fileName` / `fileUrl` / `fileId` / `permission`）；多文件时把 `fileUrl` 传给后续工具，单文件可省略。需要新页面时用 `create_new_page`，返回的 `pageId` 作为顶层节点父级。
 
-**Design-to-code deviation — deferred `fetch_file_info`:** on the `create_design` branch, defer
-`fetch_file_info` until just before the first MCP call in **Phase 2** (`apply_variables`). Phase 1 is entirely
-local/web tooling (`curl`, `WebFetch`, `playwright`), which covers the async file-load window — pair
-`fetch_file_info` with Phase 2's first MCP message. On the `open_design` branch, call it right after the file is ready.
+Phase 1 可以先用 `curl` / `WebFetch` / 浏览器工具做站点分析，Phase 2 的第一个 MCP 调用前再确认文件。
+
+详细规则见 `../../../shared/mcp-cheatsheet.md` §0。
 
 ---
 
@@ -406,7 +403,7 @@ copyright=I(footer, {type: "text", content: "© <Year> <Name>. All Rights Reserv
 
 ## Phase 4: Verification
 
-Follow the **Post-Generation Validation Pattern** in `design-rules.md` for each section.
+Follow the **Post-Generation Validation Pattern** in `../../../shared/design-rules.md` and `../../../shared/verification.md` for each section.
 
 **Do NOT screenshot the entire page** if height exceeds 2000px — screenshot sections individually.
 

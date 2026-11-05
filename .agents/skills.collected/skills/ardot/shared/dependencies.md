@@ -28,7 +28,7 @@
 | 工具 | 用途 |
 |---|---|
 | `fetch_styles` / `fetch_variables` | 读取 design token，生成时优先绑 token |
-| `apply_variables` | 把已有节点属性绑到 token |
+| `apply_variables` | 创建 / 更新变量集与变量定义；绑定走 `batch_edit` 的 `$:Set:Var` 语法 |
 | `fetch_guidelines` | 读 Ardot 官方设计 / 编码规范 |
 | `create_new_page` | 跨页编排 |
 | `html_to_ardot` | 把 HTML 渲染结果导入 Ardot 画板 |
@@ -39,6 +39,8 @@
 
 ## 版本与语法约束
 
+- 写入侧（`batch_edit`）与读回侧（`batch_read` / schema）的布局属性名字不同：写入用 `layout` / `gap`，读回是 `layoutMode` / `itemSpacing`。对应关系见 `shared/mcp-cheatsheet.md` §属性命名。
+- `capture_layout` 在当前 Ardot MCP 中可用，但 `parentId` 必须是容器节点（传 Page 会报 `Root node must be a container, not a page`）。其它宿主可能没有该工具，按可选处理。
 - `batch_edit` 必须使用当前 Ardot MCP 的 `operations` **字符串语法**
 - 每个 Insert / Copy 操作必须有 binding 名
 - 单次 batch 操作建议不超过 25 条；超过时先建外层容器，再分批生成内部节点

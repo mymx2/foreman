@@ -98,7 +98,7 @@ Step 3   生成骨架 + 校验 + 截图 + 返回链接
    | 对齐 | `absoluteBoundingBox.x` | title row / subtitle / group label / cell row 左边缘一致（容差见 `references/skeleton-spec.md` §6.1） |
    | token | `fills` / `strokes` 内的 `boundVariables` | 优先使用 preset 绑定的 token；raw 值兜底时与设计 token 语义一致 |
    | divider | divider 节点的 `absoluteBoundingBox.height` | 达到 `references/skeleton-spec.md` §6.1 的比例下限 |
-   | 主题对比度 | titlebar 与 outer 的 `fills` 配对色 | 按 `presets.md` 当前 preset 的 background/foreground 配对，不是任意取色 |
+   | 主题对比度 | titlebar 与 outer 的 `fills` 配对色 | 按 `references/presets.md` 当前 preset 的 background/foreground 配对，不是任意取色 |
    | sizing | `primaryAxisSizingMode` / `counterAxisSizingMode` | titlebar 是 FIXED width = computedOuterWidth；cell row / UI region 是 hug |
 
    容差分类见 `references/skeleton-spec.md` §6.1：确定性预算、内容驱动预算与相对位置不共用尺寸容差。`batch_read` 数值是初筛；终判按 `../../shared/verification.md` 的「属性不等于渲染」，截图与数值冲突时以截图为准。
@@ -107,7 +107,6 @@ Step 3   生成骨架 + 校验 + 截图 + 返回链接
 
    ```javascript
    batch_read({
-     fileId: "<targetFileKey>",
      nodeIds: [outerFrameId],
      readDepth: 4,
      properties: ["width","height","absoluteBoundingBox","fills","strokes",

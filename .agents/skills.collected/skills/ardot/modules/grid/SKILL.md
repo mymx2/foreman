@@ -339,7 +339,6 @@ width 永远代表"线的长度"，方向靠 rotation 控制。
 
 ```javascript
 batch_read({
-  fileId: "<fileKey>",
   nodeIds: [gridFrameId],
   readDepth: 1   // 只读直接子节点
 })

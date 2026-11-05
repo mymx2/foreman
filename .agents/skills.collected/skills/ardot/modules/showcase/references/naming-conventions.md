@@ -2,6 +2,8 @@
 
 本文维护展示区命名、标题栏与 subtitle 规则。执行生成前按本文产出文本，交付前按本文自检。
 
+范围：只覆盖 showcase 的 outer frame、titlebar、subtitle、mini-title。通用节点命名、分组层级和状态词表见 `../../../shared/naming-and-structure.md`，本文不重复定义。
+
 ## Outer FRAME 名称
 
 ```text

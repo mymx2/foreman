@@ -2,6 +2,8 @@
 
 本文是 `ardot-showcase-autolayout` 使用到的 Ardot MCP 工具速查，不是完整 API 文档。对调用方式不确定时读取。
 
+工具参数用 `fileUrl`（单文件可省略，多文件必传），没有 `fileId` 参数；页面定位用 `pageId`，围绕节点找空间用 `nodeId`。
+
 ## 调用原则
 
 - 先读状态，再算尺寸，再找空位，再批量写入，最后读回校验。
@@ -35,19 +37,18 @@ fetch_editor_state()
 
 ```javascript
 locate_available_space({
-  fileId: "<targetFileKey>",
-  nodeId: "<targetPageId>",
+  pageId: "<targetPageId>",
   width:  <computedOuterWidth>,
   height: <computedOuterHeight>,
   padding: 400,
   direction: "right"
 })
-// 返回示例：{ x, y }
+// 返回：Find empty space at x: 0, y: 0 on Page (...)
 ```
 
 注意：
 
-- `nodeId` 是页面 ID，不是文件 ID。
+- 页面用 `pageId`；围绕某个节点找空间用 `nodeId`，两者只能传一个。
 - `padding` 不低于 400。
 - 默认 `direction: "right"`；如果横向空间不足，可在用户确认后改 `down`。
 - 删除旧 showcase 后重建，也要重新调用，不复用旧坐标。
@@ -63,7 +64,6 @@ locate_available_space({
 
 ```javascript
 batch_edit({
-  fileId: "<targetFileKey>",
   operations: `
 outer=I(document, {
   type: "frame",
@@ -169,7 +169,6 @@ divider=I(cellRow, {
 
 ```javascript
 batch_read({
-  fileId: "<targetFileKey>",
   nodeIds: ["<outerFrameId>"],
   properties: ["width", "height", "absoluteBoundingBox", "primaryAxisSizingMode", "counterAxisSizingMode"]
 })
@@ -205,7 +204,6 @@ batch_read({
 
 ```javascript
 capture_screenshot({
-  fileId: "<targetFileKey>",
   nodeIds: ["<outerFrameId>"],
   screenShotDir: "<absolute temp dir>"
 })
