@@ -2,8 +2,8 @@
 name: photocraft
 description: 驱动 PhotoCraft（开源、离线、兼容 Photoshop 的图像编辑器）完成可复现的修图与 PSD 自动化：通过 photocraft-cli、批处理与动作、serve 会话、MCP 或桌面控制通道执行注册表命令，覆盖调色、抠图换底、文字与形状、滤镜修复、模板批量出图、格式转换与切图导出、打印与打印 PDF、相机 RAW 显影、只读格式导入，以及 PSD 规范化、栅格排版和分层稿交付。当用户要用 PhotoCraft 或 photocraft-cli 处理图片或 PSD、批量处理一个目录、打印/出 PDF、显影 RAW、或把 PhotoCraft 接给 agent 与 MCP 客户端时使用。不适用于生成式 AI 绘图、RAW 图库管理（单张 RAW 显影是支持的）、网页 CSS 或 Figma 设计稿，以及没有安装 PhotoCraft 的环境。
 when_to_use: photocraft, photocraft-cli, PSD 自动化, 批量修图, 图片批处理, 抠图换背景, 电商白底图, 加水印, 调色与 LUT, 格式转换, 打印, 打印 PDF, 相机 RAW, RAW 显影, XCF 导入, 图层 XMP, 轮廓库, 切图导出, 多倍图, 文字居中, 栅格排版, PSD 规范化, PSD 复刻, 分层稿交付, 缺失字体, 动作与 Droplet, 模板批量出图, 截图打码, serve 会话, MCP 修图, 桌面控制通道
-version: 1.2.0
-updated: 2026-11-04
+version: 1.2.2
+updated: 2026-11-05
 metadata:
   update: references/update.json
 ---
@@ -141,6 +141,7 @@ quality 有三套刻度，别混：CLI `--quality` 和 serve/MCP `doc.save` 是 
 | 任务 | 先读 | 脚本（执行） |
 |---|---|---|
 | 不规范 PSD 的规范化与复刻、分层稿交付 | `references/psd-workflow.md` | `scripts/psd_audit.py`、`scripts/psd_compare.py` |
+| 状态族与图层复合、令牌表、组件化判定 | `references/psd-workflow.md` §1.6–1.8 | `scripts/snapshot_state_comps.py`、`scripts/verify_state_comps.py`、`scripts/verify_token_table.py`、`psd_audit.py --state-snapshot`；组件化人工 |
 | 模板槽位换图、把素材放进指定区域 | `references/psd-workflow.md` 第 2.7 节 | — |
 | 模板版本链（母版/变量/占位/生产） | `references/psd-workflow.md` 第 2.6 节 | — |
 | 模板出图的固定品牌元素、成品区验算 | `references/actions-batch.md` 的「成品区固定内容校验」 | — |
@@ -226,6 +227,7 @@ quality 有三套刻度，别混：CLI `--quality` 和 serve/MCP `doc.save` 是 
 
 - 交付前至少跑 `python <skill-dir>/scripts/find_cli.py --check`（确认 CLI 可用；`docs_in_range` 为 false 不阻断任务，结论标 `unverified`）和 `params.py --exact <id>`。维护/升级时再跑：`run_examples.py`（案例 31 需设 `PCX_DESKTOP=1`）、`check_docs.py`（命令 id/参数/方法与注册表一致，并校验 version.json、upgrading 头和 history 链；计数以脚本输出为准）、`test_docs.py`（版本/历史检查自测）、`test_update.py`（更新器自测）、`probe_gotchas.py`（逐条复验坑点）、`test_workflow.py`、`test_control.py`（fake server；加 `--live` 再对真实 `photocraft-cli serve` 跑一遍）。全部通过后再更新文档。上游维护者升级 PhotoCraft 后按 `references/maintenance.md` 重跑并更新 `references/version.json` / `references/upgrading.md`；下游只按 `references/update.md` 整包更新，不跑 maintenance。运行结果与文档冲突时以运行结果为准。
 - 用户任务：Process 第 6 步的每项检查都要有输出可查；批处理以成功计数和逐个文件的断言为准，不以“命令跑完了”为准。打印任务检查 PDF/`sent`/纸张/标记；RAW 任务检查 16 位/ProPhoto 与 preview fallback；XMP 任务回读 `rawData` 和 `hasXmp`。
+- 命名/状态/token 校验器自测：`python scripts/test_verify_token_table.py`、`python scripts/test_psd_audit_state.py`、`python scripts/verify_state_comps.py --selftest`、`python scripts/verify_token_table.py --selftest`、`python scripts/snapshot_state_comps.py --selftest`。全部通过后再改相关脚本。
 
 ## Output
 

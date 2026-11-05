@@ -80,6 +80,68 @@
 
 `psd_audit.py` 也认 Photoshop 中文版的默认名（`图层 1`、`组 1`、`背景`、`拷贝`、`副本` 等，沿用自源技能，未在 PhotoCraft 复现）。默认名加 copy 后缀（`Layer 1 copy`）按默认名判 HIGH。
 
+### 1.6 状态族与图层复合
+
+状态用图层复合（layer comp）表达，不复制整套图层。状态词表 v1（2026-11-05）：
+
+```text
+default / hover / focus / pressed / selected / disabled / loading / empty / error / success
+```
+
+`active` 弃用：瞬时态映射 `pressed`，持久态映射 `selected`。
+
+规则：
+
+- 每个有状态的组件或区块建一组图层复合，复合名使用上述词表，必须有 `default`。
+- 复合切换会隐藏部分图层。非默认态涉及的隐藏层只能放在根层 `版本_` 组下；`参考_` 组整体隐藏，不能承载需要在某个复合里可见的状态层。状态层放不进根层 `版本_` 组时，交付独立的状态文件 `<稿名>_状态.psd`，不要把散落的隐藏层留在交付稿里。
+- 状态组不算历史版本，2.8 的「含隐藏版本母版不用 `--strict`」不适用于状态族；交付稿仍需满足 `psd_audit` 的隐藏层归属规则。审计报告无法区分状态组和历史版本，验收记录里要标注状态组名称并人工判定。
+- 存盘前 apply `default` 复合，交付稿的可见组合以默认态为准。
+- 三项检查先用 `layerComp.list` / `layerComp.apply` / `file.export.layerCompsToFiles` 取快照，再跑校验器：
+
+```bash
+python scripts/verify_state_comps.py --input state-comps.json
+```
+
+输入：`{"layerComps": [...], "applyResults": {...}, "exports": [...]}`。校验器按 v1 词表查缺失、多余、重复，`default` 恰好一个，`missingLayers` 为空，逐态导出存在且非空。
+
+- 快照可自动生成：`python scripts/snapshot_state_comps.py --psd <psd> --out state-comps.json [--states default,hover] [--export-dir <dir>]`。
+- `--states` 省略时，快照以 PSD 实际复合名作为期望集，并标 `statesSource: "comps"`；校验器会报 `STATES_DERIVED_FROM_COMPS` warning。交付验收必须显式传完整状态词表。
+- 未提供 exports 时校验器只报 `EXPORTS_NOT_CHECKED` warning；交付验收应带 `--export-dir`。
+- 导出文件默认限制在快照目录或 `--export-root` 之下，单文件上限 `--max-export-bytes`（默认 256 MiB）；越界或超限报 error。快照里的 `exportDir` 只作记录，校验根以 `--export-root` 或快照目录为准。
+- 也可以直接 `python scripts/psd_audit.py audit <psd> --state-snapshot state-comps.json`，`STATE_*` 结果并入审计与退出码；`compare` 用 `--state-snapshot`（新稿）和 `--state-snapshot-old`（旧稿）。导出目录不在快照目录下时传 `--state-export-root`。快照格式错误按 exit 2，不降级成 HIGH。
+- 执行方式：`[可查]`，前提是 PhotoCraft CLI 可用；快照生成失败按未执行处理。`psd_audit` / `layout_design` 仍不直接读图层复合，依赖快照。
+
+### 1.7 令牌表与漂移核对
+
+令牌不建成交付 PSD 里的可见图层。写进 5.5 描述文件的「设计令牌」JSON 块。
+
+- 文档头记录 `document.inspect` 的 `revision`（`info` 会剥掉 revision）。
+- 每行令牌记录角色、值、实测来源：颜色 hex、字号 pt、行高、圆角、间距。值必须来自 inspect 或取样，不靠目测估。
+- 命名用角色语义（`text-primary`、`bg-surface`），不用具体值命名；允许「别名 → 值」，别名不参与渲染。
+- revision 变化即整表重核；交接前 diff 一次。
+- 确需图层化时放独立 `_令牌.psd`，不进交付稿。
+- 执行方式：`[可查]`，运行：
+
+```bash
+python scripts/verify_token_table.py --input token-table.json
+```
+
+输入：`{"revision": "...", "expected": [{"role": "text-primary", "value": "#18191C"}], "measured": {"revision": "...", "tokens": {...}}}`。5.5 的 `tokens` 数组直接作为 `expected`；`measured` 从 `document.inspect` 生成 `{revision, tokens}`。revision 不一致、角色缺失或值不符即失败；实测多出的角色只报 warning。
+
+### 1.8 组件化判定
+
+只对版式稿生效，人工判定，不做门禁。
+
+满足任一条件升 `组件_`：
+
+- 同一视觉单元出现 ≥2 次；
+- 承载状态族或变量槽；
+- 有内部结构（≥2 个元素）且需要整体移动或复用。
+
+一次性装饰留元素层。状态用 1.6 的图层复合，不复制多份图层。判定结果和签核人写进 5.5 的规范化记录。
+
+执行方式：`[人工]`。
+
 ## 2. 规范化与复刻流程
 
 1. **审计原稿（只读）**。记原稿 SHA256。跑 `psd_audit.py audit <原稿> --json > audit-before.json`；在 PhotoCraft 打开原稿，用 `document.inspect` 和 `type.resolveMissingFonts {}` 核对层树、文字和应用侧真实缺字。先出问题清单和重建计划，确认后再动手。
@@ -263,6 +325,7 @@ SHA 不一致时失败消息必须同时带表内与当前模板的 SHA；消息
 - 可见与隐藏版本可能共享同一份智能对象内容（实测可见层与 3 个隐藏实例同源）。换图不要替换共享源；新建独立智能对象、隐藏旧可见层，隐藏实例才不会跟着变。
 - 母版 `info` 的缺字体警告可能来自保留的隐藏版本。验收按可见交付面：可见文字层字面全部已装；警告逐条归到隐藏层并在交付说明写明，不为消警告去改历史版本。不要用不带层的全文档 `type.resolveMissingFonts`（它没有 layer 参数，会改到隐藏层）；只对可见层逐层 `type.setStyle` 指定字面。
 - 含隐藏版本的母版，`psd_audit --strict` 不作为交付门槛；按项目 profile 审可见设计，剩余条目登记例外（隐藏版本本身会贡献大量默认名和根层项）。
+- 状态族组（§1.6）不算历史版本：即使放在 `版本_` 组下，也按可见交付面验收，不以「含隐藏版本」为由豁免 `--strict`。
 - 交付母版保留隐藏版本；是否另存一份只含可见版本的轻量稿，按客户需要决定，不要擅自删除历史版本。
 
 ## 3. psd_audit.py（执行）
@@ -376,6 +439,7 @@ for layer in PSDImage.open("<稿名>.psd").descendants():
 | 大小 | 字节 |
 | SHA256 | |
 | 图层数 | |
+| revision | `document.inspect` 的 revision |
 | 基准稿 | （若有） |
 
 ## 规范化记录（非规范化任务写「不适用」）
@@ -401,6 +465,21 @@ for layer in PSDImage.open("<稿名>.psd").descendants():
 ## 字体依赖
 | 图层 | 家族 | PSD 字体表（PostScript 名） | fonts/ 文件 | 授权（能否再分发） |
 |---|---|---|---|---|
+
+## 设计令牌（JSON）
+```json
+{
+  "revision": "<document.inspect 的 revision>",
+  "tokens": [
+    {"role": "text-primary", "value": "#18191C", "source": "inspect: <layerPath>"},
+    {"role": "spacing-md", "value": 16, "source": "layout spec"}
+  ],
+  "aliases": [
+    {"alias": "body-text", "role": "text-primary"}
+  ]
+}
+```
+（颜色用 hex，字号用 pt，行高/圆角/间距用 px；值必须来自 inspect 或取样。）
 
 ## 切图与资产（按需）
 （命名、倍率、格式、padding、画心/含纸边、投影/配件的决定；assets-manifest.json 的位置）

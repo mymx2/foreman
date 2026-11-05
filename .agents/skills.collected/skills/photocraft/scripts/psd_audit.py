@@ -3,8 +3,8 @@
 
 用法:
   python <skill-dir>/scripts/psd_audit.py audit PSD [--profile zh|en|FILE.json] [--json] [--strict]
-         [--installed-fonts FILE] [--max-depth N]
-  python <skill-dir>/scripts/psd_audit.py compare OLD NEW [同上选项]
+         [--installed-fonts FILE] [--max-depth N] [--state-snapshot FILE]
+  python <skill-dir>/scripts/psd_audit.py compare OLD NEW [同上选项] [--state-snapshot-old FILE]
 
 命名前缀取自 --profile（默认 zh；en 与项目 JSON 的格式见 psd_contract.py）。检查项:
   CRITICAL  EMPTY_PSD 没有图层
@@ -257,20 +257,22 @@ def audit_file(path, profile, installed, max_depth):
 
 
 def _md(text):
-    return str(text).replace("|", "\\|").replace("\n", " ")
+    escaped = (str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+               .replace("|", "\\|").replace("\r", " ").replace("\n", " "))
+    return re.sub(r"([\[\]()!])", r"\\\1", escaped)
 
 
 def format_markdown(result):
     s, summary = result["stats"], result["summary"]
-    fonts = ", ".join(f["postscriptName"] or f["family"] for f in result["fonts"]) or "无"
+    fonts = ", ".join(_md(f["postscriptName"] or f["family"]) for f in result["fonts"]) or "无"
     lines = [
-        f"# PSD audit: {result['file']}",
+        f"# PSD audit: {_md(result['file'])}",
         "",
-        f"- profile: {result['profile']['name']}；尺寸 {result['size'][0]}x{result['size'][1]}；"
+        f"- profile: {_md(result['profile']['name'])}；尺寸 {result['size'][0]}x{result['size'][1]}；"
         f"颜色模式 {result['colorMode']}；位深 {result['depth']}",
         f"- 总层数 {s['total']}；叶子 {s['leaves']}；组 {s['groups']}；文字 {s['text']}；"
         f"隐藏 {s['hidden']}；智能对象 {s['smartobjects']}；最大深度 {s['maxDepth']}",
-        f"- 根组（面板自上而下）: {', '.join(result['rootGroups']) or '无'}",
+        f"- 根组（面板自上而下）: {', '.join(_md(x) for x in result['rootGroups']) or '无'}",
         f"- 字体: {fonts}",
         "",
         "问题: CRITICAL {CRITICAL} / HIGH {HIGH} / MEDIUM {MEDIUM} / LOW {LOW}；严格模式: {s}".format(
@@ -278,7 +280,7 @@ def format_markdown(result):
         "",
     ]
     if result["readerWarnings"]:
-        lines += ["psd-tools 告警: " + "; ".join(result["readerWarnings"]), ""]
+        lines += ["psd-tools 告警: " + "; ".join(_md(w) for w in result["readerWarnings"]), ""]
     if not result["issues"]:
         lines.append("未发现结构问题。")
     else:
@@ -290,16 +292,59 @@ def format_markdown(result):
 
 
 def compare_markdown(old, new):
-    lines = [f"# PSD compare: {old['file']} -> {new['file']}", "",
+    lines = [f"# PSD compare: {_md(old['file'])} -> {_md(new['file'])}", "",
              "| 指标 | 原稿 | 新稿 |", "| --- | --- | --- |"]
     for key in ("total", "leaves", "groups", "text", "hidden", "smartobjects", "maxDepth"):
         lines.append(f"| {key} | {old['stats'][key]} | {new['stats'][key]} |")
     for sev in psd_contract.SEVERITIES:
         lines.append(f"| {sev} | {old['summary'][sev]} | {new['summary'][sev]} |")
-    lines += ["", f"原稿根组: {', '.join(old['rootGroups']) or '无'}",
-              f"新稿根组: {', '.join(new['rootGroups']) or '无'}", "", "## 新稿审计", "",
+    lines += ["", f"原稿根组: {', '.join(_md(x) for x in old['rootGroups']) or '无'}",
+              f"新稿根组: {', '.join(_md(x) for x in new['rootGroups']) or '无'}", "", "## 新稿审计", "",
               format_markdown(new)]
     return "\n".join(lines)
+
+
+def merge_state_snapshot(result, snapshot_path, export_root=None):
+    """把状态复合快照的校验结果并进 audit 结果；错误记 HIGH，警告记 LOW。"""
+    import verify_state_comps
+    with open(snapshot_path, "r", encoding="utf-8") as f:
+        payload = json.load(f)
+    if not isinstance(payload, dict):
+        raise ValueError("state snapshot must be a JSON object")
+    if not isinstance(result.get("issues"), list):
+        result["issues"] = []
+    state = verify_state_comps.verify(payload, {
+        "export_root": export_root or os.path.dirname(os.path.abspath(snapshot_path)),
+    })
+    input_codes = {"STATES_INVALID", "COMPS_MISSING", "APPLY_INVALID"}
+    bad_input = sorted({i["code"] for i in state["issues"] if i.get("code") in input_codes})
+    if bad_input:
+        raise ValueError(f"state snapshot input is invalid: {', '.join(bad_input)}")
+    for issue in state["issues"]:
+        severity = "HIGH" if issue.get("severity") == "error" else "LOW"
+        comp = issue.get("comp") or "<state-comps>"
+        result["issues"].append(psd_contract.make_issue(
+            severity,
+            "STATE_" + issue.get("code", "INVALID"),
+            comp,
+            issue.get("message", ""),
+            "见 psd-workflow.md §1.6 / verify_state_comps.py",
+        ))
+    psd_contract.sort_issues(result["issues"])
+    counts = psd_contract.count_issues(result["issues"])
+    result["summary"] = dict(counts)
+    result["summary"]["ok"] = not psd_contract.blocking(counts, False)
+    result["summary"]["strictOk"] = not psd_contract.blocking(counts, True)
+    result.setdefault("stats", {})["stateSnapshot"] = state["stats"]
+    return result
+
+
+def merge_compare_snapshots(old, new, old_snapshot=None, new_snapshot=None, export_root=None):
+    if old_snapshot:
+        old = merge_state_snapshot(old, old_snapshot, export_root)
+    if new_snapshot:
+        new = merge_state_snapshot(new, new_snapshot, export_root)
+    return old, new
 
 
 def main():
@@ -318,6 +363,10 @@ def main():
         p.add_argument("--strict", action="store_true", help="MEDIUM 也算失败（规范稿验收用）")
         p.add_argument("--installed-fonts", default=None, help="字体清单 JSON/JSONL（见上）")
         p.add_argument("--max-depth", type=int, default=0, help="嵌套深度上限；0 = 不限（默认）")
+        p.add_argument("--state-snapshot", default=None,
+                       help="状态复合快照 JSON（snapshot_state_comps.py 生成）；并入 STATE_* 检查")
+        p.add_argument("--state-export-root", default=None,
+                       help="状态导出文件根目录；默认取快照所在目录")
 
     a = sub.add_parser("audit", help="审计一个 PSD", description=__doc__, formatter_class=fmt)
     a.add_argument("psd")
@@ -327,6 +376,8 @@ def main():
     c.add_argument("old")
     c.add_argument("new")
     common(c)
+    c.add_argument("--state-snapshot-old", default=None,
+                   help="旧稿的状态复合快照（可选）；--state-snapshot 对应新稿")
     args = parser.parse_args()
 
     def fail(message):
@@ -345,11 +396,14 @@ def main():
         installed = load_installed_fonts(args.installed_fonts)
         if args.cmd == "audit":
             result = audit_file(args.psd, profile, installed, args.max_depth)
+            if args.state_snapshot:
+                result = merge_state_snapshot(result, args.state_snapshot, args.state_export_root)
             print(json.dumps(result, ensure_ascii=False) if args.json else format_markdown(result))
             gate = result["summary"]
         else:
             old = audit_file(args.old, profile, installed, args.max_depth)
             new = audit_file(args.new, profile, installed, args.max_depth)
+            old, new = merge_compare_snapshots(old, new, args.state_snapshot_old, args.state_snapshot, args.state_export_root)
             print(json.dumps({"old": old, "new": new}, ensure_ascii=False) if args.json
                   else compare_markdown(old, new))
             gate = new["summary"]
