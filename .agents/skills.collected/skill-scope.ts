@@ -168,7 +168,6 @@ const GROUPS: SkillGroup[] = [
       "webgpu-threejs-tsl",
       "shadowbot-cli",
       "computer-flow",
-      "self-iterating-system",
       "agentic-game-dev",
     ],
   },
