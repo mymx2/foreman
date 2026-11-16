@@ -1,0 +1,68 @@
+[
+  {
+    "case": "baseline",
+    "status": 200,
+    "payload": {
+      "ok": true,
+      "path": "<TEMP>\\real-render-review\\option-40d352-baseline.mp4",
+      "format": "mp4",
+      "requestId": "13aa2d61-858f-461a-9f50-762a72e965d7",
+      "revision": "sha256:997a2f23aab0fc7ad719f292b70137633d80307e4f63d78a31249a647797651f"
+    },
+    "probe": {
+      "duration": "2.020000",
+      "size": "238304",
+      "bit_rate": "943778"
+    }
+  },
+  {
+    "case": "options-bitrate",
+    "status": 409,
+    "payload": {
+      "ok": false,
+      "error": "film_export_invalid_request",
+      "requestId": "240159ed-0ae5-421a-bf80-0b3dffe0484c"
+    },
+    "probe": null
+  },
+  {
+    "case": "options-videoBitrate",
+    "status": 409,
+    "payload": {
+      "ok": false,
+      "error": "film_export_invalid_request",
+      "requestId": "bd32b6cd-55dd-4175-9624-ef3e43811bbe"
+    },
+    "probe": null
+  },
+  {
+    "case": "exportOptions-bitrate",
+    "status": 409,
+    "payload": {
+      "ok": false,
+      "error": "film_export_invalid_request",
+      "requestId": "cb39dc89-a922-4f61-b955-ce33f33c8a99"
+    },
+    "probe": null
+  },
+  {
+    "case": "videoExportOptions-bitrate",
+    "status": 409,
+    "payload": {
+      "ok": false,
+      "error": "film_export_invalid_request",
+      "requestId": "e631cddd-e4cd-4fe6-abbc-f3c0f9a4dd07"
+    },
+    "probe": null
+  },
+  {
+    "case": "outputs-video",
+    "status": 409,
+    "payload": {
+      "ok": false,
+      "error": "film_export_invalid_request",
+      "requestId": "92015c08-a53c-41bb-bd25-a24d1df022b6"
+    },
+    "probe": null
+  }
+]

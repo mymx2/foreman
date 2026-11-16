@@ -1,0 +1,13 @@
+{
+  "draftSha256": "5f90d1146353531d927b45d33269e0dd54c8b2f42f76f473dc3d0d993186a1f2",
+  "format": "mp4",
+  "options": {},
+  "outputSha256": "7ca70ec3b813ed4bc57a9b6167d88e9e74bcaa2615a11a546bd5add44a798781",
+  "path": "<REPRO>/text-anim.mp4",
+  "requestId": "4b5a6ab6-0d5f-42a1-b855-a10ce5441702",
+  "resolvedFormat": "mp4",
+  "revision": "sha256:5f90d1146353531d927b45d33269e0dd54c8b2f42f76f473dc3d0d993186a1f2",
+  "schema": "native-film-export-completion.v1",
+  "sizeBytes": 65473,
+  "snapshotId": "film-export-4b5a6ab6-0d5f-42a1-b855-a10ce5441702"
+}

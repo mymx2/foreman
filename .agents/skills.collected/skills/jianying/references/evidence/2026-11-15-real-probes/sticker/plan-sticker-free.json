@@ -1,0 +1,14 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "sticker-free-probe",
+  "canvas": {"width": 320, "height": 180, "fps": 30},
+  "tracks": [
+    {"type": "video", "segments": [{"path": "D:\\data\\123\\jy-fullcap-smoke\\bg.mp4", "start": 0, "duration": 2}]},
+    {"type": "sticker", "segments": [{
+      "resource_id": "7202575978646737469",
+      "path": "C:\\Users\\37021\\AppData\\Local\\JianyingPro\\User Data\\Cache\\effect\\7202575978646737469\\18f11e1a5cfb75d98b563c71c189345d",
+      "sticker_id": "7202575978646737469",
+      "start": 0, "duration": 2, "scale": 0.4
+    }]}
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "schema": "jianying-skill/v1",
+  "command": "auto-subtitles",
+  "ok": true,
+  "data": {
+    "srt": "<TEMP>\\new-features\\subs.srt",
+    "asr": null,
+    "plan": "<TEMP>\\new-features\\plan.json",
+    "draft": {
+      "draft_dir": "<TEMP>\\new-features\\draft",
+      "info_path": "<TEMP>\\new-features\\draft\\draft_info.json",
+      "name": "包装预设",
+      "draft_id": "601298AA-709F-4FD7-B137-1D4CF78F04BB",
+      "duration": 2.5,
+      "canvas": {
+        "width": 320,
+        "height": 180,
+        "fps": 30.0
+      },
+      "tracks": {
+        "video": 1,
+        "audio": 0,
+        "text": 2,
+        "filter": 0
+      },
+      "materials": {
+        "texts": 3,
+        "videos": 1
+      },
+      "cover": null,
+      "previous": null,
+      "versions": {
+        "schema": "jianying-versions/v1",
+        "draft_id": "601298AA-709F-4FD7-B137-1D4CF78F04BB",
+        "current": "v001",
+        "versions": [
+          {
+            "id": "v001",
+            "parent": null,
+            "kind": "build",
+            "label": "subtitle-workflow",
+            "note": "",
+            "created": 1794837247,
+            "draft_sha256": "b1ffa7e85f801f3e7d5777032071f37f2c38fb1eaff621762167fd389669ec98",
+            "snapshot": ".jianying-versions/v001/draft_info.json",
+            "meta_snapshot": ".jianying-versions/v001/draft_meta_info.json",
+            "layout": "single",
+            "timeline_id": null,
+            "plan": ".jianying-versions/v001/source-plan.json",
+            "ops": null,
+            "artifacts": [],
+            "inputs": [
+              {
+                "path": "<TEMP>\\new-features\\main.mp4",
+                "exists": true,
+                "kind": "file",
+                "size": 61661,
+                "mtime_ns": 1794837246637813200,
+                "sha256": "8ac7bc68058dc947db2dbce2c69c8dbd0cd1b20876934e6453dd067860b44237"
+              }
+            ],
+            "exports": [],
+            "duration": 2.5,
+            "tracks": 3,
+            "segments": 4,
+            "materials": 4,
+            "texts": 3
+          }
+        ],
+        "layout": "single",
+        "timeline_id": null,
+        "history_path": "<TEMP>\\new-features\\draft\\.jianying-versions\\versions.json"
+      },
+      "warnings": []
+    }
+  },
+  "warnings": [],
+  "error": null
+}

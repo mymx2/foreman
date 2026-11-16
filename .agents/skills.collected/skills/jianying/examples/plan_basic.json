@@ -1,0 +1,39 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "横屏示例·视频字幕BGM",
+  "canvas": {"width": 1920, "height": 1080, "fps": 30},
+  "tracks": [
+    {
+      "type": "video",
+      "name": "主轨",
+      "segments": [
+        {"path": "media/main.mp4", "start": 0, "duration": 6, "speed": 1, "volume": 1}
+      ]
+    },
+    {
+      "type": "image",
+      "name": "角标",
+      "segments": [
+        {"path": "media/logo.png", "start": 1, "duration": 3, "scale": 0.18,
+         "x": 0.62, "y": 0.55, "opacity": 0.95}
+      ]
+    },
+    {
+      "type": "audio",
+      "name": "BGM",
+      "segments": [
+        {"path": "media/bgm.m4a", "start": 0, "duration": 6, "volume": 0.3}
+      ]
+    },
+    {
+      "type": "text",
+      "name": "字幕",
+      "segments": [
+        {"text": "第一句字幕", "start": 0.3, "duration": 2.4, "font_size": 8,
+         "color": "#FFFFFF", "stroke_color": "#000000", "stroke_width": 0.05, "y": -0.72},
+        {"text": "第二句字幕", "start": 2.7, "duration": 3, "font_size": 8,
+         "color": "#FFFFFF", "stroke_color": "#000000", "stroke_width": 0.05, "y": -0.72}
+      ]
+    }
+  ]
+}

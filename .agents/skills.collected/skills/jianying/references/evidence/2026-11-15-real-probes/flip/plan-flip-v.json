@@ -1,0 +1,18 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "flip-vertical-probe",
+  "canvas": {"width": 320, "height": 180, "fps": 30},
+  "tracks": [
+    {
+      "type": "video",
+      "segments": [
+        {
+          "path": "D:\\data\\123\\jy-fullcap-smoke\\clip.mp4",
+          "start": 0,
+          "duration": 2,
+          "flip": {"horizontal": false, "vertical": true}
+        }
+      ]
+    }
+  ]
+}

@@ -84,6 +84,7 @@ vpx skills add cathrynlavery/diagram-design --skill diagram-design --agent openc
 ```
 
 > `storyset` 为个人创建，无 skills.sh 安装命令。
+> `jianying` 为本地维护（吸收 skills.sh `capcut-edit` 的草稿写保护约束），无上游一键安装命令。
 
 ### 技能索引
 
@@ -108,6 +109,7 @@ vpx skills add cathrynlavery/diagram-design --skill diagram-design --agent openc
 | `storyset` | 个人创建 | Storyset 插画检索、下载、品牌换色与动画 SVG/GIF 导出 |
 | `ardot` | 本仓（repros + 插件技能吸收） | Ardot 设计工具 MCP 伞技能：像素网格 / 衍生展示区 / 文本布局适配 / 设计稿转代码 / UI 领域规范 |
 | `photocraft` | mroxso/artcraft-skills | PhotoCraft 图像编辑自动化：CLI/serve/MCP/control，打印 PDF、RAW 显影、图层选区文字与批处理 |
+| `jianying` | 本仓（repros jianying-1/2 + skills.sh 约束） | 剪映专业版 11.8：明文多轨草稿/修改/首页登记 + native 导出 + SRT 生成与烧录，写前备份、抽帧验收 |
 | `ai-visual-design` | 本地维护 | AI 视觉生成方法论：图像/品牌资产/系列一致性锚点链/电商详情图/视频镜头语言 + 交付质量门 |
 | `diagram-design` | cathrynlavery/diagram-design | 编辑级技术图表：45 种图型，自包含 HTML+SVG，支持品牌配色与 draw.io/Mermaid 重绘 |
 

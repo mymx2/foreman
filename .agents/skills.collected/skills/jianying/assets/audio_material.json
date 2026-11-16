@@ -1,0 +1,15 @@
+{
+  "id": "",
+  "type": "extract_music",
+  "name": "",
+  "duration": 0,
+  "path": "",
+  "category_name": "local",
+  "music_id": "",
+  "resource_id": "",
+  "local_material_id": "",
+  "similiar_music_info": {},
+  "tts_benefit_info": {
+    "benefit_type": "none"
+  }
+}

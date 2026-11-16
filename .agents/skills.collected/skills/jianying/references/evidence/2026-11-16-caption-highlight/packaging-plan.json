@@ -1,0 +1,732 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "包装预设测试",
+  "canvas": {
+    "width": 1280,
+    "height": 640,
+    "fps": 30.0
+  },
+  "tracks": [
+    {
+      "type": "video",
+      "name": "主轨",
+      "segments": [
+        {
+          "path": "D:\\data\\123\\__repros\\jianying-subtitle-demo\\clip-60s.mp4",
+          "start": 0,
+          "duration": 60.066667
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "标题",
+      "segments": [
+        {
+          "text": "AI工具分享",
+          "start": 0.5,
+          "duration": 3.0,
+          "font_size": 16,
+          "color": "#FFD400",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": 0.2,
+          "resource_ref": "毛笔行楷",
+          "animations": [
+            {
+              "type": "in",
+              "resource_ref": "变色输入",
+              "duration": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "字幕",
+      "segments": [
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "ai工具入手然后一步步讲怎么做一",
+          "start": 0.05,
+          "duration": 2.7600000000000002,
+          "caption_info": {
+            "id": "caption-1",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-1",
+            "original_text": "ai工具入手然后一步步讲怎么做一",
+            "words": [
+              {
+                "id": "word-1",
+                "text": "ai工具入手然后一步步讲怎么做一",
+                "tag": "",
+                "origin_text": "ai工具入手然后一步步讲怎么做一",
+                "time_range": {
+                  "start": 0,
+                  "duration": 2760000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "个功能和产品然后今天是分享会也是",
+          "start": 2.81,
+          "duration": 3.7399999999999998,
+          "caption_info": {
+            "id": "caption-2",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-2",
+            "original_text": "个功能和产品然后今天是分享会也是",
+            "words": [
+              {
+                "id": "word-2",
+                "text": "个功能和产品然后今天是分享会也是",
+                "tag": "",
+                "origin_text": "个功能和产品然后今天是分享会也是",
+                "time_range": {
+                  "start": 0,
+                  "duration": 3740000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "一个怎么说动员会也好吧那大家首先",
+          "start": 6.55,
+          "duration": 3.3999999999999995,
+          "caption_info": {
+            "id": "caption-3",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-3",
+            "original_text": "一个怎么说动员会也好吧那大家首先",
+            "words": [
+              {
+                "id": "word-3",
+                "text": "一个怎么说动员会也好吧那大家首先",
+                "tag": "",
+                "origin_text": "一个怎么说动员会也好吧那大家首先",
+                "time_range": {
+                  "start": 0,
+                  "duration": 3400000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "第一步要让ai干活首先得下一个合",
+          "start": 9.95,
+          "duration": 2.4000000000000004,
+          "caption_info": {
+            "id": "caption-4",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-4",
+            "original_text": "第一步要让ai干活首先得下一个合",
+            "words": [
+              {
+                "id": "word-4",
+                "text": "第一步要让ai干活首先得下一个合",
+                "tag": "",
+                "origin_text": "第一步要让ai干活首先得下一个合",
+                "time_range": {
+                  "start": 0,
+                  "duration": 2400000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "适的工具对吧那呃",
+          "start": 12.35,
+          "duration": 2.5,
+          "caption_info": {
+            "id": "caption-5",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-5",
+            "original_text": "适的工具对吧那呃",
+            "words": [
+              {
+                "id": "word-5",
+                "text": "适的工具对吧那呃",
+                "tag": "",
+                "origin_text": "适的工具对吧那呃",
+                "time_range": {
+                  "start": 0,
+                  "duration": 2500000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "现在市面上有几家公司已经做了不错",
+          "start": 15.21,
+          "duration": 2.879999999999999,
+          "caption_info": {
+            "id": "caption-6",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-6",
+            "original_text": "现在市面上有几家公司已经做了不错",
+            "words": [
+              {
+                "id": "word-6",
+                "text": "现在市面上有几家公司已经做了不错",
+                "tag": "",
+                "origin_text": "现在市面上有几家公司已经做了不错",
+                "time_range": {
+                  "start": 0,
+                  "duration": 2880000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "的产品就比如说我们说",
+          "start": 18.09,
+          "duration": 3.120000000000001,
+          "caption_info": {
+            "id": "caption-7",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-7",
+            "original_text": "的产品就比如说我们说",
+            "words": [
+              {
+                "id": "word-7",
+                "text": "的产品就比如说我们说",
+                "tag": "",
+                "origin_text": "的产品就比如说我们说",
+                "time_range": {
+                  "start": 0,
+                  "duration": 3120000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "的呃有work buddy还有豆包",
+          "start": 21.21,
+          "duration": 4.52,
+          "caption_info": {
+            "id": "caption-8",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-8",
+            "original_text": "的呃有work buddy还有豆包",
+            "words": [
+              {
+                "id": "word-8",
+                "text": "的呃有work buddy还有豆包",
+                "tag": "",
+                "origin_text": "的呃有work buddy还有豆包",
+                "time_range": {
+                  "start": 0,
+                  "duration": 4520000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "那这两个都是分别两个大公司的产品",
+          "start": 25.73,
+          "duration": 3.5150000000000006,
+          "caption_info": {
+            "id": "caption-9",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-9",
+            "original_text": "那这两个都是分别两个大公司的产品",
+            "words": [
+              {
+                "id": "word-9",
+                "text": "那这两个都是分别两个大公司的产品",
+                "tag": "",
+                "origin_text": "那这两个都是分别两个大公司的产品",
+                "time_range": {
+                  "start": 0,
+                  "duration": 3515000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "一个是腾讯的一个是那个字节的那除",
+          "start": 29.245,
+          "duration": 3.5399999999999956,
+          "caption_info": {
+            "id": "caption-10",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-10",
+            "original_text": "一个是腾讯的一个是那个字节的那除",
+            "words": [
+              {
+                "id": "word-10",
+                "text": "一个是腾讯的一个是那个字节的那除",
+                "tag": "",
+                "origin_text": "一个是腾讯的一个是那个字节的那除",
+                "time_range": {
+                  "start": 0,
+                  "duration": 3540000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "了腾讯自节阿里也有比如说这样像那",
+          "start": 32.785,
+          "duration": 2.720000000000006,
+          "caption_info": {
+            "id": "caption-11",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-11",
+            "original_text": "了腾讯自节阿里也有比如说这样像那",
+            "words": [
+              {
+                "id": "word-11",
+                "text": "了腾讯自节阿里也有比如说这样像那",
+                "tag": "",
+                "origin_text": "了腾讯自节阿里也有比如说这样像那",
+                "time_range": {
+                  "start": 0,
+                  "duration": 2720000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "个千万办公corder然后呃我会",
+          "start": 35.505,
+          "duration": 3.0,
+          "caption_info": {
+            "id": "caption-12",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-12",
+            "original_text": "个千万办公corder然后呃我会",
+            "words": [
+              {
+                "id": "word-12",
+                "text": "个千万办公corder然后呃我会",
+                "tag": "",
+                "origin_text": "个千万办公corder然后呃我会",
+                "time_range": {
+                  "start": 0,
+                  "duration": 3000000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "推推荐大家用那个work body",
+          "start": 38.505,
+          "duration": 2.3399999999999963,
+          "caption_info": {
+            "id": "caption-13",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-13",
+            "original_text": "推推荐大家用那个work body",
+            "words": [
+              {
+                "id": "word-13",
+                "text": "推推荐大家用那个work body",
+                "tag": "",
+                "origin_text": "推推荐大家用那个work body",
+                "time_range": {
+                  "start": 0,
+                  "duration": 2340000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "因为workbody呢就是腾讯整",
+          "start": 40.845,
+          "duration": 2.539999999999999,
+          "caption_info": {
+            "id": "caption-14",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-14",
+            "original_text": "因为workbody呢就是腾讯整",
+            "words": [
+              {
+                "id": "word-14",
+                "text": "因为workbody呢就是腾讯整",
+                "tag": "",
+                "origin_text": "因为workbody呢就是腾讯整",
+                "time_range": {
+                  "start": 0,
+                  "duration": 2540000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "个公司策策略战略吧应该已经整体偏",
+          "start": 43.385,
+          "duration": 3.1600000000000037,
+          "caption_info": {
+            "id": "caption-15",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-15",
+            "original_text": "个公司策策略战略吧应该已经整体偏",
+            "words": [
+              {
+                "id": "word-15",
+                "text": "个公司策策略战略吧应该已经整体偏",
+                "tag": "",
+                "origin_text": "个公司策策略战略吧应该已经整体偏",
+                "time_range": {
+                  "start": 0,
+                  "duration": 3160000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "向这个work by workbody",
+          "start": 46.545,
+          "duration": 1.2199999999999989,
+          "caption_info": {
+            "id": "caption-16",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-16",
+            "original_text": "向这个work by workbody",
+            "words": [
+              {
+                "id": "word-16",
+                "text": "向这个work by workbody",
+                "tag": "",
+                "origin_text": "向这个work by workbody",
+                "time_range": {
+                  "start": 0,
+                  "duration": 1220000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "这个产品",
+          "start": 47.765,
+          "duration": 0.7000000000000028,
+          "caption_info": {
+            "id": "caption-17",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-17",
+            "original_text": "这个产品",
+            "words": [
+              {
+                "id": "word-17",
+                "text": "这个产品",
+                "tag": "",
+                "origin_text": "这个产品",
+                "time_range": {
+                  "start": 0,
+                  "duration": 700000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "呃整个的最近肯两天吧最近两天那个",
+          "start": 49.175,
+          "duration": 4.32,
+          "caption_info": {
+            "id": "caption-18",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-18",
+            "original_text": "呃整个的最近肯两天吧最近两天那个",
+            "words": [
+              {
+                "id": "word-18",
+                "text": "呃整个的最近肯两天吧最近两天那个",
+                "tag": "",
+                "origin_text": "呃整个的最近肯两天吧最近两天那个",
+                "time_range": {
+                  "start": 0,
+                  "duration": 4320000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "马化腾球员都会讲话也说了会把整个",
+          "start": 53.495,
+          "duration": 3.3200000000000003,
+          "caption_info": {
+            "id": "caption-19",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-19",
+            "original_text": "马化腾球员都会讲话也说了会把整个",
+            "words": [
+              {
+                "id": "word-19",
+                "text": "马化腾球员都会讲话也说了会把整个",
+                "tag": "",
+                "origin_text": "马化腾球员都会讲话也说了会把整个",
+                "time_range": {
+                  "start": 0,
+                  "duration": 3320000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "公司的这个能力物力",
+          "start": 56.815,
+          "duration": 3.039999999999999,
+          "caption_info": {
+            "id": "caption-20",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-20",
+            "original_text": "公司的这个能力物力",
+            "words": [
+              {
+                "id": "word-20",
+                "text": "公司的这个能力物力",
+                "tag": "",
+                "origin_text": "公司的这个能力物力",
+                "time_range": {
+                  "start": 0,
+                  "duration": 3040000
+                }
+              }
+            ]
+          },
+          "resource_ref": "毛笔行楷",
+          "caption_template": {
+            "resource_ref": "白字黑边",
+            "resources": []
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+# 核心功能只依赖 Python 标准库（3.9+）；本地 ASR 是可选能力：
+#   pip install numpy onnxruntime kaldi-native-fbank
+# 不安装时除 srt.from-local-asr 外的命令仍可运行。
+#
+# 外部程序：
+#   ffmpeg / ffprobe   媒体探测、抽帧、字幕烧录
+#   剪映专业版          草稿预览与 native bridge 导出
+#
+# 优先使用剪映安装目录自带的 ffmpeg/ffprobe；字幕烧录需要带 libass 和 libx264
+# 的外部构建，剪映自带的 ffmpeg 不满足该条件。
+# 字幕工具查找外部 ffmpeg 的顺序见 scripts/subtitles/jy_common.py。

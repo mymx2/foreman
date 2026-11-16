@@ -1,0 +1,58 @@
+{
+  "schema": "jianying-skill/v1",
+  "command": "render",
+  "ok": true,
+  "data": {
+    "path": "<TEMP>\\jy-render-check\\out.mp4",
+    "bytes": 30294,
+    "format": "mp4",
+    "request_id": "03d80651-92cc-4571-b5ad-3eb99532d9d7",
+    "revision": "sha256:8d6eae1634021a767c613dbe58279dbdd6475e31bbf2082a3156de42d537ccda",
+    "duration_ms": 1750,
+    "export_elapsed_ms": 1750,
+    "draft_sha256": "8d6eae1634021a767c613dbe58279dbdd6475e31bbf2082a3156de42d537ccda",
+    "draft_sha256_before": "8d6eae1634021a767c613dbe58279dbdd6475e31bbf2082a3156de42d537ccda",
+    "draft_sha256_after": "8d6eae1634021a767c613dbe58279dbdd6475e31bbf2082a3156de42d537ccda",
+    "draft_mutated": true,
+    "draft_files_changed": [
+      "draft_content.json"
+    ],
+    "draft_backups": [
+      "<TEMP>\\jy-render-check\\draft\\.jianying-backups\\render-draft_info.json.20261116-110644-04895-f17dc8",
+      "<TEMP>\\jy-render-check\\draft\\.jianying-backups\\render-draft_meta_info.json.20261116-110644-04895-f17dc8"
+    ],
+    "bridge": {
+      "version": "11.8.0",
+      "pid": 33696
+    },
+    "install": {
+      "exe_sha256": "bbe97bb4579418259962636e3935d05fe8d853e847b74897504f5022dab719c2",
+      "videoeditor": [
+        {
+          "name": "videoeditor.dll",
+          "sha256": "35d24d493d678eee9d8847d543ceae1dd136d5c51953333ad22213d9cb251fa0"
+        }
+      ],
+      "dir": "<LOCALAPPDATA>\\JianyingPro\\Apps\\11.8.0.14778",
+      "version": "11.8.0.14778"
+    },
+    "probe": {
+      "path": "<TEMP>\\jy-render-check\\out.mp4",
+      "bytes": 30294,
+      "duration": 1.020998,
+      "width": 320,
+      "height": 180,
+      "fps": 30.0,
+      "video_codec": "h264",
+      "audio": true
+    },
+    "expected_duration": 1.0,
+    "warnings": [
+      "剪映在导出期间回写或移动了草稿文件：draft_content.json；已保留导出前备份，交付前复核草稿内容。"
+    ]
+  },
+  "warnings": [
+    "剪映在导出期间回写或移动了草稿文件：draft_content.json；已保留导出前备份，交付前复核草稿内容。"
+  ],
+  "error": null
+}

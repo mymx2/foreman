@@ -1,0 +1,13 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "关键词高亮测试",
+  "canvas": {"width": 640, "height": 360, "fps": 30},
+  "tracks": [
+    {"type": "image", "name": "背景", "segments": [{"path": "black.png", "start": 0, "duration": 5}]},
+    {"type": "text", "name": "文字", "segments": [{
+      "text": "AI工具分享 AI时代", "start": 0.5, "duration": 4,
+      "font_size": 18, "color": "#FFFFFF", "y": 0,
+      "highlight": {"words": ["AI"], "color": "#FFD400", "bold": true}
+    }]}
+  ]
+}

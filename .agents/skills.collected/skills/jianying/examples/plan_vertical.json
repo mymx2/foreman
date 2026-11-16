@@ -1,0 +1,37 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "竖屏示例·封面标题字幕",
+  "canvas": {"width": 1080, "height": 1920, "fps": 30},
+  "tracks": [
+    {
+      "type": "video",
+      "name": "封面",
+      "segments": [
+        {"path": "media/cover.jpg", "start": 0, "duration": 5, "scale": 1}
+      ]
+    },
+    {
+      "type": "text",
+      "name": "标题",
+      "segments": [
+        {"text": "竖屏封面标题", "start": 0.3, "duration": 4.2, "font_size": 14,
+         "color": "#FFFFFF", "stroke_color": "#000000", "stroke_width": 0.06, "y": 0.12}
+      ]
+    },
+    {
+      "type": "text",
+      "name": "字幕",
+      "segments": [
+        {"text": "底部字幕示例", "start": 0.5, "duration": 4, "font_size": 7.5,
+         "color": "#FFFFFF", "stroke_color": "#000000", "stroke_width": 0.04, "y": -0.7}
+      ]
+    },
+    {
+      "type": "audio",
+      "name": "BGM",
+      "segments": [
+        {"path": "media/bgm.m4a", "start": 0, "duration": 5, "volume": 0.25}
+      ]
+    }
+  ]
+}

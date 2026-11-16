@@ -1,0 +1,55 @@
+{
+  "schema": "jianying-skill/v1",
+  "command": "render",
+  "ok": true,
+  "data": {
+    "path": "<TEMP>\\real-render-review-20261116-195123-2\\cli-mov.mov",
+    "bytes": 238419,
+    "format": "mov",
+    "request_id": "7b3aeac4-3373-48d5-9660-92bd10a47e8a",
+    "revision": "sha256:997a2f23aab0fc7ad719f292b70137633d80307e4f63d78a31249a647797651f",
+    "duration_ms": 828,
+    "export_elapsed_ms": 828,
+    "draft_sha256": "997a2f23aab0fc7ad719f292b70137633d80307e4f63d78a31249a647797651f",
+    "draft_sha256_before": "997a2f23aab0fc7ad719f292b70137633d80307e4f63d78a31249a647797651f",
+    "draft_sha256_after": "997a2f23aab0fc7ad719f292b70137633d80307e4f63d78a31249a647797651f",
+    "draft_mutated": false,
+    "draft_files_changed": [],
+    "draft_backups": [
+      "<TEMP>\\real-render-review-20261116-195123-2\\draft\\.jianying-backups\\render-draft_info.json.20261116-202224-44591-c9fcb6",
+      "<TEMP>\\real-render-review-20261116-195123-2\\draft\\.jianying-backups\\render-draft_meta_info.json.20261116-202224-44591-c9fcb6",
+      "<TEMP>\\real-render-review-20261116-195123-2\\draft\\.jianying-backups\\render-draft_content.json.20261116-202224-44591-c9fcb6",
+      "<TEMP>\\real-render-review-20261116-195123-2\\draft\\.jianying-backups\\render-attachment_editing.json.20261116-202224-44591-c9fcb6",
+      "<TEMP>\\real-render-review-20261116-195123-2\\draft\\.jianying-backups\\render-common_attachment.20261116-202224-44591-c9fcb6"
+    ],
+    "bridge": {
+      "version": "11.8.0",
+      "pid": 30692
+    },
+    "install": {
+      "exe_sha256": "bbe97bb4579418259962636e3935d05fe8d853e847b74897504f5022dab719c2",
+      "videoeditor": [
+        {
+          "name": "videoeditor.dll",
+          "sha256": "35d24d493d678eee9d8847d543ceae1dd136d5c51953333ad22213d9cb251fa0"
+        }
+      ],
+      "dir": "<LOCALAPPDATA>\\JianyingPro\\Apps\\11.8.0.14778",
+      "version": "11.8.0.14778"
+    },
+    "probe": {
+      "path": "<TEMP>\\real-render-review-20261116-195123-2\\cli-mov.mov",
+      "bytes": 238419,
+      "duration": 2.02,
+      "width": 320,
+      "height": 180,
+      "fps": 30.0,
+      "video_codec": "h264",
+      "audio": true
+    },
+    "expected_duration": 2.0,
+    "warnings": []
+  },
+  "warnings": [],
+  "error": null
+}

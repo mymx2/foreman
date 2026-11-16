@@ -1,0 +1,21 @@
+{
+  "app_baseline": "11.8.0",
+  "behavior_tested": "11.8.0",
+  "build_tested": "14778",
+  "supported": {
+    "min": "11.8.0",
+    "max": "11.8.0"
+  },
+  "draft_format": "plaintext",
+  "bridge": "native",
+  "skill_version": "1.2.4",
+  "changelog": "references/changelog.md",
+  "history_max": 3,
+  "undocumented_allow": [
+    "FAILED",
+    "PARSE_FAIL",
+    "NO_MATCH",
+    "SELF_TEST_FAILED",
+    "DOC_CODE_MISMATCH"
+  ]
+}

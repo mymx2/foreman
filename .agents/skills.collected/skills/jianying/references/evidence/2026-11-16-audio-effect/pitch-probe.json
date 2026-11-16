@@ -1,0 +1,14 @@
+[
+  {
+    "case": "current_material",
+    "peak_hz": 440.0,
+    "rms": 0.08779,
+    "note": "old material missing sub_type/path/param indexes"
+  },
+  {
+    "case": "fixed_material",
+    "peak_hz": 740.0,
+    "rms": 0.03705,
+    "note": "sub_type=0, path, audio_adjust_params with indexes"
+  }
+]

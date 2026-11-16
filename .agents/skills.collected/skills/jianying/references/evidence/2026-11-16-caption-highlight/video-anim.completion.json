@@ -1,0 +1,13 @@
+{
+  "draftSha256": "82192a38d4d6bb7fe8b538ff2983dfbbc8ec91b996f76a00dd775c4feef9a14b",
+  "format": "mp4",
+  "options": {},
+  "outputSha256": "3ff349fd9beff28973784bd660b2e6f4ef7c18b900f944a68d6b3e32b0fc9765",
+  "path": "<REPRO>/video-anim.mp4",
+  "requestId": "2ee42390-ccde-4d55-a438-c1eceebd451a",
+  "resolvedFormat": "mp4",
+  "revision": "sha256:82192a38d4d6bb7fe8b538ff2983dfbbc8ec91b996f76a00dd775c4feef9a14b",
+  "schema": "native-film-export-completion.v1",
+  "sizeBytes": 930624,
+  "snapshotId": "film-export-2ee42390-ccde-4d55-a438-c1eceebd451a"
+}

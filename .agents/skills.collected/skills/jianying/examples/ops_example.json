@@ -1,0 +1,9 @@
+{
+  "ops": [
+    {"op": "set_text", "segment": 3, "text": "改过的标题", "font_size": 12,
+     "color": "#FFFFFF", "stroke_width": 0.05},
+    {"op": "set_volume", "segment": 2, "volume": 0.2},
+    {"op": "shift", "segment": 3, "start": 0.5},
+    {"op": "trim", "segment": 3, "duration": 3}
+  ]
+}

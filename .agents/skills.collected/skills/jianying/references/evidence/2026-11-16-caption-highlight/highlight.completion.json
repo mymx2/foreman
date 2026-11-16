@@ -1,0 +1,13 @@
+{
+  "draftSha256": "b45a7d2d7f55a16dd1b4bc97d0b7c92acde0af55117668c75828d42f850be972",
+  "format": "mp4",
+  "options": {},
+  "outputSha256": "927f70179d5995f2f9fa33ba656c4789f7c5e7e43bf745a486909cdc6f80c037",
+  "path": "<REPRO>/highlight.mp4",
+  "requestId": "262a3220-dbe3-4d35-a613-c27c9a9c8639",
+  "resolvedFormat": "mp4",
+  "revision": "sha256:b45a7d2d7f55a16dd1b4bc97d0b7c92acde0af55117668c75828d42f850be972",
+  "schema": "native-film-export-completion.v1",
+  "sizeBytes": 69906,
+  "snapshotId": "film-export-262a3220-dbe3-4d35-a613-c27c9a9c8639"
+}

@@ -1,0 +1,9 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "render-check",
+  "canvas": {"width": 320, "height": 180, "fps": 30},
+  "tracks": [
+    {"type": "video", "segments": [{"path": "src.mp4", "start": 0, "duration": 1.0}]},
+    {"type": "text", "segments": [{"text": "RENDER OK", "start": 0.1, "duration": 0.8, "y": 0}]}
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "audio-channel-left-probe",
+  "canvas": {"width": 320, "height": 180, "fps": 30},
+  "tracks": [
+    {
+      "type": "video",
+      "segments": [
+        {"path": "D:\\data\\123\\jy-fullcap-smoke\\bg.mp4", "start": 0, "duration": 2}
+      ]
+    },
+    {
+      "type": "audio",
+      "segments": [
+        {
+          "path": "C:\\Users\\37021\\AppData\\Local\\Temp\\jy-feature-probe\\stereo.m4a",
+          "start": 0,
+          "duration": 2,
+          "volume": 1.0,
+          "channel": 1
+        }
+      ]
+    }
+  ]
+}

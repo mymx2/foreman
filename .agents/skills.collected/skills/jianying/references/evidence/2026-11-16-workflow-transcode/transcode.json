@@ -1,0 +1,25 @@
+{
+  "schema": "jianying-skill/v1",
+  "command": "transcode",
+  "ok": true,
+  "data": {
+    "input": "<TEMP>\\new-features\\main.mp4",
+    "output": "<TEMP>\\new-features\\transcode.mp4",
+    "video_bitrate": "500k",
+    "audio_bitrate": "96k",
+    "fps": null,
+    "probe": {
+      "path": "<TEMP>\\new-features\\transcode.mp4",
+      "bytes": 86879,
+      "duration": 2.0,
+      "width": 320,
+      "height": 180,
+      "fps": 30.0,
+      "video_codec": "h264",
+      "audio": false
+    },
+    "note": "本命令用本机 ffmpeg 转码，不是剪映原生码率参数"
+  },
+  "warnings": [],
+  "error": null
+}

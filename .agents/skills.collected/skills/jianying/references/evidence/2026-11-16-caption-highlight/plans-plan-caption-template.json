@@ -1,0 +1,21 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "caption_template 测试",
+  "canvas": {"width": 1280, "height": 720, "fps": 30},
+  "tracks": [
+    {"type": "video", "name": "主轨", "segments": [{"path": "clip-60s.mp4", "start": 0, "duration": 60}]},
+    {"type": "text", "name": "字幕", "segments": [{
+      "text": "这是字幕模板测试",
+      "start": 1,
+      "duration": 3,
+      "y": -0.7,
+      "caption_template": {"resource_ref": "白字黑边", "resources": []},
+      "caption_info": {
+        "id": "caption-1", "speaker_type": "", "speaker_id": "",
+        "caption_segment_id": "seg-1", "original_text": "这是字幕模板测试",
+        "words": [{"id": "word-1", "text": "这是字幕模板测试", "tag": "", "origin_text": "这是字幕模板测试",
+                   "time_range": {"start": 0, "duration": 3000000}}]
+      }
+    }]}
+  ]
+}

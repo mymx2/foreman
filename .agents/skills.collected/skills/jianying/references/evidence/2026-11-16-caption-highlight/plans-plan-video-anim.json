@@ -1,0 +1,11 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "视频动画资源测试",
+  "canvas": {"width": 1280, "height": 720, "fps": 30},
+  "tracks": [
+    {"type": "image", "name": "画面", "segments": [{
+      "path": "colorful.png", "start": 0, "duration": 5,
+      "animations": [{"type": "in", "resource_ref": "翻入", "duration": 1.17}]
+    }]}
+  ]
+}

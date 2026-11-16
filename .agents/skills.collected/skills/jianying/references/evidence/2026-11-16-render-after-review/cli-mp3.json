@@ -1,0 +1,59 @@
+{
+  "schema": "jianying-skill/v1",
+  "command": "render",
+  "ok": true,
+  "data": {
+    "path": "<TEMP>\\real-render-review-audio-202152\\cli-mp3.mp3",
+    "bytes": 49578,
+    "format": "mp3",
+    "request_id": "a09da7bb-593d-4dbd-9a51-86c5211cd667",
+    "revision": "sha256:278df3027ab9169f204dc15175c720b8488c32d456e172bf6c185a7a13aaf1c0",
+    "duration_ms": 312,
+    "export_elapsed_ms": 312,
+    "draft_sha256": "278df3027ab9169f204dc15175c720b8488c32d456e172bf6c185a7a13aaf1c0",
+    "draft_sha256_before": "278df3027ab9169f204dc15175c720b8488c32d456e172bf6c185a7a13aaf1c0",
+    "draft_sha256_after": "278df3027ab9169f204dc15175c720b8488c32d456e172bf6c185a7a13aaf1c0",
+    "draft_mutated": false,
+    "draft_files_changed": [],
+    "draft_backups": [
+      "<TEMP>\\real-render-review-audio-202152\\draft\\.jianying-backups\\render-draft_info.json.20261116-202226-46107-b8b4b8",
+      "<TEMP>\\real-render-review-audio-202152\\draft\\.jianying-backups\\render-draft_meta_info.json.20261116-202226-46107-b8b4b8",
+      "<TEMP>\\real-render-review-audio-202152\\draft\\.jianying-backups\\render-draft_content.json.20261116-202226-46107-b8b4b8",
+      "<TEMP>\\real-render-review-audio-202152\\draft\\.jianying-backups\\render-attachment_editing.json.20261116-202226-46107-b8b4b8",
+      "<TEMP>\\real-render-review-audio-202152\\draft\\.jianying-backups\\render-common_attachment.20261116-202226-46107-b8b4b8"
+    ],
+    "bridge": {
+      "version": "11.8.0",
+      "pid": 30692
+    },
+    "install": {
+      "exe_sha256": "bbe97bb4579418259962636e3935d05fe8d853e847b74897504f5022dab719c2",
+      "videoeditor": [
+        {
+          "name": "videoeditor.dll",
+          "sha256": "35d24d493d678eee9d8847d543ceae1dd136d5c51953333ad22213d9cb251fa0"
+        }
+      ],
+      "dir": "<LOCALAPPDATA>\\JianyingPro\\Apps\\11.8.0.14778",
+      "version": "11.8.0.14778"
+    },
+    "probe": {
+      "path": "<TEMP>\\real-render-review-audio-202152\\cli-mp3.mp3",
+      "bytes": 49578,
+      "duration": 2.063892,
+      "width": 0,
+      "height": 0,
+      "fps": 0.0,
+      "video_codec": null,
+      "audio": true
+    },
+    "expected_duration": 2.0,
+    "warnings": [
+      "输出没有视频流（音频格式正常）；需要画面请换 mp4/mov/gif。"
+    ]
+  },
+  "warnings": [
+    "输出没有视频流（音频格式正常）；需要画面请换 mp4/mov/gif。"
+  ],
+  "error": null
+}

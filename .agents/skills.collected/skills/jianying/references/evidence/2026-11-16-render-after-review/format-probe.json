@@ -1,0 +1,120 @@
+[
+  {
+    "format": "mp4",
+    "status": 200,
+    "payload": {
+      "ok": true,
+      "path": "<TEMP>\\real-render-review-20261116-195123-2\\format-b71997-mp4.mp4",
+      "format": "mp4"
+    },
+    "exists": true,
+    "bytes": 238304,
+    "draft_kind": "video"
+  },
+  {
+    "format": "mov",
+    "status": 200,
+    "payload": {
+      "ok": true,
+      "path": "<TEMP>\\real-render-review-20261116-195123-2\\format-b71997-mov.mov",
+      "format": "mov"
+    },
+    "exists": true,
+    "bytes": 238419,
+    "draft_kind": "video"
+  },
+  {
+    "format": "gif",
+    "status": 200,
+    "payload": {
+      "ok": true,
+      "path": "<TEMP>\\real-render-review-20261116-195123-2\\format-b71997-gif.gif",
+      "format": "gif"
+    },
+    "exists": true,
+    "bytes": 508389,
+    "draft_kind": "video"
+  },
+  {
+    "format": "mp3",
+    "status": 409,
+    "payload": {
+      "ok": false,
+      "error": "film_export_no_audio"
+    },
+    "exists": false,
+    "bytes": null,
+    "draft_kind": "video"
+  },
+  {
+    "format": "wav",
+    "status": 409,
+    "payload": {
+      "ok": false,
+      "error": "film_export_no_audio"
+    },
+    "exists": false,
+    "bytes": null,
+    "draft_kind": "video"
+  },
+  {
+    "format": "mp4",
+    "status": 200,
+    "payload": {
+      "ok": true,
+      "path": "<TEMP>\\real-render-review-audio-202152\\format-7db242-mp4.mp4",
+      "format": "mp4"
+    },
+    "exists": true,
+    "bytes": 55714,
+    "draft_kind": "audio"
+  },
+  {
+    "format": "mov",
+    "status": 200,
+    "payload": {
+      "ok": true,
+      "path": "<TEMP>\\real-render-review-audio-202152\\format-7db242-mov.mov",
+      "format": "mov"
+    },
+    "exists": true,
+    "bytes": 55803,
+    "draft_kind": "audio"
+  },
+  {
+    "format": "gif",
+    "status": 200,
+    "payload": {
+      "ok": true,
+      "path": "<TEMP>\\real-render-review-audio-202152\\format-7db242-gif.gif",
+      "format": "gif"
+    },
+    "exists": true,
+    "bytes": 11987,
+    "draft_kind": "audio"
+  },
+  {
+    "format": "mp3",
+    "status": 200,
+    "payload": {
+      "ok": true,
+      "path": "<TEMP>\\real-render-review-audio-202152\\format-7db242-mp3.mp3",
+      "format": "mp3"
+    },
+    "exists": true,
+    "bytes": 49578,
+    "draft_kind": "audio"
+  },
+  {
+    "format": "wav",
+    "status": 200,
+    "payload": {
+      "ok": true,
+      "path": "<TEMP>\\real-render-review-audio-202152\\format-7db242-wav.wav",
+      "format": "wav"
+    },
+    "exists": true,
+    "bytes": 356430,
+    "draft_kind": "audio"
+  }
+]

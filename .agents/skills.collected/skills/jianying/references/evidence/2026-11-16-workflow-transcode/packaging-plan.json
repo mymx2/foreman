@@ -1,0 +1,102 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "包装预设",
+  "canvas": {
+    "width": 320,
+    "height": 180,
+    "fps": 30.0
+  },
+  "tracks": [
+    {
+      "type": "video",
+      "name": "主轨",
+      "segments": [
+        {
+          "path": "main.mp4",
+          "start": 0,
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "标题",
+      "segments": [
+        {
+          "text": "自动字幕",
+          "start": 0.5,
+          "duration": 2.0,
+          "font_size": 16,
+          "color": "#FFD400",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": 0.2
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "字幕",
+      "segments": [
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "第一句",
+          "start": 0.0,
+          "duration": 1.0,
+          "caption_info": {
+            "id": "caption-1",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-1",
+            "original_text": "第一句",
+            "words": [
+              {
+                "id": "word-1",
+                "text": "第一句",
+                "tag": "",
+                "origin_text": "第一句",
+                "time_range": {
+                  "start": 0,
+                  "duration": 1000000
+                }
+              }
+            ]
+          }
+        },
+        {
+          "font_size": 8,
+          "color": "#FFFFFF",
+          "stroke_color": "#000000",
+          "stroke_width": 0.05,
+          "y": -0.72,
+          "text": "第二句",
+          "start": 1.2,
+          "duration": 0.8,
+          "caption_info": {
+            "id": "caption-2",
+            "speaker_type": "",
+            "speaker_id": "",
+            "caption_segment_id": "segment-2",
+            "original_text": "第二句",
+            "words": [
+              {
+                "id": "word-2",
+                "text": "第二句",
+                "tag": "",
+                "origin_text": "第二句",
+                "time_range": {
+                  "start": 0,
+                  "duration": 800000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

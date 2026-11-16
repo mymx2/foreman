@@ -1,0 +1,8 @@
+{
+  "observed_at": "2026-11-15",
+  "command": "python scripts/jy.py render <draft-sticker> -o <sticker-real.mp4>",
+  "draft": "C:\\Users\\37021\\AppData\\Local\\Temp\\jy-feature-probe\\draft-sticker",
+  "resource_id": "7675620818189077810",
+  "exit_code": 1,
+  "stdout": "{\r\n  \"schema\": \"jianying-skill/v1\",\r\n  \"command\": \"render\",\r\n  \"ok\": false,\r\n  \"data\": null,\r\n  \"warnings\": [],\r\n  \"error\": {\r\n    \"code\": \"film_export_entitlement_denied\",\r\n    \"message\": \"剪映拒绝导出：草稿里有需要会员/授权的素材。\",\r\n    \"retriable\": false,\r\n    \"details\": {\r\n      \"status\": 409,\r\n      \"native_error\": \"film_export_entitlement_denied\"\r\n    },\r\n    \"fix\": \"最常见原因是文字素材 type=\\\"subtitle\\\"（被当作 AI 字幕）。把文字素材改成 type=\\\"text\\\"；其次检查是否引用了会员字体、会员特效/转场。\"\r\n  }\r\n}\r\n"
+}

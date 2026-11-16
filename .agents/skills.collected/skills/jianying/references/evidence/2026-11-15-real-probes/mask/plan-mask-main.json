@@ -1,0 +1,25 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "mask-main-probe",
+  "canvas": {"width": 320, "height": 180, "fps": 30},
+  "tracks": [
+    {
+      "type": "video",
+      "name": "base",
+      "segments": [
+        {
+          "path": "D:\\data\\123\\jy-fullcap-smoke\\clip.mp4",
+          "start": 0,
+          "duration": 2,
+          "mask": {
+            "resource_type": "circle",
+            "resource_id": "82432977",
+            "name": "圆形",
+            "path": "C:\\Users\\37021\\AppData\\Local\\JianyingPro\\User Data\\Cache\\effect\\82432977\\3ab1c47350d987c8ad415497e020a38b",
+            "config": {}
+          }
+        }
+      ]
+    }
+  ]
+}

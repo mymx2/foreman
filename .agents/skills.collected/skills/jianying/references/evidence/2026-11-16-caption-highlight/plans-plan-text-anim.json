@@ -1,0 +1,13 @@
+{
+  "schema": "jianying-plan/v1",
+  "name": "文字动画资源测试",
+  "canvas": {"width": 640, "height": 360, "fps": 30},
+  "tracks": [
+    {"type": "image", "name": "背景", "segments": [{"path": "black.png", "start": 0, "duration": 5}]},
+    {"type": "text", "name": "文字", "segments": [{
+      "text": "打字动画", "start": 0.5, "duration": 4,
+      "font_size": 18, "color": "#FFFFFF", "y": 0,
+      "animations": [{"type": "in", "resource_ref": "变色输入", "duration": 1.5}]
+    }]}
+  ]
+}

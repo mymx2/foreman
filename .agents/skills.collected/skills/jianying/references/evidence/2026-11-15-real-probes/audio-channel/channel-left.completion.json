@@ -1,0 +1,13 @@
+{
+  "draftSha256": "bf14f146e0d7d21a668b6e5cc8dcf226aa9c6280cfb718491db2f71ad1bd3ac4",
+  "format": "mp4",
+  "options": {},
+  "outputSha256": "02f684564c572eb003ee942244cac4a88d316ee2f042aabe54d49a7811c590f0",
+  "path": "C:\\Users\\37021\\AppData\\Local\\Temp\\jy-feature-probe\\channel-left.mp4",
+  "requestId": "5e62eb82-4cb7-4993-8f98-e44d833f0e28",
+  "resolvedFormat": "mp4",
+  "revision": "sha256:bf14f146e0d7d21a668b6e5cc8dcf226aa9c6280cfb718491db2f71ad1bd3ac4",
+  "schema": "native-film-export-completion.v1",
+  "sizeBytes": 371541,
+  "snapshotId": "film-export-5e62eb82-4cb7-4993-8f98-e44d833f0e28"
+}
