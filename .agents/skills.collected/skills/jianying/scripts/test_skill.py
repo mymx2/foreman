@@ -49,6 +49,7 @@ from jylib.errors import SkillError  # noqa: E402
 import capability_probe as capability_mod  # noqa: E402
 import check_skill as check_skill_mod  # noqa: E402
 import jy as jy_mod  # noqa: E402
+import upgrade_check as upgrade_mod  # noqa: E402
 
 
 def write_json(path: Path, value) -> None:
@@ -3967,6 +3968,239 @@ class AuditFixTests(unittest.TestCase):
         failed = mock.Mock(stdout="", returncode=1)
         with mock.patch.object(index_mod.subprocess, "run", return_value=failed):
             self.assertEqual(index_mod._ensure_editor_closed(), "unknown")
+
+
+class UpgradeCheckTests(unittest.TestCase):
+    """升级体检：版本窗口 + 能力矩阵漂移，不联网、不自替换。"""
+
+    VERSION = {
+        "app_baseline": "11.8.0",
+        "behavior_tested": "11.8.0",
+        "build_tested": "14778",
+        "supported": {"min": "11.8.0", "max": "11.8.0"},
+        "skill_version": "1.2.5",
+    }
+
+    def _policy(self, status, note=""):
+        return {
+            "status": status, "note": note,
+            "install_version": "11.8.0.14778", "install_build": "14778",
+            "in_range": status != "unsupported",
+            "behavior_match": status == "verified",
+            "build_match": True,
+        }
+
+    def test_verified_without_drift_is_ok(self):
+        report = upgrade_mod.build_report(
+            self.VERSION, {"version": "11.8.0.14778"},
+            self._policy("verified"), {"draft.build": "implemented"})
+        self.assertEqual(report["status"], "ok")
+        self.assertEqual(report["exit_code"], 0)
+        self.assertEqual(report["drift"]["capabilities"], [])
+
+    def test_unsupported_requires_migration_checklist(self):
+        report = upgrade_mod.build_report(
+            self.VERSION, {"version": "11.9.0.14778"},
+            self._policy("unsupported", "install 11.9.0 超出 supported"),
+            {"draft.build": "implemented"})
+        self.assertEqual(report["status"], "attention")
+        self.assertEqual(report["exit_code"], 10)
+        self.assertTrue(any("history" in item for item in report["checklist"]))
+        self.assertTrue(any("build → render → verify" in item
+                            for item in report["checklist"]))
+
+    def test_capability_drift_reported(self):
+        baseline = {
+            "schema": upgrade_mod.SCHEMA,
+            "install": {"version": "11.8.0.14778"},
+            "capabilities": {"a": "implemented", "b": "conditional"},
+        }
+        report = upgrade_mod.build_report(
+            self.VERSION, {"version": "11.8.0.14778"},
+            self._policy("verified"),
+            {"a": "implemented", "b": "unverified", "c": "planned"},
+            baseline=baseline)
+        self.assertEqual(report["status"], "attention")
+        self.assertEqual(
+            [(item["id"], item["baseline"], item["current"])
+             for item in report["drift"]["capabilities"]],
+            [("b", "conditional", "unverified"), ("c", None, "planned")])
+
+    def test_save_and_load_baseline_roundtrip(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "baseline.json"
+            report = upgrade_mod.build_report(
+                self.VERSION, {"version": "11.8.0.14778"},
+                self._policy("verified"), {"draft.build": "implemented"})
+            saved = upgrade_mod.save_report(path, report)
+            self.assertEqual(saved, str(path))
+            loaded = upgrade_mod.load_baseline(path)
+            self.assertEqual(loaded["capabilities"], {"draft.build": "implemented"})
+            self.assertEqual(loaded["install"]["version"], "11.8.0.14778")
+            with self.assertRaises(SkillError) as caught:
+                upgrade_mod.save_report(path, report)
+            self.assertEqual(caught.exception.code, "OUTPUT_EXISTS")
+
+    def test_install_version_drift_reported(self):
+        baseline = {
+            "schema": upgrade_mod.SCHEMA,
+            "install": {"version": "11.8.0.14778"},
+            "capabilities": {"a": "implemented"},
+        }
+        report = upgrade_mod.build_report(
+            self.VERSION, {"version": "11.8.0.15000"},
+            self._policy("verified"), {"a": "implemented"},
+            baseline=baseline)
+        self.assertEqual(report["status"], "attention")
+        self.assertEqual(report["drift"]["install"],
+                         {"baseline": "11.8.0.14778",
+                          "current": "11.8.0.15000"})
+
+    def test_probe_failure_is_not_reported_as_capability_drift(self):
+        baseline = {
+            "schema": upgrade_mod.SCHEMA,
+            "install": {"version": "11.8.0.14778"},
+            "capabilities": {"a": "implemented"},
+        }
+        report = upgrade_mod.build_report(
+            self.VERSION, {"version": "11.8.0.14778"},
+            self._policy("verified"), {}, baseline=baseline,
+            capability_errors=["probe boom"])
+        self.assertEqual(report["drift"]["capabilities"], [])
+        self.assertTrue(any("能力探测失败" in reason
+                            for reason in report["reasons"]))
+        self.assertTrue(any("probe" in item for item in report["checklist"]))
+
+    def test_load_baseline_rejects_bad_types_and_unc(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad.json"
+            for payload in (
+                    {"schema": upgrade_mod.SCHEMA, "capabilities": []},
+                    {"schema": upgrade_mod.SCHEMA, "capabilities": {"a": 1}},
+                    {"schema": upgrade_mod.SCHEMA, "capabilities": {},
+                     "install": "x"}):
+                path.write_text(json.dumps(payload), "utf-8")
+                with self.assertRaises(SkillError) as caught:
+                    upgrade_mod.load_baseline(path)
+                self.assertEqual(caught.exception.code, "VALIDATION")
+        with self.assertRaises(SkillError) as caught:
+            upgrade_mod.load_baseline(r"\\10.0.0.5\share\b.json")
+        self.assertEqual(caught.exception.code, "UNSAFE_PATH")
+
+    def test_save_refuses_foreign_or_directory_target(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            report = upgrade_mod.build_report(
+                self.VERSION, {"version": "11.8.0.14778"},
+                self._policy("verified"), {"a": "implemented"})
+            foreign = Path(tmp) / "version.json"
+            foreign.write_text('{"x":1}', "utf-8")
+            with self.assertRaises(SkillError) as caught:
+                upgrade_mod.save_report(foreign, report, force=True)
+            self.assertEqual(caught.exception.code, "VALIDATION")
+            self.assertEqual(foreign.read_text("utf-8"), '{"x":1}')
+            with self.assertRaises(SkillError) as caught:
+                upgrade_mod.save_report(Path(tmp), report, force=True)
+            self.assertEqual(caught.exception.code, "VALIDATION")
+
+    def test_main_save_failure_returns_error_envelope(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(
+                    env_mod, "find_install",
+                    return_value={"dir": "C:/fake",
+                                  "version": "11.8.0.14778"}), \
+                    mock.patch.object(env_mod, "version_policy",
+                                      return_value=self._policy("verified")), \
+                    mock.patch.object(upgrade_mod.cap_mod, "probe",
+                                      return_value={"capabilities": [
+                                          {"id": "draft.build",
+                                           "status": "implemented"}]}), \
+                    mock.patch.object(
+                        upgrade_mod, "save_report",
+                        side_effect=SkillError(
+                            "写入失败", code="OUTPUT_WRITE_FAILED")), \
+                    contextlib.redirect_stdout(io.StringIO()) as out:
+                code = upgrade_mod.main(
+                    ["--save", str(Path(tmp) / "baseline.json")])
+        self.assertEqual(code, 2)
+        payload = json.loads(out.getvalue())
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["error"]["code"], "OUTPUT_WRITE_FAILED")
+
+    def test_main_refuses_saving_empty_capabilities(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "baseline.json"
+            with mock.patch.object(
+                    env_mod, "find_install",
+                    return_value={"dir": "C:/fake",
+                                  "version": "11.8.0.14778"}), \
+                    mock.patch.object(env_mod, "version_policy",
+                                      return_value=self._policy("verified")), \
+                    mock.patch.object(upgrade_mod.cap_mod, "probe",
+                                      return_value={"capabilities": []}), \
+                    contextlib.redirect_stdout(io.StringIO()) as out:
+                code = upgrade_mod.main(["--save", str(target)])
+            self.assertEqual(code, 2)
+            self.assertFalse(json.loads(out.getvalue())["ok"])
+            self.assertFalse(target.exists())
+
+    def test_runtime_environment_is_not_capability_drift(self):
+        baseline = {
+            "schema": upgrade_mod.SCHEMA,
+            "skill_version": "1.2.5",
+            "install": {"version": "11.8.0.14778"},
+            "capabilities": {"export.render": "conditional"},
+        }
+        report = upgrade_mod.build_report(
+            self.VERSION, {"version": "11.8.0.14778"},
+            self._policy("verified"), {"export.render": "conditional"},
+            baseline=baseline,
+            runtime_capabilities={"export.render": "implemented"})
+        self.assertEqual(report["drift"]["capabilities"], [])
+        self.assertEqual(report["runtime_capabilities"],
+                         {"export.render": "implemented"})
+        self.assertEqual(report["status"], "ok")
+
+    def test_baseline_skill_version_mismatch_is_attention(self):
+        baseline = {
+            "schema": upgrade_mod.SCHEMA,
+            "skill_version": "1.2.4",
+            "install": {"version": "11.8.0.14778"},
+            "capabilities": {"a": "implemented"},
+        }
+        report = upgrade_mod.build_report(
+            self.VERSION, {"version": "11.8.0.14778"},
+            self._policy("verified"), {"a": "implemented"},
+            baseline=baseline)
+        self.assertEqual(report["status"], "attention")
+        self.assertTrue(any("重新留基线" in reason
+                            for reason in report["reasons"]))
+
+    def test_without_baseline_reports_no_comparison(self):
+        report = upgrade_mod.build_report(
+            self.VERSION, {"version": "11.8.0.14778"},
+            self._policy("verified"), {"a": "implemented"})
+        self.assertFalse(report["baseline_compared"])
+        self.assertEqual(report["status"], "ok")
+        self.assertTrue(any("未提供 --baseline" in item
+                            for item in report["checklist"]))
+
+    def test_main_emits_json_and_attention_exit(self):
+        policy = self._policy("unsupported", "install 11.9.0 超出 supported")
+        with mock.patch.object(env_mod, "find_install",
+                               return_value={"dir": "C:/fake",
+                                             "version": "11.9.0.14778"}), \
+                mock.patch.object(env_mod, "version_policy",
+                                  return_value=policy), \
+                mock.patch.object(upgrade_mod.cap_mod, "probe",
+                                  return_value={"capabilities": [
+                                      {"id": "draft.build",
+                                       "status": "implemented"}]}), \
+                contextlib.redirect_stdout(io.StringIO()) as out:
+            code = upgrade_mod.main([])
+        self.assertEqual(code, 10)
+        payload = json.loads(out.getvalue())
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["data"]["status"], "attention")
 
 
 if __name__ == "__main__":

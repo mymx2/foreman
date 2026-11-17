@@ -1,8 +1,8 @@
 # 维护与更新
 
-`jianying` 由本仓（rbz-one）本地维护，不走 skills.sh 一键安装，也没有远程更新器。
-升级 = 修改仓库文件 → 跑离线自检 → 在真实剪映上复验 → 更新版本基线。不要伪造
-`update.py` / 远程清单：没有上游发布源，自动更新只会制造不可核对的链路。
+`jianying` 由本仓（rbz-one）维护，不走 skills.sh 一键安装；技能里**不内置自替换更新器**，
+下游按本仓的分发方式自行 git 同步整包。本文件里的“升级”指**剪映版本基线迁移**，不是技能包自更新；
+不要在技能内伪造 `update.py` / 远程清单，避免和仓库分发形成两条不可核对的链路。
 
 ## 修改前
 
@@ -49,6 +49,17 @@ missing_resource / host_only / account_gated / manual，见脚本 legend）；
 - 换剪映版本后，先在临时草稿上跑 `build → render → verify`，再把新结论写进
   `version.json` 和 [能力边界](limits.md)；没跑过就不要改 `supported`。完整流程见
   [版本升级与迁移](upgrading.md)。
+
+## 剪映升级时
+
+1. 升级前留基线：`python scripts/upgrade_check.py --save <baseline.json>`；
+   只读、不访问外网（会查本机回环 bridge health），能力探测约 5–8 秒，`--save` 才写文件。
+   基线建议放仓库外本地路径，或 `references/evidence/upgrade-baselines/<日期>.json` 归档；
+   不要写进 `scripts/`。
+2. 升级后对比：`python scripts/upgrade_check.py --baseline <baseline.json>`；
+   `exit_code=10` 表示窗口外/未对齐/能力漂移/探测失败，按输出 checklist 处理。
+   在真机复验并更新 `version.json` 之前，10 属预期，不要为了消红提前改窗口。
+3. 真机复验后再改 `version.json` / `limits.md`，流程见 [版本升级与迁移](upgrading.md)。
 
 ## 版本一致性
 

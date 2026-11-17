@@ -2,7 +2,7 @@
 name: jianying
 description: 在 Windows 上驱动剪映专业版（JianyingPro）完成可复现的剪辑、合成、特效、音频、字幕与交付：生成多轨明文草稿（视频/图片/文字/字幕/BGM/关键帧/变速/音量/裁剪/翻转/倒放/蒙版/曲线变速/色轮/文字动画/文字背景阴影/贴纸/画面特效/音频淡入淡出）、读取与修改已有明文草稿、调用剪映原生引擎导出视频/音频/动图（mp4/mov/gif/mp3/wav/aac/flac/aiff/ogg）、ffprobe 与抽帧验收，以及把草稿登记到剪映首页。草稿自带可递进的版本链（快照、结构 diff、恢复新分支），不是一次性成片。也包含剪映本地 Paraformer ASR、SRT 生成/规范化/校验、SRT 入轨与版本化编辑、硬字幕烧录工具，以及只读能力矩阵/资源预检（区分已实现、未验收、资源缺失、宿主专属、账号受限）。用户提到剪映、JianyingPro、剪映草稿、draft_info.json、剪映导出/渲染、剪映字幕、本地 ASR、识别字幕、SRT 对齐、SRT 入轨、字幕版本、剪映多轨、关键帧、变速、BGM、裁剪、蒙版、曲线变速、文字动画、文字背景、贴纸、画面特效、音频淡入淡出、修改剪映草稿、剪映多版本/版本回退、把草稿放进剪映首页、剪映能力/支持哪些效果时使用。未在非 11.8 版本验证；不适用于剪映模板创作、AI 成片、云端素材下载、会员素材解锁、手机端剪映、CapCut 国际版。
 when_to_use: 剪映, 剪映专业版, JianyingPro, 剪映草稿, draft_info.json, 剪映导出, 剪映渲染, 剪映字幕, 本地 ASR, 识别字幕, SRT, SRT 入轨, 字幕版本, 字幕对齐, 字幕烧录, 剪映多轨, 剪映 BGM, 关键帧, 变速, 裁剪, 蒙版, 曲线变速, 文字动画, 文字背景, 贴纸, 画面特效, 音频淡入淡出, 修改剪映草稿, 剪映版本, 剪映多版本, 版本回退, 版本 diff, 剪映首页登记
-version: 1.2.4
+version: 1.2.5
 updated: 2026-11-17
 ---
 
@@ -361,5 +361,6 @@ python scripts/run_examples.py
 | `scripts/check_docs.py` | 文档↔代码一致性自检（错误码/动词/版本基线/脚本引用） |
 | `scripts/probe_gotchas.py` | 可执行踩坑探针（UTF-8/UNC/白名单/校验/暂存清理/索引 id/`init-present`/ffmpeg 能力诚实性） |
 | `scripts/capability_probe.py` | 只读能力探测：已实现/未验收/计划/资源/宿主/账号六类状态 |
+| `scripts/upgrade_check.py` | 只读升级体检：安装版本/能力矩阵对比基线，生成迁移清单；不访问外网、不自替换，`--save` 才写文件 |
 | `scripts/run_examples.py` | 编号案例 runner（examples/NN-*.py，PASS/FAIL/SKIP） |
 | `references/version.json` | 机器可读版本基线（app/build/supported），与 limits.md 对齐 |
