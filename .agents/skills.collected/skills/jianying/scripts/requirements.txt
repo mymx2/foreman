@@ -1,5 +1,7 @@
 # 核心功能只依赖 Python 标准库（3.9+）；本地 ASR 是可选能力：
 #   pip install numpy onnxruntime kaldi-native-fbank
+# ITN（--itn，数字/日期规范化）另需：
+#   pip install kaldifst
 # 不安装时除 srt.from-local-asr 外的命令仍可运行。
 #
 # 外部程序：

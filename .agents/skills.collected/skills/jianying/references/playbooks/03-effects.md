@@ -56,7 +56,7 @@
 - 值 -1..1；写 `materials.primary_color_wheels`；
 - `hsl:true` 时同时写 `materials.hsl` 伴随材质（HSL 本身未生效，见下）；
 - 2026-11-15 真机 `gamma red=0.5` 导出抽帧与无调色帧一致，11.8 未观察到像素变化；不要承诺色轮效果；
-  证据在 [`evidence/2026-11-15-real-probes/wheel/`](../evidence/2026-11-15-real-probes/wheel/)。
+  证据已移出仓库。
 
 ## 5. 曲线变速
 
@@ -70,7 +70,7 @@
 - `points` 至少 2 点；`x` 0..1 单调不减；`y` 为正；
 - 写 `materials.speeds` 的 `{type:"speed", mode:1, speed:avg, curve_speed:{...}}`；
 - 片段 `speed` 会被曲线平均速度覆盖；
-- 曲线像素未抽帧，导出后看速度变化。
+- 2026-11-18 已真机抽帧验收：3 秒曲线段白块 1s `0.203` / 2s `0.547`，线性对照 `0.172` / `0.328`；target/source 时长仍按线性计算。
 
 ## 6. 调色：当前边界
 

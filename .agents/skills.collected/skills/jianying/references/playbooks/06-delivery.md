@@ -50,6 +50,8 @@ python scripts/jy.py render <draft> -o <out.mp4> --timeout 300
 - 只对**明文** `draft_info.json` 导出；
 - 输出已存在默认拒绝，`--force` 需用户授权；
 - 执行前备份草稿文件；回执看 `draft_mutated`、`draft_files_changed`、`draft_sha256_before/after`；
+- 草稿含 `chroma`/`beauty`/`mix_mode` 时，bridge 只导出未应用版本；这三项成片必须走剪映界面导出，
+  `render` 的 warning 只是在提醒，不代表效果已生效；
 - 成功后 MP4 路径、字节数和 ffprobe 时长写入当前版本的 `exports`；没有版本历史时回执带 warning，
   先 `version snapshot` 再导出；
 - 错误码按 [bridge-protocol](../bridge-protocol.md) 处理，不并发轰炸。
@@ -97,9 +99,9 @@ python scripts/jy.py register <draft> --apply
 - 音频任务 `volumedetect` 数字或听感；
 - SRT 的 `lines`/`issues`；
 - publish 的 `action/applied/backup/verified`；
-- 未验证项（`adjust`/`freeze`/HSL/绿幕/花字/气泡/加密草稿/导出参数）。
-- 真机探针的仓库内可复核证据在 [`references/evidence/2026-11-15-real-probes/`](../evidence/2026-11-15-real-probes/README.md)；
-  它不包含源素材/缓存包/登录态，交付时引用相对路径，不引用本机 `%TEMP%`，并说明“仓库内可复核”而非“换机端到端可复现”。
+- 未验证项/条件项（`adjust`/`freeze`/HSL/色轮/花字/气泡/加密草稿/导出参数；绿幕/美颜/混合模式标注为仅界面导出）。
+- 真机探针的可复核证据已移出仓库；
+  它不包含源素材/缓存包/登录态；交付时引用仓库外归档编号/日期，不引用本机 `%TEMP%`，不声称“仓库内可复核”或“换机端到端可复现”。
 
 ## 7. 错误处理
 

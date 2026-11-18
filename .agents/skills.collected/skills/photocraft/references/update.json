@@ -1,7 +1,7 @@
 {
   "skill": "photocraft",
-  "version": "1.2.2",
-  "updated": "2026-11-05",
+  "version": "1.2.3",
+  "updated": "2026-11-19",
   "check_interval_days": 7,
   "severity": "normal",
   "cli_supported": {

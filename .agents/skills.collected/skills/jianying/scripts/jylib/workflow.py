@@ -147,7 +147,7 @@ def build_subtitle_draft(video, out, *, audio=None, srt=None, plan_out=None,
                          highlight_words=None, highlight_color="#FFD400",
                          model_dir=None, remove_fillers=False, fillers=None,
                          punctuate=False, max_chars=16, max_dur=5.0, gap=0.35,
-                         fetch_resources=False, force=False,
+                         fetch_resources=False, allow_http=False, force=False,
                          make_cover=True) -> dict:
     video_path = media_mod.local_path(video, field="视频路径").resolve()
     out_dir = media_mod.local_path(out, field="草稿输出目录")
@@ -185,7 +185,8 @@ def build_subtitle_draft(video, out, *, audio=None, srt=None, plan_out=None,
     warnings.extend(plan.get("warnings") or [])
     built = draft_mod.build(
         plan_path, out_dir, force=force, name=draft_name, make_cover=make_cover,
-        version_label="subtitle-workflow", fetch_resources=fetch_resources)
+        version_label="subtitle-workflow", fetch_resources=fetch_resources,
+        allow_http=allow_http)
     return {
         "srt": str(srt_path),
         "asr": asr_data,

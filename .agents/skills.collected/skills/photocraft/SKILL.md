@@ -2,8 +2,8 @@
 name: photocraft
 description: 驱动 PhotoCraft（开源、离线、兼容 Photoshop 的图像编辑器）完成可复现的修图与 PSD 自动化：通过 photocraft-cli、批处理与动作、serve 会话、MCP 或桌面控制通道执行注册表命令，覆盖调色、抠图换底、文字与形状、滤镜修复、模板批量出图、格式转换与切图导出、打印与打印 PDF、相机 RAW 显影、只读格式导入，以及 PSD 规范化、栅格排版和分层稿交付。当用户要用 PhotoCraft 或 photocraft-cli 处理图片或 PSD、批量处理一个目录、打印/出 PDF、显影 RAW、或把 PhotoCraft 接给 agent 与 MCP 客户端时使用。不适用于生成式 AI 绘图、RAW 图库管理（单张 RAW 显影是支持的）、网页 CSS 或 Figma 设计稿，以及没有安装 PhotoCraft 的环境。
 when_to_use: photocraft, photocraft-cli, PSD 自动化, 批量修图, 图片批处理, 抠图换背景, 电商白底图, 加水印, 调色与 LUT, 格式转换, 打印, 打印 PDF, 相机 RAW, RAW 显影, XCF 导入, 图层 XMP, 轮廓库, 切图导出, 多倍图, 文字居中, 栅格排版, PSD 规范化, PSD 复刻, 分层稿交付, 缺失字体, 动作与 Droplet, 模板批量出图, 截图打码, serve 会话, MCP 修图, 桌面控制通道
-version: 1.2.2
-updated: 2026-11-05
+version: 1.2.3
+updated: 2026-11-19
 metadata:
   update: references/update.json
 ---
@@ -17,6 +17,8 @@ metadata:
 **版本基线**：`references/version.json` 是唯一版本清单（`params_baseline` / `behavior_tested` / `supported`），支持窗口以它为准；`history/` 上限见 `version.json` 的 `history_max`，超出删最旧。当前文档只写当前行为；0.18→0.19 的迁移差异见 `references/upgrading.md`，0.14→0.18 与 0.12→0.14 冻结在 `references/history/`，升级/核对流程见 `references/maintenance.md`。低于 supported 下限不保证；正文标 `unverified` 的规则，先在支持窗口内验证再用。
 
 PhotoCraft 的绝大多数菜单动作、工具和对话框都对应注册表里的一条命令（条数随版本变，少数桌面菜单项不在注册表里）。CLI、`serve`、MCP、桌面控制通道调用的是同一份注册表，差别在文件权限、可用的方法和启动成本：CLI 每次 `run` 都是新进程并重新打开文档，`serve` 只打开一次、后续查询和编辑都在会话内完成。本技能负责：选对入口、查准参数、在副本上执行、逐项核对产出。`examples/` 里的 Python 场景脚本可以照着改；数量与结果以 `run_examples.py` 输出为准（案例 31 需要真实窗口，默认跳过）。PSD 工程类任务另有审计、比对、切图脚本。入口决策树与质量尺度见 `references/entrypoints.md`；打印见 `references/printing.md`；相机 RAW 见 `references/raw.md`；0.18→0.19 的变化见 `references/upgrading.md`，旧版本见 `references/history/`（仅用于升级旧稿）。
+
+**能力边界**：已安装的 0.23.1 注册表有 1009 条命令，参数面全量快照见 `references/registry/commands-0.23.1.md`（自动生成，冲突以它为准）。哪些工序能做到什么精度、哪些只是"注册表里有但行为未实跑"（`unverified`），以 `references/capability-matrix.md` 为准；该表标注为 `unverified` 的能力，交付时不许当已验证结论写。想知道某条命令在**这台机器上**到底成不成，跑 `python scripts/probe_capabilities.py --work <目录> [--only id1,id2]`（**16 条探针，四态 works/degrades/fails/untested**，输出 JSON + 证据图；退出码 0=选中范围（默认全部；`--only` 时只算选中的）全 works、3=选中范围有 degrades 或有未跑项（untested）、1=有 fails、2=参数/环境错误；`--only` 写错探针名或传空值直接退 2，不会空报告退 0；报告恒含 16 条，未跑的探针如实标 `untested`）。`degrades` 也算"没测到它声称的那个量"，交付时按未证明处理。
 
 ## 更新技能
 
@@ -149,6 +151,7 @@ quality 有三套刻度，别混：CLI `--quality` 和 serve/MCP `doc.save` 是 
 | 栅格排版、对齐分布、参考线 | `references/layout.md` | `scripts/layout_design.py` |
 | 抠图、裁边、切图、多倍图与资产导出 | `references/cutout-export.md` | `scripts/trim_export.py` |
 | 修复、人像、合成、频率分离（磨皮保纹理）的工序与验收 | `references/retouch.md` | — |
+| 三层非破坏人像交付（背景散景 / 门控补丁 / 主体）+ 并排与 400% 质检 | `references/capability-matrix.md` §7 | `scripts/pipeline_portrait.py`；侧车抠像（pymatting 闭式 CFM / 无 trimap 时降级经典）走 `scripts/sidecar/matte.py` |
 | 文字框内居中、溢出、行距、竖排、路径文字 | `references/text-layout.md` | — |
 | 缺字体、换字体、字体授权 | `references/fonts.md` | — |
 | 动作、批处理、Droplet、变量数据组 | `references/actions-batch.md` | — |
@@ -179,6 +182,11 @@ quality 有三套刻度，别混：CLI `--quality` 和 serve/MCP `doc.save` 是 
 - 插件只安装可信的 WebAssembly：沙箱没有文件/网络/时钟，但仍有 32 MiB 模块、512 MiB 内存、60 s 墙钟上限；PhotoCraft 不加载 `.8BF`/CEP/UXP。
 - 只读格式不要假设能写回：XCF、KRA、PDN、Affinity、HEIC 等是导入；Cineon 在 0.14 可写，DDS 可写。保存前看 `info`/`session.list` 的 `path`，不要依赖“不带 path 的保存”能回写。
 - `ui.gpu.simulateLoss {destroy:true}` 会真销毁窗口 GPU、保存 Recovery 后关闭应用，只用于测试；正常会话不要调用。Web/WASM 版没有 CLI/serve/MCP/控制通道，不要承诺自动化。
+
+- 能力只按注册表说话：写进文档或交付报告的 command id，必须能在当前 `photocraft-cli commands --json` 里查到；查不到的不写、不执行、不承诺。新增或修改的每一行必须标 `verified@<版本>` 或 `unverified`。
+- 引擎出处必须可核：交付报告写明实际使用的引擎（`select.subject` / `select.refineEdge` / `sidecar:<模型名>+<算法>`）。发生降级必须标注；以未安装或未运行的引擎名义交付，按失败处理。
+- 主体零生成：任何生成类操作只能以空间门控掩码为限。交付前必须给出"关掉生成层与调色层后，主体不透明区与原片逐像素差 ≤4/255（8 位合成取整；不是 0，也不是 100%）"的证据，并在报告里写实测的 max/MAE；给不出就不许写"原片像素 100% 保留"。
+- alpha 与颜色分开记：`layer.matting.*` 只改边缘颜色、**不改 alpha**。任何"用 matting 命令改轮廓"的结论一律无效，轮廓只能由选区、蒙版或 `select.refineEdge` 改。
 
 ## Gotchas
 
@@ -225,10 +233,10 @@ quality 有三套刻度，别混：CLI `--quality` 和 serve/MCP `doc.save` 是 
 
 ## Verification
 
-- 交付前至少跑 `python <skill-dir>/scripts/find_cli.py --check`（确认 CLI 可用；`docs_in_range` 为 false 不阻断任务，结论标 `unverified`）和 `params.py --exact <id>`。维护/升级时再跑：`run_examples.py`（案例 31 需设 `PCX_DESKTOP=1`）、`check_docs.py`（命令 id/参数/方法与注册表一致，并校验 version.json、upgrading 头和 history 链；计数以脚本输出为准）、`test_docs.py`（版本/历史检查自测）、`test_update.py`（更新器自测）、`probe_gotchas.py`（逐条复验坑点）、`test_workflow.py`、`test_control.py`（fake server；加 `--live` 再对真实 `photocraft-cli serve` 跑一遍）。全部通过后再更新文档。上游维护者升级 PhotoCraft 后按 `references/maintenance.md` 重跑并更新 `references/version.json` / `references/upgrading.md`；下游只按 `references/update.md` 整包更新，不跑 maintenance。运行结果与文档冲突时以运行结果为准。
+- 交付前至少跑 `python <skill-dir>/scripts/find_cli.py --check`（确认 CLI 可用；`docs_in_range` 为 false 不阻断任务，结论标 `unverified`）和 `params.py --exact <id>`。维护/升级时再跑：`run_examples.py`（案例 31 需设 `PCX_DESKTOP=1`）、`check_docs.py`（命令 id/参数/方法与注册表一致，并校验 version.json、upgrading 头和 history 链；计数以脚本输出为准）、`test_docs.py`（版本/历史检查自测）、`test_update.py`（更新器自测）、`test_probe_math.py`（探针数学/选择/退出码）、`test_sidecar_patch.py`（gate 外逐像素不变的契约；需 cv2，缺 opencv 时相关项 SKIP，不算通过）、`test_pipeline_portrait.py`（流水线纯函数与命令拼装）、`probe_gotchas.py`（逐条复验坑点）、`test_workflow.py`、`test_control.py`（fake server；加 `--live` 再对真实 `photocraft-cli serve` 跑一遍）。全部通过后再更新文档。上游维护者升级 PhotoCraft 后按 `references/maintenance.md` 重跑并更新 `references/version.json` / `references/upgrading.md`；下游只按 `references/update.md` 整包更新，不跑 maintenance。运行结果与文档冲突时以运行结果为准。
 - 用户任务：Process 第 6 步的每项检查都要有输出可查；批处理以成功计数和逐个文件的断言为准，不以“命令跑完了”为准。打印任务检查 PDF/`sent`/纸张/标记；RAW 任务检查 16 位/ProPhoto 与 preview fallback；XMP 任务回读 `rawData` 和 `hasXmp`。
 - 命名/状态/token 校验器自测：`python scripts/test_verify_token_table.py`、`python scripts/test_psd_audit_state.py`、`python scripts/verify_state_comps.py --selftest`、`python scripts/verify_token_table.py --selftest`、`python scripts/snapshot_state_comps.py --selftest`。全部通过后再改相关脚本。
 
 ## Output
 
-交付时依次列出：产出文件（路径、尺寸、格式、位深/模式）、母版文件、每项核对的结果、stderr 里值得用户知道的 `warning:`（字体回退、图层拼合、有损压缩、RAW preview fallback、XMP/元数据丢失等）、没能验证的部分及原因；PSD 规范化、复刻或切图任务另附审计、比对报告或资产 manifest 的路径；打印任务另附 PDF 路径、`file.print` 回执（`sent`/`backend`/`spooler`）和纸张/标记/出血设置；RAW 任务另附来源格式、位深/色彩空间（ProPhoto/16 位）和是否使用内嵌预览；XMP 任务列出写入/删除的图层和回读结果。
+交付时依次列出：产出文件（路径、尺寸、格式、位深/模式）、母版文件、每项核对的结果、`engine_provenance`（实际引擎与版本，降级要写明）、stderr 里值得用户知道的 `warning:`（字体回退、图层拼合、有损压缩、RAW preview fallback、XMP/元数据丢失等）、没能验证的部分及原因；PSD 规范化、复刻或切图任务另附审计、比对报告或资产 manifest 的路径；打印任务另附 PDF 路径、`file.print` 回执（`sent`/`backend`/`spooler`）和纸张/标记/出血设置；RAW 任务另附来源格式、位深/色彩空间（ProPhoto/16 位）和是否使用内嵌预览；XMP 任务列出写入/删除的图层和回读结果。

@@ -77,7 +77,13 @@ def main(args):
     if len(r["errors"]):
         fail("file.automate.batch reported errors")
     n_in = len([p for p in Path("in").iterdir() if p.is_file()])
-    expect_count("upload", "SKU-1??_*.jpg", n_in)
+    uploads = sorted(Path("upload").iterdir())
+    if len(uploads) != n_in:
+        fail(f"expected {n_in} uploads, got {len(uploads)}")
+    for up in uploads:
+        # 扩展名行为随 CLI 版本变化（0.23.1 不自动加）；这里只锁命名模板与序号
+        if not re.match(r"^SKU-\d{3,}_", up.name):
+            fail(f"unexpected upload name: {up.name}")
 
 
 def _product_check(ppm, box):

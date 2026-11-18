@@ -25,9 +25,9 @@
 | 域 | 主要能力 | 代表入口/案例 |
 |---|---|---|
 | 剪辑 | 多轨、分割、拼接、变速、倒放、关键帧、画中画、画布、patch、版本链 | `build` / `patch` / `13-multitrack-pip.py` / `19-version-chain.py` |
-| 合成 | 蒙版、抠像、绿幕、混合层级、贴纸/文字模板叠加 | `14-mask-title.py` / `15-text-effects.py` |
+| 合成 | 蒙版、抠像、绿幕、混合层级、贴纸/文字模板叠加（绿幕/美颜/混合模式为 conditional，仅界面导出） | `14-mask-title.py` / `15-text-effects.py` |
 | 特效 | 转场、滤镜、画面特效、色轮、曲线变速、调色/HSL | `16-transition-filter-effect.py` |
-| 音频 | 音量、音量关键帧、淡入淡出、声道、音效、BGM/原声 | `17-audio-mix.py` |
+| 音频 | 音量、音量关键帧、淡入淡出、声道、音效、响度、BGM/原声 | `17-audio-mix.py` |
 | 字幕 | 本地 ASR、SRT 生成/规范化/校验、SRT 入轨、字幕模板、版本化编辑、硬字幕 | `subtitle.asr.local` / `srt.from-local-asr` / `20-caption-template-highlight.py`（字幕模板；本地 ASR 需模型，无离线案例） |
 | 交付 | probe、inspect、render、verify、抽帧、publish/register、版本链、能力探测 | `09-publish-dry-run.py` / `05-capability-report.py` / `19-version-chain.py` |
 
@@ -41,18 +41,29 @@
   的触发路径未确认。plan 里写 `adjust` 会被**显式拒绝**，不会静默忽略。
 - **视频定格 `freeze`**：只有“抽帧图片 + 前后视频段”的工作流，不冒充原生 freeze；
   plan 里写 `freeze` 会被显式拒绝。
-- **HSL `hsl`**：已按官方 11.8 白名单写 `materials.hsl` + `enable_hsl`；真实导出首测
-  未观察到像素变化，保持 `unverified`。
-- **绿幕 `chroma`**：已按 `materials.chromas` 写入并挂 refs；真实导出首测未抠绿，
-  可能还缺触发字段，保持 `unverified`。
-- **花字/气泡 `text_effect` / `text_bubble`**：结构已写入 `materials.filters`，
-  但需要真实缓存资源 id，尚未渲染验收。
+- **HSL `hsl`**：已按官方 11.8 白名单写 `materials.hsl` + `enable_hsl`；2026-11-18 真机导出
+  仍无像素变化，保持 `unverified`。
+- **绿幕 `chroma`（conditional）**：`materials.chromas` 已接线；2026-11-18 构建的草稿在 11.8 UI
+  打开即预览蓝底红块，`抠像` 面板读回“色度抠图”勾选、关键色绿色、强度 20；界面原生导出 1s 角点
+  `(0,0,254)`、中心 `(253,0,0)`。native bridge `draftPath` 仍不应用 chroma，`render` 不能出绿幕成片，
+  成片必须走剪映界面导出；技能不内置 GUI 自动化，界面导出是外部步骤。
+- **花字 `text_effect`（conditional）**：结构已写入 `materials.effects`
+  （2026-11-18 依 `pyJianYingDraft` 与 `jianying-tool` 复核；此前误写 `materials.filters`）；
+  712 包真机导出帧差 `YAVG=4.1713` / `YMAX=209`，但需要真实 `flower` 缓存资源，缺包会静默回落。
+- **文字气泡 `text_bubble`（unverified）**：同一结构路径；本机 `bubble` 缓存为 0，尚未渲染验收。
 - **音效/音色 `audio_effect`**：2026-11-16 免费“萝莉”VC 资源真机输出 440Hz→740Hz；
-  需要 `sub_type=0`、`path` 和带索引的 `audio_adjust_params`（证据 `evidence/2026-11-16-audio-effect/`），
+  需要 `sub_type=0`、`path` 和带索引的 `audio_adjust_params`（证据已移出仓库），
   其他资源仍需逐个听感验收。
 - **左右声道 `channel`**：写 `materials.sound_channel_mappings[].audio_channel_mapping`；
-  左-only 源实测 0 保持原样、1 左复制双声道、2 右复制双声道（证据 `evidence/2026-11-16-channel-mapping/`），
-  已从 `unverified` 升为 `implemented`。
+  左-only 源实测：0 左 -11.0dB/右静音、1 双声道 -11.0dB、2 双声道静音（2 是复制源右声道，
+  源右本身静音）；证据已移出仓库，能力已升为 `implemented`。
+- **背景填充 `background_fill`**：写 `materials.canvases`，已在 11.8 真机用纯色与渐变图确认
+  不是默认黑底；只对最底层视觉轨生效。
+- **混合模式 `mix_mode`**：写 `materials.effects[type=mix_mode]` + refs；11.8 界面预览与
+  UI 原生导出为品红（品红即滤色生效的正确结果），但 native bridge `draftPath` 导出仍为纯红
+  （纯红表示未应用），因此保持 `conditional`，`render` 会对含 mix_mode 的草稿写 warning。
+- **响度 `loudness`**：对已构建草稿按片段测 EBU R128，并按目标 LUFS 写 volume；已用
+  剪映原生导出复核增益（证据已移出仓库）。
 - **`native` 逃生舱**：可写 `segment` / `material` / 任意已存在 `materials` 桶；
   技能不校验字段语义，必须自带真实结构并回读验收。
 
@@ -101,6 +112,11 @@
 | `draft.build` | 新建多轨明文草稿 | file | implemented | 剪映安装 + ffprobe | 不启动剪映 |
 | `draft.inspect` | 读取草稿结构 | file | implemented | Python | 不解密 |
 | `draft.patch` | 修改明文草稿 | file | implemented | Python | 默认写副本 |
+| `timeline.template` | 片段模板保存/盖印 | file | implemented | Python | 从真实草稿提取任意片段、主素材和 extra 材质，应用时重映射全部 id；离线草稿往返已验证，未做像素抽帧 |
+| `timeline.otio` | OpenTimelineIO 时间线交换 | file | implemented | Python | 导出 Timeline/Stack/Track/Clip/Gap；文字/贴纸/特效轨在回执里列 skipped；导入支持 Timeline/Stack/Track/数组 |
+| `media.relink` | 草稿素材重新链接 | file | implemented | Python | 支持 `--from/--to` 前缀映射或 `--dir` 同名搜索；歧义保留原路径并报告；默认写副本 |
+| `media.replace` | 片段素材替换/重定时 | file | implemented | ffprobe | 按 ffprobe 更新素材时长/宽高/音频标记；`--retime` 按新时长重算 speed；默认写副本 |
+| `media.prune` | 清理无引用素材 | file | implemented | Python | 删除没有片段引用、也没有被其他已引用材质间接引用的素材；默认写副本 |
 | `version.history` | 草稿版本链（快照/差异/恢复） | file | implemented | Python | 全量快照；restore 新目录；diff 比结构+材质指纹；导出回写落 editor-rewrite |
 | `export.render` | 原生导出视频/音频/动图 | bridge | conditional | 剪映运行 + bridge health | 端口每次启动变；format 支持 mp4/mov/gif/mp3/wav/aac/flac/aiff/ogg；draftPath 入口不支持视频自定义码率，分辨率/帧率走画布 |
 | `export.transcode` | 本机 ffmpeg 转码到目标码率 | file | implemented | ffmpeg | 后处理，不是剪映原生码率；补 native bridge 不支持视频码率 |
@@ -118,35 +134,47 @@
 | `text.decorate` | 文字背景/阴影/粗斜下划线 | file | implemented | Python | 真实导出抽帧已确认背景/阴影/粗体/下划线；原始抽帧未归档 |
 | `native.escape` | native 结构逃生舱 | file | unverified | Python | 技能不校验字段语义 |
 | `subtitle.srt` | SRT 生成/校验 | file | implemented | Python | 不做语音识别 |
-| `subtitle.asr.local` | 本地 Paraformer 识别字幕 | file | implemented | 剪映本地 ASR 模型 + numpy/onnxruntime/kaldi-native-fbank | 用剪映「识别字幕」已下载的模型；不登录、不联网；输出逐字时间戳与 SRT |
+| `subtitle.asr.local` | 本地 Paraformer 识别字幕 | file | implemented | 剪映本地 ASR 模型 + numpy/onnxruntime/kaldi-native-fbank | 用剪映「识别字幕」已下载的模型；不登录、不联网；输出逐字时间戳与 SRT；先按静音分段（VAD 式）再切块，块长读 `strategy.json`；回执带 `quality`（剪映质量打分器，分数含义未标定，只做相对参考）与模型版本/字节数指纹 |
 | `subtitle.apply` | SRT 写入可编辑字幕轨 | file | implemented | Python | `patch` 的 `add_subtitles`；自动成为下一版本，可继续 `set_text`/`set_style` |
 | `subtitle.workflow` | 字幕自动流水线 | file | implemented | Python | 本地 ASR/SRT → packaging plan → 可编辑草稿；不给 `--srt` 时需要 ASR 模型/依赖 |
 | `subtitle.template` | 字幕模板（caption_template_info） | resource | conditional | `Cache/artistEffect` + 模板资源 | 2026-11-16 免费“白字黑边”真实导出，cue 文本绑定成功；模板依赖字体/花字仍需缓存 |
-| `subtitle.postprocess` | 本地去水词/标点（启发式） | file | implemented | Python | 规则匹配删除口头禅、按停顿加标点；不冒充剪映 AI 去水词/标点 |
+| `subtitle.postprocess` | 本地去水词/标点 | file | implemented | Python + 剪映 `asr-punc.onnx` | 标点优先用剪映本地标点模型（断句点后静音 ≥0.6s 写句号），模型缺失回落按停顿启发式，回执 `punc.source` 标注；去水词仍是本地规则；不冒充剪映云端 AI |
+| `subtitle.itn` | 数字/日期/单位规范化 | file | implemented | 剪映 `asr-itn-fst.fst` + kaldifst | `--itn` 用剪映下发的 ITN FST（标准 OpenFST，539 KB）把中文数字/日期/百分比转成阿拉伯数字；FST 或 kaldifst 缺失时跳过并写 `itn-skip` warning，不静默降级；「早上八点」这类拿不准的表达原样保留 |
+| `subtitle.ass` | ASS/SSA 字幕导入导出 | file | implemented | Python | 解析事件时间、基础样式与常用内联标签（颜色/字号/粗斜下划线/重置），其他标签写入 `unsupported_tags`；导出读文字轨写 ASS；离线往返已验证，未做 libass 烧录比对 |
 | `subtitle.burn` | 硬字幕烧录 | file | implemented | 带 libass 的 ffmpeg | 剪映自带 ffmpeg 不行；`imageio-ffmpeg` 自带 ffmpeg 7.1 带 libass，会被自动发现 |
-| `adjust.basic` | 基础调色 | file | planned | Python | native 写入口未确认；plan 显式拒绝；2026-11-16 `materials.effects[type=adjust]` + `adjust_params` 抽帧无变化 |
-| `adjust.hsl` | HSL | file | unverified | Python | 结构已写；真实导出未见像素变化 |
-| `color.wheels` | 色轮/色彩匹配 | resource | unverified | 缓存资源 | 2026-11-15 真机 gamma red=0.5 导出抽帧与无调色帧一致（证据 `evidence/2026-11-15-real-probes/wheel/`） |
+| `adjust.basic` | 基础调色 | file | planned | Python | native 写入口未确认；plan 显式拒绝；2026-11-16 `materials.effects[type=adjust]` + `adjust_params` 抽帧无变化；2026-11-18 按 jianying-tool 写 `common_keyframes` `KFTypeBrightness` 也无像素变化 |
+| `adjust.hsl` | HSL | file | unverified | Python | 2026-11-18 真机导出：`enable_hsl=true` + red hue=-100 下纯红帧仍 (252,0,0)，像素未变 |
+| `color.wheels` | 色轮/色彩匹配 | resource | unverified | 缓存资源 | 2026-11-15 真机 gamma red=0.5 导出抽帧与无调色帧一致（证据已移出仓库）；2026-11-18 复核色轮资源仍无可用的缓存包 |
 | `audio.fade` | 音频淡入淡出 | file | implemented | Python | 独立音频轨两次真实导出 volumedetect 渐变通过；原始回执未归档 |
 | `audio.effect` | 音效/音色 | resource | conditional | 缓存资源 | 2026-11-16 免费“萝莉”VC 资源真机 440Hz→740Hz；其他资源仍需听感验收，不能一概承诺 |
 | `audio.channel` | 左右声道 | file | implemented | Python | 2026-11-16 左only 源实测：channel=0 左 -11.0dB/右静音、channel=1 左右均 -11.0dB、channel=2 双声道静音；写 `materials.sound_channel_mappings` |
-| `speed.curve` | 曲线变速 | file | unverified | Python | 只写材质，不改 target/source 时长；曲线像素未抽帧 |
+| `analysis.silence` | 静音段检测 | file | implemented | ffmpeg | `ffmpeg silencedetect`，输出静音段与保留段，同时给秒和微秒；2026-11-18 3 秒音/静音/音素材检出 1.0999–1.9001s（`--pad 0.1`）；只分析不改草稿 |
+| `analysis.scenes` | 镜头切换检测 | file | implemented | ffmpeg | `select(scene)+showinfo`，按阈值和最小间隔输出切点与场景区间；2026-11-18 红蓝硬切 4 秒素材切点精确 2.0s；只分析不改草稿 |
+| `analysis.retakes` | 重复/重拍片段检测 | file | implemented | Python | 按 cue 文本做本地 LCS 相似度，返回重复对与建议删除区间；是本地规则，不冒充语义模型 |
+| `audio.loudness` | EBU R128 响度测量/增益 | file | implemented | ffmpeg | `loudnorm` 测量每个音频片段，按目标 LUFS 计算并写 volume；2026-11-18 4 秒正弦测得 -33.75 LUFS，`--max-gain-db 6 --apply` 后剪映原生导出实测 -27.86 LUFS（计划 -27.75，差 0.11 dB）；`--target -28` 导出实测 -28.06 LUFS（计划 -28.00，差 0.06 dB） |
+| `speed.curve` | 曲线变速 | file | implemented | Python | 2026-11-18 真机导出：3s 段曲线 1→3，白块位置 1s 0.203 / 2s 0.547，线性对照 0.172 / 0.328，确认按曲线加速；`target/source` 时长仍按线性计算 |
 | `crop.flip` | 裁剪/翻转 | file | implemented | Python | 垂直翻转有归档抽帧；裁剪/水平翻转同批目视确认，未单独归档 |
-| `visual.reverse` | 视频倒放 | file | unverified | Python | `segment.reverse`；2026-11-15 真实导出被 11.8 忽略（案例 12） |
+| `visual.reverse` | 视频倒放 | file | unverified | Python | `segment.reverse`；2026-11-15 真实导出被 11.8 忽略；2026-11-18 补 `reverse_path` 指向 ffmpeg 反向片仍无效（对照帧 0.172/0.328 与正常一致） |
 | `visual.freeze` | 定格 | file | planned | Python | 只做抽帧工作流 |
 | `effects.transition` | 转场 | resource | conditional | 缓存资源 | 未缓存会静默忽略 |
 | `effects.filter` | 滤镜 | resource | conditional | 缓存资源 | 结构≠效果 |
 | `effects.video` | 画面特效 | resource | conditional | 缓存资源 | 独立 effect 轨；效果包需缓存 |
-| `visual.mask` | 形状蒙版 | resource | conditional | 缓存资源 | `common_mask` 单材质引用；2026-11-15 真机 `circle` + width/height 抽帧已确认（证据 `evidence/2026-11-15-real-probes/mask/`）；`config` 为空/字段不全给 warning |
+| `visual.mask` | 形状蒙版 | resource | conditional | 缓存资源 | `common_mask` 单材质引用；2026-11-15 真机 `circle` + width/height 抽帧已确认（证据已移出仓库）；`config` 为空/字段不全给 warning |
 | `visual.matting` | 智能抠像 | resource | conditional | Python（构建时另校验目录存在） | 构建时校验目录存在；外部不能凭空生成 |
-| `visual.chroma` | 绿幕抠像 | file | unverified | Python | 结构已写；真实导出首测未抠绿 |
+| `visual.chroma` | 绿幕抠像 | file | conditional | Python | 2026-11-18 构建的草稿在 11.8 UI 打开即蓝底红块，`抠像` 面板读回“色度抠图”勾选、关键色绿色、强度 20；界面原生导出角点 `(0,0,254)`、中心 `(253,0,0)`。native bridge `draftPath` 仍不应用 chroma，成片走界面导出 |
+| `visual.background_fill` | 视频/图片背景填充 | file | implemented | Python | `blur`/`color`；写 `materials.canvases` + refs，只对最底层视觉轨生效；2026-11-18 纯色填充角落 `(0,0,254)`、渐变图模糊填充角落 `(242,0,9)`/边缘 `(101,0,152)`，确认不是黑底 |
+| `visual.mix_mode` | 视频混合模式 | file | conditional | Python | 写 `materials.effects[type=mix_mode]` + refs；2026-11-18 11.8 UI 预览/UI 原生导出为品红，但 native bridge `draftPath` 导出仍是纯红；`render` 会写 warning，需混合成片时走界面导出 |
+| `visual.beauty` | 人像美颜/美型/美妆/美体 | file | conditional | Python | 写 `materials.effects[type=figure]`，仅在真正有美妆项时追加 `makeup-root`，支持 `skin/shape/makeup/body`；2026-11-18 11.8 UI 能读回 `磨皮=100` / `美白=100`，同草稿界面原生导出与 plain 对照：磨皮人脸 `avg_abs_rgb=1.215`、边缘能量 `-6.2%`，美白皮肤 `RGB +7.1/+8.8/+9.2`；native bridge `draftPath` 导出仍与 plain 帧 hash 相同，`figure_algorithm` 为空；`shape/makeup` 409 entitlement。结构可用，成片必须走剪映界面导出 |
 | `visual.animation` | 视频/图片入场出场动画 | resource | conditional | 缓存资源 | 2026-11-16 免费“翻入”经 `material_animations[type=video_animation]` 真实导出 |
 | `text.animation` | 文字动画 | resource | conditional | 缓存资源 | 2026-11-16 免费“变色输入”经 `material_animations` 真实导出 |
-| `text.effect` | 花字/文字特效 | resource | unverified | `artistEffect` | 官方要求 ref 为 `flower`；`DeepGlow` 是 `tool_text_glow`，此前资源类型不匹配。需真实 flower 资源再做像素验收 |
-| `text.bubble` | 文字气泡 | resource | unverified | `artistEffect` | 需真实气泡资源 |
-| `text.template` | 文字模板 | resource | conditional | 模板包 | 槽位需缓存 |
-| `sticker` | 贴纸 | resource | conditional | 缓存资源 | 独立 sticker 轨；2026-11-15 两个包：`7675620818189077810` 409 entitlement，`7202575978646737469` render ok 但抽帧无贴纸（证据 `evidence/2026-11-15-real-probes/sticker/`） |
+| `text.effect` | 花字/文字特效 | resource | conditional | `artistEffect` | `materials.effects[type=text_effect]` + `styles[0].effectStyle`；花字会重置文字颜色/描边/阴影；`text_template` 或 `text_bubble` 存在时花字被忽略。2026-11-18 用真实 `flower` 包 `7127669365423508767` 真机导出，和同文案无花字帧差 `YAVG=4.1713`/`YMAX=209`；带红字/绿描边/蓝阴影的 712 帧与默认 712 帧差 `0/0`，确认重置行为；`7187739440347958589`、`7351316503771368713` 均 409 entitlement。只对已缓存且账号可导出的 flower 资源承诺，不把“有包”当成“能导出” |
+| `text.bubble` | 文字气泡 | resource | unverified | `artistEffect` | `materials.effects[type=text_shape]`；`capcut-mate` 实证 `effect_id` 与 `resource_id` 不是同一个值（`716434` / `6821385652727190024`），两者都要给；它只加装饰底板，不改文字填充/描边/阴影。模板 > 气泡 > 花字，气泡存在时花字被忽略。官方 11.8 选择协议没有 `text_shape`，气泡走 `text_template`；本机 `bubble` 缓存 0，未渲染验收 |
+| `text.template` | 文字模板 | resource | conditional | 模板包 | 槽位需缓存；2026-11-18 “粉黑”免费字幕模板依赖 flower，缺花字包时导出成功但画面回落成普通文字，模板视觉不能只凭 `ok` 判定 |
+| `sticker` | 贴纸 | resource | conditional | 缓存资源 | 独立 sticker 轨；2026-11-15 两个包：`7675620818189077810` 409 entitlement，`7202575978646737469` render ok 但抽帧无贴纸（证据已移出仓库） |
 | `official.xml.draft` | 官方 XMLDraft 协议 | official | host_only | 官方技能目录 | 只读协议 |
+| `official.hubcli.canvas` | 官方 canvas 命令面（55 条契约） | official | host_only | `agent_runtime_env/cli/hubcli` + 宿主注入的 bun/IPC | 只读契约清单见 [official-host](official-host.md)；技能不调用，调用需要宿主运行时 |
+| `official.hubcli.media` | 官方媒体命令（转写/审片） | official | host_only | 同上 | `media.transcribe`（宿主 ASR，按毫秒返回段落/词）、`media.reviewVideo`；与本地 `subtitle.asr.local` 是两条线 |
+| `official.motiongraph` | 动态图形（MotionGraph）SDK | official | host_only | `agent_runtime_env/motiongraph` + CEF renderer | SDK 自带 schema/预览/资源加载；技能不调用，无独立渲染入口 |
 | `ai.subtitle` | 智能字幕 | account | account_gated | 剪映客户端 | 云端识别/翻译/划重点仍受账号限制；本地识别见 `subtitle.asr.local` |
 | `ai.lyric` | 歌词识别/动效 | account | account_gated | 宿主/云端 | 不调用 |
 | `ai.tts` | TTS/音色克隆 | account | account_gated | 账号/云端 | 官方暂不支持克隆 |
@@ -163,6 +191,11 @@
 | draft.build | file | install, ffprobe |
 | draft.inspect | file | python |
 | draft.patch | file | python |
+| timeline.template | file | python |
+| timeline.otio | file | python |
+| media.relink | file | python |
+| media.replace | file | ffprobe |
+| media.prune | file | python |
 | version.history | file | python |
 | export.render | bridge | install, bridge |
 | export.transcode | file | ffmpeg |
@@ -175,6 +208,7 @@
 | visual.animation | resource | cache_effect |
 | speed.linear | file | python |
 | audio.volume | file | python |
+| audio.loudness | file | ffmpeg |
 | canvas.layout | file | python |
 | text.basic | file | python |
 | text.highlight | file | python |
@@ -186,6 +220,8 @@
 | subtitle.workflow | file | python |
 | subtitle.template | resource | cache_artistEffect |
 | subtitle.postprocess | file | python |
+| subtitle.itn | file | python |
+| subtitle.ass | file | python |
 | subtitle.burn | file | ffmpeg_libass |
 | adjust.basic | file | python |
 | adjust.hsl | file | python |
@@ -193,6 +229,9 @@
 | audio.fade | file | python |
 | audio.effect | resource | cache_effect |
 | audio.channel | file | python |
+| analysis.silence | file | ffmpeg |
+| analysis.scenes | file | ffmpeg |
+| analysis.retakes | file | python |
 | speed.curve | file | python |
 | crop.flip | file | python |
 | visual.reverse | file | python |
@@ -203,12 +242,18 @@
 | visual.mask | resource | cache_effect |
 | visual.matting | resource | python |
 | visual.chroma | file | python |
+| visual.background_fill | file | python |
+| visual.mix_mode | file | python |
+| visual.beauty | file | python |
 | text.animation | resource | cache_effect |
 | text.effect | resource | cache_artistEffect |
 | text.bubble | resource | cache_artistEffect |
 | text.template | resource | cache_artistEffect |
 | sticker | resource | cache_effect |
 | official.xml.draft | official | official_skills |
+| official.hubcli.canvas | official | official_skills |
+| official.hubcli.media | official | official_skills |
+| official.motiongraph | official | official_skills |
 | ai.subtitle | account | — |
 | ai.lyric | account | — |
 | ai.tts | account | — |
@@ -274,9 +319,10 @@
 已接线并有真实验收：基础变换/关键帧、文字基础样式与背景阴影、字幕模板
 （`caption_template_info` + `caption_info`）、本地 ASR/SRT、文字/视频动画、本地关键词高亮、
 音频音量/淡入淡出、形状蒙版、裁剪/翻转、独立 effect/filter 轨（资源缓存时）。
+其中绿幕 chroma、美颜 figure、混合模式 mix_mode 为 `conditional`，只在剪映界面导出出片。
 
-已接线但未验收：文本花字/气泡、文字模板槽位、转场/滤镜/贴纸、调节包、
-HSL/色轮/绿幕、其他音效资源、视频倒放、曲线变速、智能抠像。
+已接线但未验收：文字气泡、文字模板槽位、转场/滤镜/贴纸、调节包、
+HSL/色轮、其他音效资源、视频倒放、智能抠像。
 
 尚未接线：基础调节 `adjust`、色彩匹配、眼睛校正/滑杆参数/智能补光/去闪烁、
 媒体处理（音频降噪/人声分离/乐器分离/人声增强/画质增强/补帧/超分/视频降噪/防抖/智能响度）、

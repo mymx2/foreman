@@ -21,7 +21,7 @@
 0. **升级前留基线**。`python scripts/upgrade_check.py --save <baseline.json>`（只读、不访问外网）。
    基线 schema 为 `jianying-upgrade-baseline/v1`：`install.version`、`skill_version` 与
    `capabilities` 的 `code_status`；不含 bridge/缓存/ASR 等运行时状态，因此不会因剪映没开而误报漂移。
-   建议存仓库外，或归档到 `references/evidence/upgrade-baselines/<日期>.json`；不要写进 `scripts/`。
+   建议存仓库外，或归档到仓库外证据库的 `upgrade-baselines/<日期>.json`；不要写进 `scripts/`。
    升级后跑 `python scripts/upgrade_check.py --baseline <baseline.json>`；`exit_code=10`
    表示版本窗口/能力矩阵有漂移，按输出的 checklist 处理。更新 `version.json` 前出现 10 属预期。
 1. **先冻结旧版差异**。把“从当前到达版本升到新版本”的行为变化写成

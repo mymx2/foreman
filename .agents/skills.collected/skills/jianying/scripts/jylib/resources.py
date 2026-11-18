@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import os
 import re
@@ -15,8 +16,9 @@ import sqlite3
 import tempfile
 import time
 import urllib.error
-import uuid
+import urllib.parse
 import urllib.request
+import uuid
 import zipfile
 from pathlib import Path, PurePosixPath
 
@@ -114,6 +116,15 @@ def _connect(db_path: Path):
                          details={"path": str(db_path), "reason": str(exc)}) from exc
 
 
+def _business_flag(item, extra):
+    """商务标记以数据库字段和 extra 任一为准，避免旧记录漏标。"""
+    try:
+        db_flag = bool(item["is_business"])
+    except (KeyError, IndexError, TypeError):
+        db_flag = False
+    return db_flag or bool(extra.get("is_business"))
+
+
 def _row(item, packages: dict[str, Path]) -> dict:
     md5 = item["md5"] or ""
     package = packages.get(md5)
@@ -124,7 +135,7 @@ def _row(item, packages: dict[str, Path]) -> dict:
     except (TypeError, ValueError):
         extra = {}
     vip = bool(extra.get("is_vip")) or bool(item["is_vip"])
-    business = bool(extra.get("is_business"))
+    business = _business_flag(item, extra)
     return {
         "id": item["id"],
         "title": item["title"] or "",
@@ -160,14 +171,14 @@ def _candidate(item) -> dict:
         "panel": panel,
         "panel_label": PANEL_LABELS.get(panel, panel),
         "vip": bool(extra.get("is_vip")) or bool(item["is_vip"]),
-        "business": bool(extra.get("is_business")),
+        "business": _business_flag(item, extra),
     }
 
 
 def _select(db_path: Path, where: str = "", params: tuple = (),
             limit: int | None = None):
-    sql = ("select id, title, name, panel_name, effect_type, is_vip, md5, "
-           "extra, category_id, category_name from effect")
+    sql = ("select id, title, name, panel_name, effect_type, is_vip, "
+           "is_business, md5, extra, category_id, category_name from effect")
     if where:
         sql += " where " + where
     sql += " order by title, id"
@@ -237,14 +248,14 @@ def stats(*, db_path: Path | None = None, cache_root: Path | None = None) -> dic
         })
         entry["total"] += 1
         entry["cached"] += 1 if item["cached"] else 0
-        entry["free"] += 0 if item["vip"] else 1
+        entry["free"] += 0 if (item["vip"] or item["business"]) else 1
     return {
         "db": str(db_path),
         "cache_root": str(cache_root or env_mod.find_cache_root()),
         "packages": len(packages),
         "total": len(items),
         "cached": sum(1 for item in items if item["cached"]),
-        "free": sum(1 for item in items if not item["vip"]),
+        "free": sum(1 for item in items if not item["vip"] and not item["business"]),
         "panels": sorted(panels.values(), key=lambda x: x["total"], reverse=True),
     }
 
@@ -292,7 +303,66 @@ ARTIST_PANELS = {
 FONT_SUFFIXES = {".ttf", ".otf", ".ttc"}
 
 
-def _parse_urls(raw) -> list[str]:
+def _url_allowed(url: str, allow_http: bool) -> bool:
+    """scheme 判定统一走这里：默认 https，``--allow-http`` 才放行 http。"""
+    lowered = str(url or "").strip().lower()
+    return lowered.startswith("https://") or (
+        allow_http and lowered.startswith("http://"))
+
+
+def _redact_url(url: str) -> str:
+    """回执只留 scheme/host/path：签名 URL 的 query 是 bearer 票据。"""
+    try:
+        parts = urllib.parse.urlsplit(str(url or ""))
+    except ValueError:
+        return "<invalid-url>"
+    port = f":{parts.port}" if parts.port else ""
+    return f"{parts.scheme}://{parts.hostname or ''}{port}{parts.path or '/'}"
+
+
+def _is_private_target(url: str) -> bool:
+    """IP 字面量指向本机/内网时拒绝；域名解析结果留到连接层判定。"""
+    try:
+        host = urllib.parse.urlsplit(str(url or "")).hostname or ""
+    except ValueError:
+        return True
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return (ip.is_private or ip.is_loopback or ip.is_link_local
+            or ip.is_reserved or ip.is_multicast or ip.is_unspecified)
+
+
+class _GuardedRedirect(urllib.request.HTTPRedirectHandler):
+    """逐跳校验重定向；urllib 默认跟随 3xx 时不做 scheme/host 检查。"""
+
+    max_redirections = 5
+
+    def __init__(self, *, allow_http, item_id):
+        super().__init__()
+        self._allow_http = allow_http
+        self._item_id = item_id
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if (not _url_allowed(newurl, self._allow_http)
+                or _is_private_target(newurl)):
+            raise SkillError(
+                "资源下载被重定向到不安全地址，已拒绝",
+                code="UNSAFE_URL",
+                details={"id": self._item_id, "url": _redact_url(newurl)},
+                fix="换一个 https 资源；不要为个别镜像放宽 --allow-http。",
+            )
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _open_url(request, *, timeout, allow_http, item_id):
+    opener = urllib.request.build_opener(
+        _GuardedRedirect(allow_http=allow_http, item_id=item_id))
+    return opener.open(request, timeout=timeout)
+
+
+def _parse_urls(raw, *, allow_http: bool = False) -> list[str]:
     try:
         data = json.loads(raw or "[]")
     except (TypeError, ValueError):
@@ -302,7 +372,7 @@ def _parse_urls(raw) -> list[str]:
     if not isinstance(data, list):
         return []
     return [item for item in data
-            if isinstance(item, str) and item.startswith(("http://", "https://"))]
+            if isinstance(item, str) and _url_allowed(item, allow_http)]
 
 
 def _expires(url: str):
@@ -477,9 +547,50 @@ def install_archive(archive: Path, target: Path, *, force: bool = False) -> None
             shutil.rmtree(temp, ignore_errors=True)
 
 
+def _gated_dependencies(dependencies: list[dict], db_path: Path) -> list[dict]:
+    """检查模板类资源的依赖；依赖会员/商务时整体拒绝下载。
+
+    主资源免费、依赖字体/花字收费是剪映资源库里的常见组合。只在主记录
+    上判权益会让用户下到一半、导出时才 409，所以下载前把依赖也过一遍。
+    依赖不在本机资源表里时无法判定，保留 ``unknown``，不臆测放行。
+    """
+    gated: list[dict] = []
+    for dependency in dependencies:
+        resource_id = str(dependency.get("resource_id") or "")
+        if not resource_id or dependency.get("type") == "system-fonts":
+            continue
+        rows = _select(db_path, "id = ?", (resource_id,), limit=1)
+        if not rows:
+            dependency["gated"] = False
+            dependency["unknown"] = True
+            continue
+        row = rows[0]
+        extra = {}
+        try:
+            extra = json.loads(row["extra"] or "{}")
+        except (TypeError, ValueError):
+            extra = {}
+        vip = bool(extra.get("is_vip")) or bool(row["is_vip"])
+        business = _business_flag(row, extra)
+        dependency["gated"] = vip or business
+        dependency["title"] = row["title"] or ""
+        dependency["panel"] = row["panel_name"] or ""
+        if vip or business:
+            gated.append({
+                "resource_id": resource_id,
+                "type": dependency.get("type"),
+                "title": row["title"] or "",
+                "panel": row["panel_name"] or "",
+                "vip": vip,
+                "business": business,
+            })
+    return gated
+
+
 def download_resource(ref: str, *, db_path: Path | None = None,
                       cache_root: Path | None = None, apply: bool = False,
-                      force: bool = False, timeout: int = 60) -> dict:
+                      force: bool = False, timeout: int = 60,
+                      allow_http: bool = False) -> dict:
     cache_root = cache_root or env_mod.find_cache_root()
     db_path = db_path or find_db(cache_root)
     resolved = resolve(ref, db_path=db_path, cache_root=cache_root,
@@ -497,13 +608,6 @@ def download_resource(ref: str, *, db_path: Path | None = None,
                      "panel": item["panel"]},
             fix="换一个资源；这类记录常见于数字人等特殊面板，不能保证剪映能加载。",
         )
-    if item["cached"] and not force:
-        return {
-            "ref": ref, "id": item["id"], "title": item["title"],
-            "panel": item["panel"], "applied": False, "already_cached": True,
-            "cache_path": item["package_path"],
-            "db_md5": item["md5"], "archive_md5": None,
-        }
     connection = _connect(db_path)
     try:
         row = connection.execute(
@@ -514,18 +618,6 @@ def download_resource(ref: str, *, db_path: Path | None = None,
     if not row:
         raise SkillError("资源记录消失", code="RESOURCE_NOT_FOUND",
                          details={"id": item["id"]})
-    urls = _parse_urls(row["item_urls"])
-    if not urls:
-        raise SkillError("资源没有下载地址", code="RESOURCE_URL_MISSING",
-                         details={"id": item["id"], "title": item["title"]})
-    now = time.time()
-    usable = [url for url in urls
-              if _expires(url) is None or _expires(url) > now]
-    if not usable:
-        raise SkillError("资源下载地址已过期", code="RESOURCE_URL_EXPIRED",
-                         details={"id": item["id"], "title": item["title"]},
-                         fix="在剪映里打开一次素材面板刷新资源；或换一个资源")
-    target = _target_dir(cache_root, item["panel"], item["id"], item["md5"])
     dependencies = []
     try:
         sdk_extra = json.loads(row["sdk_extra"] or "{}")
@@ -538,14 +630,60 @@ def download_resource(ref: str, *, db_path: Path | None = None,
                 "resource_id": str(dependency.get("resource_id") or ""),
                 "source": dependency.get("source"),
             })
-    if not apply:
+    gated = _gated_dependencies(dependencies, db_path)
+    if gated:
+        raise SkillError(
+            "资源依赖包含会员/商业资源，不能整体下载",
+            code="RESOURCE_GATED",
+            details={"id": item["id"], "title": item["title"],
+                     "dependencies": gated},
+            fix="换一个依赖全免费的资源；会员/商业依赖只在剪映客户端正常获取。",
+        )
+    if item["cached"] and not force:
         return {
+            "ref": ref, "id": item["id"], "title": item["title"],
+            "panel": item["panel"], "applied": False, "already_cached": True,
+            "cache_path": item["package_path"],
+            "db_md5": item["md5"], "archive_md5": None,
+            "dependencies": dependencies,
+        }
+    all_urls = _parse_urls(row["item_urls"], allow_http=True)
+    urls = [url for url in all_urls
+            if _url_allowed(url, allow_http) and not _is_private_target(url)]
+    skipped_insecure = len(all_urls) - len(urls)
+    if not urls:
+        if all_urls:
+            raise SkillError(
+                "资源下载地址不安全（要求 https，且拒绝本机/内网地址），已拒绝",
+                code="UNSAFE_URL",
+                details={
+                    "id": item["id"], "title": item["title"],
+                    "hosts": sorted({url.split("/", 3)[2] for url in all_urls
+                                     if "://" in url}),
+                },
+                fix="改用 https 公网地址；确认是本机可信来源时可显式加 --allow-http。",
+            )
+        raise SkillError("资源没有下载地址", code="RESOURCE_URL_MISSING",
+                         details={"id": item["id"], "title": item["title"]})
+    now = time.time()
+    usable = [url for url in urls
+              if _expires(url) is None or _expires(url) > now]
+    if not usable:
+        raise SkillError("资源下载地址已过期", code="RESOURCE_URL_EXPIRED",
+                         details={"id": item["id"], "title": item["title"]},
+                         fix="在剪映里打开一次素材面板刷新资源；或换一个资源")
+    target = _target_dir(cache_root, item["panel"], item["id"], item["md5"])
+    if not apply:
+        result = {
             "ref": ref, "id": item["id"], "title": item["title"],
             "panel": item["panel"], "applied": False, "already_cached": False,
             "target": str(target), "url_count": len(usable),
             "dependencies": dependencies,
             "note": "dry-run；加 --apply 才下载到本机缓存",
         }
+        if skipped_insecure:
+            result["skipped_insecure_url_count"] = skipped_insecure
+        return result
     if target.exists() and not force:
         raise SkillError("资源包已存在", code="OUTPUT_EXISTS",
                          details={"path": str(target)},
@@ -554,13 +692,27 @@ def download_resource(ref: str, *, db_path: Path | None = None,
     os.close(handle)
     archive = Path(temp_name)
     archive_md5 = None
+    final_url = usable[0]
     try:
         request = urllib.request.Request(usable[0],
                                          headers={"User-Agent": "Mozilla/5.0"})
         digest = hashlib.md5()
         total = 0
-        with urllib.request.urlopen(request, timeout=timeout) as response, \
+        with _open_url(request, timeout=timeout, allow_http=allow_http,
+                       item_id=item["id"]) as response, \
                 open(archive, "wb") as sink:
+            # 跳转已在 _GuardedRedirect 里逐跳校验；这里再复核最终 URL，
+            # 覆盖被替换 opener 或代理改写的情况。
+            getter = getattr(response, "geturl", None)
+            final_url = str(getter() if callable(getter) else usable[0])
+            if (not _url_allowed(final_url, allow_http)
+                    or _is_private_target(final_url)):
+                raise SkillError(
+                    "资源下载被重定向到非 https 地址，已拒绝",
+                    code="UNSAFE_URL",
+                    details={"id": item["id"], "url": _redact_url(final_url)},
+                    fix="换一个 https 资源；不要为个别镜像放宽 --allow-http。",
+                )
             while True:
                 chunk = response.read(1024 * 1024)
                 if not chunk:
@@ -593,4 +745,8 @@ def download_resource(ref: str, *, db_path: Path | None = None,
     }
     if item["panel"] == "fonts":
         result["font_path"] = str(font_file(target))
+    if final_url != usable[0]:
+        result["final_url"] = _redact_url(final_url)
+    if skipped_insecure:
+        result["skipped_insecure_url_count"] = skipped_insecure
     return result

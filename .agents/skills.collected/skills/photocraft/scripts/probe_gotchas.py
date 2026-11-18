@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -483,7 +484,10 @@ def scan_unknown_keys():
                                       "--cmd", "type.create",
                                       "--params", json.dumps({"x": 8, "y": 32, "text": "t", "size": 12}),
                                       "--out", str(TMP / "scan-base.psd")],
-                                     capture_output=True, text=True, encoding="utf-8", check=False).stdout.splitlines()[-1])["result"]
+                                     capture_output=True, text=True, encoding="utf-8",
+                                     errors="replace",
+                                     env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+                                     check=False).stdout.splitlines()[-1])["result"]
     del base
     rejected = silent = blocked = 0
     for c in reg:

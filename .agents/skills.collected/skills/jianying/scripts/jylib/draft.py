@@ -15,12 +15,12 @@ import math
 import os
 import re
 import shutil
-import stat
 import time
 import uuid
 from pathlib import Path
 
 from .errors import SkillError
+from . import beauty as beauty_mod
 from . import media as media_mod
 from . import resources as resources_mod
 from . import versions as versions_mod
@@ -113,7 +113,7 @@ def load_json(path):
     target = media_mod.local_path(path, field="JSON 文件")
     try:
         # utf-8-sig 兼容 Notepad/PowerShell 写出的带 BOM 文件
-        text = target.read_text("utf-8-sig")
+        text = media_mod.read_plain_bytes(target).decode("utf-8-sig")
     except OSError as exc:
         raise SkillError(
             "文件读不了",
@@ -166,11 +166,11 @@ def backup_draft_files(draft_dir, label="render"):
         for name in ("draft_info.json", "draft_meta_info.json", "draft_content.json",
                      "attachment_editing.json", "draft.extra", "common_attachment"):
             source = folder / name
-            if not source.exists() or _is_link(source):
+            if _is_link(source) or not source.exists():
                 continue
             target = backup_dir / f"{label}-{name}.{stamp}"
             if source.is_dir():
-                shutil.copytree(source, target, symlinks=True)
+                media_mod.copy_tree(source, target)
             else:
                 shutil.copy2(source, target)
             backups.append(str(target))
@@ -190,21 +190,18 @@ def _asset(name):
 
 _HEX_RGB = re.compile(r"^[0-9a-fA-F]{6}$")
 _TIMELINE_ID = re.compile(r"^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$")
-_REPARSE_POINT = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
 
 
 def _is_link(path):
-    """Symlink or Windows junction/reparse point; never follow it."""
+    """Symlink or Windows junction; never follow it, don't flag cloud placeholders."""
     path = Path(path)
     try:
-        if path.is_symlink():
-            return True
-        attrs = getattr(path.lstat(), "st_file_attributes", 0)
+        info = path.lstat()
     except FileNotFoundError:
         return False
     except OSError:
         return True
-    return bool(attrs & _REPARSE_POINT)
+    return media_mod._is_link_stat(info)
 
 
 def _assert_plain_tree(root):
@@ -237,6 +234,17 @@ def hex_rgb(value, default="#FFFFFF"):
         raise SkillError(f"颜色必须是 #RRGGBB：{value!r}", code="VALIDATION",
                          details={"field": "color", "value": value})
     return [int(text[i:i + 2], 16) / 255.0 for i in (0, 2, 4)]
+
+
+def rgba_color(value, default="#00000000"):
+    """接受 #RRGGBB / #RRGGBBAA；6 位自动补 FF。返回大写 8 位字符串。"""
+    text = str(value if value is not None else default).strip().lstrip("#").upper()
+    if len(text) == 6:
+        text += "FF"
+    if len(text) != 8 or not re.fullmatch(r"[0-9A-F]{8}", text):
+        raise SkillError(f"颜色必须是 #RRGGBB 或 #RRGGBBAA：{value!r}",
+                         code="VALIDATION", details={"field": "color", "value": value})
+    return "#" + text
 
 
 def resolve_draft_info(draft_dir):
@@ -522,6 +530,20 @@ def _apply_keyframes(segment, raw):
 _HSL_COLORS = {"red", "orange", "yellow", "green", "cyan", "blue", "purple",
                "magenta"}
 
+# pyJianYingDraft 0.3.1 的混合模式元数据；这些是客户端内置模式，不需要额外缓存包。
+_MIX_MODES = {
+    "正片叠底": ("6758325895519277582", "871333"),
+    "颜色减淡": ("6758325800031752712", "871334"),
+    "颜色加深": ("6758325724848853518", "871335"),
+    "线性加深": ("6758325619253056013", "871336"),
+    "柔光": ("6758325439212556814", "871337"),
+    "强光": ("6758325264670790152", "871338"),
+    "滤色": ("6758325170760323597", "871339"),
+    "叠加": ("6758324989931295240", "871340"),
+    "变亮": ("6758324919789949453", "871341"),
+    "变暗": ("6758324839670354445", "871342"),
+}
+
 _NATIVE_BUCKETS = {
     "adjusts", "ai_generate_holders", "ai_text_effects", "ai_translates",
     "audio_balances", "audio_effects", "audio_fades", "audio_pannings",
@@ -530,7 +552,8 @@ _NATIVE_BUCKETS = {
     "effects", "filters", "green_screens", "handwrites", "hsl", "hsl_curves",
     "images", "log_color_wheels", "loudnesses", "manual_beautys",
     "manual_deformations", "material_animations", "material_colors",
-    "multi_language_refs", "placeholder_infos", "placeholders", "plugin_effects",
+    "mix_modes", "multi_language_refs", "placeholder_infos", "placeholders",
+    "plugin_effects",
     "primary_color_wheels", "realtime_denoises", "shapes", "smart_crops",
     "smart_relights", "sound_channel_mappings", "speeds", "stickers",
     "tail_leaders", "text_templates", "texts", "time_marks", "transitions",
@@ -551,13 +574,14 @@ _KNOWN_SEGMENT_KEYS = {
     "bubble", "background", "shadow", "bold", "italic", "underline",
     "adjust", "freeze", "native", "crop", "flip", "reverse", "mask",
     "curve_speed", "matting", "color_wheel", "hsl", "chroma", "audio_fade",
+    "background_fill", "background_filling", "mix_mode", "blend_mode",
     "fade", "audio_effect", "audio_effects", "transition", "resource_id",
     "sticker_id", "name", "value", "adjust_params", "category_id",
     "category_name", "source_platform", "combo_info", "radius", "shadow_point",
     "shape_param", "shape_fill_render_style", "request_id", "effect_id",
     "style_path", "third_resource_id", "panel", "resources", "version",
     "caption_info", "caption_duration_info", "resource_ref", "apply_target_type",
-    "green_screen", "line_max_width",
+    "green_screen", "line_max_width", "beauty", "beautify",
 }
 
 
@@ -916,7 +940,70 @@ def _audio_effect_materials(spec, index=0):
     return materials
 
 
-def _apply_video_extras(segment, material, spec, warnings, doc, *, photo=False):
+def _background_fill_material(spec):
+    """视频背景填充：底层视频留白处用模糊或纯色补齐。"""
+    if not isinstance(spec, dict):
+        raise SkillError(
+            "background_fill 必须是对象 {type: blur|color, blur?, color?}",
+            code="VALIDATION")
+    fill_type = str(spec.get("type") or spec.get("fill_type") or "").strip().lower()
+    if fill_type in {"blur", "canvas_blur"}:
+        kind = "canvas_blur"
+    elif fill_type in {"color", "canvas_color"}:
+        kind = "canvas_color"
+    else:
+        raise SkillError("background_fill.type 只能是 blur 或 color",
+                         code="VALIDATION", details={"value": fill_type})
+    blur = _number("background_fill.blur", spec.get("blur", 0.0625),
+                   original=spec.get("blur"), min_value=0.0, max_value=1.0)
+    color = rgba_color(spec.get("color", "#00000000"))
+    return {
+        "id": uid(),
+        "type": kind,
+        "blur": blur,
+        "color": color,
+        "source_platform": 0,
+    }
+
+
+def _mix_mode_material(spec):
+    """混合模式：使用客户端内置 effect/resource id，不依赖素材缓存。"""
+    if isinstance(spec, str):
+        spec = {"name": spec}
+    if not isinstance(spec, dict):
+        raise SkillError("mix_mode 必须是模式名或对象 {name,effect_id,resource_id}",
+                         code="VALIDATION")
+    name = str(spec.get("name") or spec.get("mode") or "").strip()
+    if not name:
+        raise SkillError("mix_mode.name 不能为空", code="VALIDATION")
+    mapped = _MIX_MODES.get(name)
+    resource_id = str(spec.get("resource_id") or (mapped[0] if mapped else "")).strip()
+    effect_id = str(spec.get("effect_id") or (mapped[1] if mapped else "")).strip()
+    if not resource_id or not effect_id:
+        raise SkillError(
+            "未知的 mix_mode；要么用内置模式名，要么同时提供 effect_id/resource_id",
+            code="VALIDATION",
+            details={"name": name, "supported": sorted(_MIX_MODES)},
+        )
+    return {
+        "id": uid(),
+        "type": "mix_mode",
+        "name": name,
+        "effect_id": effect_id,
+        "resource_id": resource_id,
+        "value": 1.0,
+        "apply_target_type": 0,
+        "platform": "all",
+        "source_platform": 0,
+        "category_id": "",
+        "category_name": "",
+        "sub_type": "none",
+        "time_range": None,
+    }
+
+
+def _apply_video_extras(segment, material, spec, warnings, doc, *, photo=False,
+                        bottom_track=True):
     """接线已核实 native 形状的逐片段能力：crop/flip/reverse/mask/曲线/色轮/HSL/绿幕。"""
     if photo:
         for photo_unsupported in ("curve_speed", "reverse", "matting"):
@@ -927,6 +1014,50 @@ def _apply_video_extras(segment, material, spec, warnings, doc, *, photo=False):
                     code="VALIDATION",
                     details={"field": photo_unsupported})
     extras = []
+    background = spec.get("background_fill")
+    if background is None:
+        background = spec.get("background_filling")
+    if background is not None:
+        fill = _background_fill_material(background)
+        segment["extra_material_refs"].append(fill["id"])
+        extras.append({"kind": "background_fill", "material": fill})
+        if not bottom_track:
+            warnings.append(
+                "background_fill 仅对最底层视频轨生效；当前片段不在第 0 条视觉轨，"
+                "剪映可能忽略填充。")
+
+    mix_spec = spec.get("mix_mode")
+    if mix_spec is None:
+        mix_spec = spec.get("blend_mode")
+    if mix_spec is not None:
+        mix = _mix_mode_material(mix_spec)
+        segment["extra_material_refs"].append(mix["id"])
+        extras.append({"kind": "mix_mode", "material": mix})
+        warnings.append(
+            "mix_mode 已写入 materials.effects[type=mix_mode]；11.8 界面预览/UI 原生导出"
+            "为品红（滤色生效的正常结果），但 native bridge 的 draftPath 导出仍为纯红；"
+            "需要混合模式成片请在剪映界面导出。")
+
+    beauty_spec = spec.get("beauty") or spec.get("beautify")
+    if beauty_spec is not None:
+        placeholder = str(uuid.uuid5(
+            uuid.NAMESPACE_OID, f"figure:{doc.get('id') or 'draft'}")).upper()
+        figures = beauty_mod.build(
+            beauty_spec, video_material_id=material.get("id"),
+            placeholder_id=placeholder)
+        if figures:
+            for item in figures:
+                segment["extra_material_refs"].append(item["id"])
+                extras.append({"kind": "beauty", "material": item})
+            warnings.append(
+                "beauty 已写入 materials.effects[type=figure]（美颜/美型/美妆/美体），"
+                "资源由剪映按 resource_id 拉取；11.8 界面原生导出可见像素变化，"
+                "但 native bridge 的 draftPath 导出不应用 figure（与 plain 帧一致）；"
+                "美颜成片请在剪映界面导出。")
+        else:
+            warnings.append(
+                "beauty 规格中的滑杆值全为 0，未写入 figure 材质；如只想保留占位，"
+                "不要把这条 warning 当作已生效。")
     crop = spec.get("crop")
     if crop is not None:
         if not isinstance(crop, dict):
@@ -985,7 +1116,8 @@ def _apply_video_extras(segment, material, spec, warnings, doc, *, photo=False):
             raise SkillError(
                 "matting.path 不能为空：抠像需要剪映生成的逐帧蒙版目录，外部不能凭空生成",
                 code="VALIDATION")
-        if not media_mod.local_path(path, field="matting.path").is_dir():
+        if not media_mod.is_plain_dir(
+                media_mod.local_path(path, field="matting.path")):
             raise SkillError(
                 "matting.path 必须是已存在的逐帧蒙版目录",
                 code="VALIDATION", details={"path": path})
@@ -1198,7 +1330,7 @@ def _apply_video_extras(segment, material, spec, warnings, doc, *, photo=False):
         segment["enable_hsl"] = True
         warnings.append(
             "hsl 已写入 materials.hsl（官方 11.8 白名单形状）；"
-            "颜色通道像素未单独验收。")
+            "2026-11-18 真机导出没有像素变化，不能当已支持。")
 
     chroma_spec = spec.get("chroma") or spec.get("green_screen")
     if chroma_spec is not None:
@@ -1206,7 +1338,8 @@ def _apply_video_extras(segment, material, spec, warnings, doc, *, photo=False):
         segment["extra_material_refs"].append(chroma_material["id"])
         extras.append({"kind": "chroma", "material": chroma_material})
         warnings.append(
-            "chroma 已写入 materials.chromas；色度抠图像素与边缘参数未单独验收。")
+            "chroma 已写入 materials.chromas；11.8 界面打开会读回“色度抠图”并界面出片，"
+            "但 native bridge 不应用，需要界面导出。")
 
     _native_extras(segment, material, spec, doc, warnings)
     return extras or None
@@ -1280,11 +1413,42 @@ def _caption_duration_info(spec):
     }
 
 
+def _reset_text_style_for_effect(style):
+    """花字接管文字外观时，客户端会把字色/描边/阴影重置为默认值。
+
+    与 capcut-mate 的剪映实证一致：花字只管 ``effectStyle``，不接管背景和发光；
+    重置的是文字自身的 fill / strokes / shadows，不是整个文字材质。
+    """
+    style["fill"] = {
+        "alpha": 1.0,
+        "content": {
+            "render_type": "solid",
+            "solid": {"alpha": 1.0, "color": hex_rgb("#FFFFFF")},
+        },
+    }
+    style["strokes"] = []
+    style.pop("shadows", None)
+    style["useLetterColor"] = True
+
+
 def _apply_text_extras(segment, text_material, spec, doc, warnings):
     """接线文字模板、动画、花字、气泡与 native 逃生舱。"""
     extras = []
     template = spec.get("text_template") or spec.get("template")
     template_type = "text_template"
+    # 模板 / 气泡 / 花字的优先级按剪映实证：模板 > 气泡 > 花字。
+    # 三者都改文字片段身份或 styles[0]，同时写会得到未定义结果，不能静默叠加。
+    effect_spec = spec.get("text_effect") or spec.get("flower")
+    bubble_spec = spec.get("text_bubble") or spec.get("bubble")
+    if template is not None and bubble_spec is not None:
+        warnings.append("text_template 优先，text_bubble 已忽略")
+        bubble_spec = None
+    if template is not None and effect_spec is not None:
+        warnings.append("text_template 优先，text_effect 已忽略")
+        effect_spec = None
+    if template is None and bubble_spec is not None and effect_spec is not None:
+        warnings.append("text_bubble 优先，text_effect 已忽略")
+        effect_spec = None
     if template is not None:
         if not isinstance(template, dict):
             raise SkillError("text_template 必须是对象 {resource_id,name,path,resources}",
@@ -1361,7 +1525,6 @@ def _apply_text_extras(segment, text_material, spec, doc, warnings):
         segment["extra_material_refs"].append(text_material["id"])
         extras.append({"kind": "text_template", "material": text_template_material})
 
-    effect_spec = spec.get("text_effect") or spec.get("flower")
     if effect_spec is not None:
         if not isinstance(effect_spec, dict):
             raise SkillError("text_effect 必须是对象 {resource_id,effect_id?,path?}",
@@ -1387,64 +1550,86 @@ def _apply_text_extras(segment, text_material, spec, doc, warnings):
             content = json.loads(text_material.get("content") or "{}")
         except json.JSONDecodeError:
             content = {}
-        styles = content.get("styles") or [{}]
-        styles[0]["effectStyle"] = {
+        styles = content.setdefault("styles", [{}])
+        if not styles:
+            styles.append({})
+        style = styles[0]
+        style["effectStyle"] = {
             "id": effect_id,
             "path": str(effect_spec.get("style_path")
                         or effect_spec.get("path") or ""),
         }
+        _reset_text_style_for_effect(style)
         encoded = json.dumps(content, ensure_ascii=False, separators=(",", ":"))
         text_material["content"] = encoded
         text_material["base_content"] = encoded
         segment["extra_material_refs"].append(effect_material["id"])
-        extras.append({"kind": "text_effect", "bucket": "filters",
+        extras.append({"kind": "text_effect", "bucket": "effects",
                        "material": effect_material})
         warnings.append(
-            "text_effect 已写入 materials.filters[type=text_effect] 与文字 effectStyle；"
+            "text_effect 已写入 materials.effects[type=text_effect] 与文字 effectStyle；"
+            "花字会把文字颜色/描边/阴影重置为白字、无描边、无阴影（背景/发光不重置）；"
+            "官方 11.8 要求 ref 绑定 flower，DeepGlow 属 tool_text_glow 不匹配；"
             "花字资源必须已缓存，像素未验收。")
 
     glow_spec = spec.get("text_glow")
     if glow_spec is not None:
         if not isinstance(glow_spec, dict):
-            raise SkillError("text_glow 必须是对象 {resource_id,effect_id?,path?}",
+            raise SkillError("text_glow 必须是对象 {resource_id,effect_id,bloom_params?}",
                              code="VALIDATION")
         resource_id = str(glow_spec.get("resource_id") or "").strip()
         if not resource_id:
             raise SkillError("text_glow.resource_id 不能为空", code="VALIDATION")
-        effect_id = str(glow_spec.get("effect_id") or resource_id)
+        effect_id = str(glow_spec.get("effect_id") or "").strip()
+        if not effect_id:
+            raise SkillError(
+                "text_glow.effect_id 不能为空：发光的 effect_id 与 resource_id 不是同一个值",
+                code="VALIDATION")
+        bloom_spec = glow_spec.get("bloom_params")
+        if bloom_spec is None:
+            bloom_spec = {}
+        if not isinstance(bloom_spec, dict):
+            raise SkillError("text_glow.bloom_params 必须是对象", code="VALIDATION")
+        bloom_params = {
+            "color": str(bloom_spec.get("color") or "#FFFFFF"),
+            "dir_x": _number("text_glow.bloom_params.dir_x",
+                             bloom_spec.get("dir_x", 0.5),
+                             original=bloom_spec.get("dir_x"), min_value=0.0,
+                             max_value=1.0),
+            "dir_y": _number("text_glow.bloom_params.dir_y",
+                             bloom_spec.get("dir_y", 0.5),
+                             original=bloom_spec.get("dir_y"), min_value=0.0,
+                             max_value=1.0),
+            "range": _number("text_glow.bloom_params.range",
+                             bloom_spec.get("range", 0.2),
+                             original=bloom_spec.get("range"), min_value=0.0,
+                             max_value=1.0),
+            "strength": _number("text_glow.bloom_params.strength",
+                                bloom_spec.get("strength", 0.3),
+                                original=bloom_spec.get("strength"), min_value=0.0,
+                                max_value=1.0),
+        }
         glow_material = {
             "apply_target_type": 0,
             "effect_id": effect_id,
             "id": uid(),
             "resource_id": resource_id,
-            "type": "text_glow",
-            "value": _number("text_glow.value", glow_spec.get("value", 1.0),
-                             original=glow_spec.get("value")),
-            "source_platform": int(_number(
-                "text_glow.source_platform", glow_spec.get("source_platform", 1),
-                original=glow_spec.get("source_platform"), min_value=0)),
-            "path": str(glow_spec.get("path") or ""),
+            "type": "bloom",
+            "panel_id": "text_glow",
+            "value": _number("text_glow.value", glow_spec.get("value", 0.0),
+                             original=glow_spec.get("value"), min_value=0.0,
+                             max_value=1.0),
+            "bloom_params": bloom_params,
         }
-        try:
-            content = json.loads(text_material.get("content") or "{}")
-        except json.JSONDecodeError:
-            content = {}
-        styles = content.get("styles") or [{}]
-        styles[0]["effectStyle"] = {
-            "id": effect_id,
-            "path": str(glow_spec.get("path") or ""),
-        }
-        encoded = json.dumps(content, ensure_ascii=False, separators=(",", ":"))
-        text_material["content"] = encoded
-        text_material["base_content"] = encoded
+        text_material["check_flag"] = int(text_material.get("check_flag") or 7) | 64
         segment["extra_material_refs"].append(glow_material["id"])
-        extras.append({"kind": "text_glow", "bucket": "filters",
+        extras.append({"kind": "text_glow", "bucket": "effects",
                        "material": glow_material})
         warnings.append(
-            "text_glow 已写入 materials.filters[type=text_glow] 与文字 effectStyle；"
-            "光效资源必须已缓存，像素未验收。")
+            "text_glow 已写入 materials.effects[type=bloom] + panel_id=text_glow，"
+            "文字 check_flag 置 64；bloom_params 按给定值写入，"
+            "资源必须已缓存，像素待验收。")
 
-    bubble_spec = spec.get("text_bubble") or spec.get("bubble")
     if bubble_spec is not None:
         if not isinstance(bubble_spec, dict):
             raise SkillError("text_bubble 必须是对象 {resource_id,effect_id?,path?}",
@@ -1452,9 +1637,14 @@ def _apply_text_extras(segment, text_material, spec, doc, warnings):
         resource_id = str(bubble_spec.get("resource_id") or "").strip()
         if not resource_id:
             raise SkillError("text_bubble.resource_id 不能为空", code="VALIDATION")
+        effect_id = str(bubble_spec.get("effect_id") or "").strip()
+        if not effect_id:
+            raise SkillError(
+                "text_bubble.effect_id 不能为空：气泡的 effect_id 与 resource_id 不是同一个值",
+                code="VALIDATION")
         bubble_material = {
             "apply_target_type": 0,
-            "effect_id": str(bubble_spec.get("effect_id") or resource_id),
+            "effect_id": effect_id,
             "id": uid(),
             "resource_id": resource_id,
             "type": "text_shape",
@@ -1463,11 +1653,12 @@ def _apply_text_extras(segment, text_material, spec, doc, warnings):
             "path": str(bubble_spec.get("path") or ""),
         }
         segment["extra_material_refs"].append(bubble_material["id"])
-        extras.append({"kind": "text_bubble", "bucket": "filters",
+        extras.append({"kind": "text_bubble", "bucket": "effects",
                        "material": bubble_material})
         warnings.append(
-            "text_bubble 已写入 materials.filters[type=text_shape]；"
-            "气泡资源必须已缓存，像素未验收。")
+            "text_bubble 已写入 materials.effects[type=text_shape]；"
+            "官方 11.8 选择协议没有 text_shape，气泡走 text_template；"
+            "此字段仅兼容旧草稿，气泡资源必须已缓存，像素未验收。")
 
     animations = spec.get("animations")
     if animations is not None:
@@ -1735,6 +1926,56 @@ def _apply_highlight_styles(content, text, spec):
             start = index + len(word)
 
 
+def _apply_range_styles(content, text, spec):
+    """把 ASS 导入等来源的按区间样式合并进 content.styles。"""
+    ranges = spec.get("range_styles")
+    if ranges is None:
+        return
+    if not isinstance(ranges, list):
+        raise SkillError("range_styles 必须是数组", code="VALIDATION")
+    base = copy.deepcopy(content["styles"][0])
+    additions = []
+    for index, item in enumerate(ranges):
+        if not isinstance(item, dict):
+            raise SkillError(f"range_styles[{index}] 必须是对象", code="VALIDATION")
+        start = int(_number(f"range_styles[{index}].start", item.get("start", 0),
+                            original=item.get("start"), min_value=0))
+        end = int(_number(f"range_styles[{index}].end", item.get("end", 0),
+                          original=item.get("end"), min_value=0))
+        if end <= start:
+            continue
+        style = copy.deepcopy(base)
+        style["range"] = [start, end]
+        color = item.get("color")
+        if color:
+            style["fill"] = {
+                "alpha": 1.0,
+                "content": {"render_type": "solid",
+                            "solid": {"alpha": 1.0, "color": hex_rgb(color)}},
+            }
+            style["useLetterColor"] = True
+        if item.get("font_size") is not None:
+            style["size"] = _number(f"range_styles[{index}].font_size",
+                                    item.get("font_size"), positive=True)
+        for flag in ("bold", "italic"):
+            if item.get(flag) is not None:
+                style[flag] = _strict_bool(f"range_styles[{index}].{flag}",
+                                           item.get(flag), False)
+        if item.get("underline") is not None:
+            style["underline"] = _strict_bool(f"range_styles[{index}].underline",
+                                              item.get("underline"), False)
+        additions.append(style)
+    if additions:
+        # 必须有覆盖全文的基础样式；否则 ASS 区间之外的文字会丢样式。
+        base["range"] = [0, len(text.encode("utf-16-le")) // 2]
+        existing = content.get("styles") or []
+        content["styles"] = [base] + [
+            item for item in existing[1:]
+            if isinstance(item, dict) and item.get("range") != base["range"]
+        ] + additions
+        content.setdefault("text", text)
+
+
 def _text_material(text, spec, template):
     material = copy.deepcopy(template)
     length = len(text.encode("utf-16-le")) // 2
@@ -1836,6 +2077,7 @@ def _text_material(text, spec, template):
         shadow_shape = None
     content = {"styles": [style], "text": text}
     _apply_highlight_styles(content, text, spec)
+    _apply_range_styles(content, text, spec)
     encoded = json.dumps(content, ensure_ascii=False, separators=(",", ":"))
     material.update({
         "id": uid(),
@@ -2007,10 +2249,11 @@ def _commit_output(staging, final, force):
     return previous
 
 
-def _resolve_plan_resource_refs(value, *, fetch_resources=False):
+def _resolve_plan_resource_refs(value, *, fetch_resources=False, allow_http=False):
     if isinstance(value, list):
         for item in value:
-            _resolve_plan_resource_refs(item, fetch_resources=fetch_resources)
+            _resolve_plan_resource_refs(item, fetch_resources=fetch_resources,
+                                        allow_http=allow_http)
         return value
     if not isinstance(value, dict):
         return value
@@ -2028,7 +2271,8 @@ def _resolve_plan_resource_refs(value, *, fetch_resources=False):
                                           "title": item["title"]},
                                  fix="先跑 jy.py resource download <ref> --apply，"
                                      "或给 build 加 --fetch-resources")
-            resources_mod.download_resource(text, apply=True)
+            resources_mod.download_resource(text, apply=True,
+                                            allow_http=allow_http)
             item = resources_mod.resolve(text)["item"]
         if item["panel"] == "fonts":
             if not value.get("font_path"):
@@ -2048,7 +2292,8 @@ def _resolve_plan_resource_refs(value, *, fetch_resources=False):
                 value["category_name"] = item["category_name"]
     for child in value.values():
         if isinstance(child, (dict, list)):
-            _resolve_plan_resource_refs(child, fetch_resources=fetch_resources)
+            _resolve_plan_resource_refs(child, fetch_resources=fetch_resources,
+                                        allow_http=allow_http)
     return value
 
 
@@ -2096,11 +2341,12 @@ def _resolve_relative_extras_paths(plan, base):
 
 
 def build(plan_path, out_dir, *, force=False, name=None, make_cover=True,
-          version_label=None, fetch_resources=False):
+          version_label=None, fetch_resources=False, allow_http=False):
     plan = load_json(plan_path)
     if not isinstance(plan, dict):
         raise SkillError("计划必须是 JSON 对象", code="VALIDATION")
-    _resolve_plan_resource_refs(plan, fetch_resources=fetch_resources)
+    _resolve_plan_resource_refs(plan, fetch_resources=fetch_resources,
+                                allow_http=allow_http)
     tracks = plan.get("tracks")
     if not isinstance(tracks, list) or not tracks:
         raise SkillError("计划缺少 tracks（至少一条视频/图片/音频/文字轨）",
@@ -2141,6 +2387,18 @@ def build(plan_path, out_dir, *, force=False, name=None, make_cover=True,
     def probe_of(path):
         raw = media_mod.local_path(path, field="素材路径")
         resolved = raw if raw.is_absolute() else (plan_dir / raw)
+        if media_mod._has_link_ancestor(resolved):
+            raise SkillError("素材文件位于链接目录下，已拒绝",
+                             code="MEDIA_NOT_FOUND",
+                             details={"path": str(resolved)})
+        try:
+            info = resolved.lstat()
+        except OSError:
+            info = None
+        if info is not None and media_mod._is_link_stat(info):
+            raise SkillError("素材文件是链接路径，已拒绝",
+                             code="MEDIA_NOT_FOUND",
+                             details={"path": str(resolved)})
         key = str(resolved.resolve())
         if key not in probe_cache:
             probe_cache[key] = media_mod.probe_media(ffprobe, key)
@@ -2301,7 +2559,7 @@ def build(plan_path, out_dir, *, force=False, name=None, make_cover=True,
                                 "文字动画已写入 material_animations，但动画资源必须已缓存；"
                                 "未缓存时剪映会忽略或报 dependency_missing。")
                         elif extra["kind"] in {"text_effect", "text_bubble", "text_glow"}:
-                            doc["materials"]["filters"].append(extra["material"])
+                            doc["materials"]["effects"].append(extra["material"])
                     new_track["segments"].append(segment)
                     text_track_index += 1
                     max_end = max(max_end, us(start + duration))
@@ -2409,7 +2667,8 @@ def build(plan_path, out_dir, *, force=False, name=None, make_cover=True,
                 _apply_keyframes(segment, seg_spec.get("keyframes"))
                 _apply_video_animations(segment, seg_spec, doc, warnings)
                 extra_materials = _apply_video_extras(
-                    segment, material, seg_spec, warnings, doc, photo=photo)
+                    segment, material, seg_spec, warnings, doc, photo=photo,
+                    bottom_track=(visual_index == 0))
                 for extra in extra_materials or []:
                     if extra["kind"] == "mask":
                         doc["materials"]["common_mask"].append(extra["material"])
@@ -2431,6 +2690,12 @@ def build(plan_path, out_dir, *, force=False, name=None, make_cover=True,
                         doc["materials"]["hsl"].append(extra["material"])
                     elif extra["kind"] == "chroma":
                         doc["materials"]["chromas"].append(extra["material"])
+                    elif extra["kind"] == "background_fill":
+                        doc["materials"].setdefault("canvases", []).append(extra["material"])
+                    elif extra["kind"] == "mix_mode":
+                        doc["materials"].setdefault("effects", []).append(extra["material"])
+                    elif extra["kind"] == "beauty":
+                        doc["materials"].setdefault("effects", []).append(extra["material"])
                 if material.get("has_audio") and any(
                         key in seg_spec for key in ("channel", "audio_fade",
                                                     "fade", "audio_effect",
@@ -2610,11 +2875,11 @@ def build(plan_path, out_dir, *, force=False, name=None, make_cover=True,
 
 def _materials_bytes(document, root):
     total = 0
-    for bucket in ("videos", "audios"):
+    for bucket in ("videos", "images", "audios", "stickers"):
         for item in document["materials"].get(bucket) or []:
             try:
                 path = media_mod.local_path(item.get("path") or "", field="素材路径")
-                if path.is_file():
+                if media_mod.is_plain_file(path):
                     total += path.stat().st_size
             except (OSError, SkillError):
                 continue
@@ -2623,8 +2888,7 @@ def _materials_bytes(document, root):
 
 def _plain_file(path):
     """普通文件：存在且不是符号链接/junction。"""
-    path = Path(path)
-    return path.is_file() and not _is_link(path)
+    return media_mod.is_plain_file(path)
 
 
 def _read_optional_json(path, label, warnings):
@@ -2707,6 +2971,8 @@ def inspect(draft_dir):
         "fps": None,
         "tracks": [],
         "texts": [],
+        "text_effects": [],
+        "video_extras": [],
         "missing_media": [],
         "warnings": [],
         "consistency": {"meta": {"present": False}, "content": {"present": False}},
@@ -2745,7 +3011,7 @@ def inspect(draft_dir):
             entry["starts"].append(round(start, 3))
             entry["ends"].append(round(start + duration, 3))
             material_id = seg.get("material_id")
-            for bucket in ("videos", "audios"):
+            for bucket in ("videos", "images", "audios", "stickers"):
                 for item in materials.get(bucket) or []:
                     if item.get("id") != material_id:
                         continue
@@ -2757,7 +3023,12 @@ def inspect(draft_dir):
                             result["missing_media"].append(path)
                             result["warnings"].append("草稿引用了 UNC/网络路径，已拒绝访问。")
                         else:
-                            if not local.is_file():
+                            if bucket == "stickers":
+                                ok = (media_mod.is_plain_file(local)
+                                      or media_mod.is_plain_dir(local))
+                            else:
+                                ok = media_mod.is_plain_file(local)
+                            if not ok:
                                 result["missing_media"].append(path)
             try:
                 text_item = _text_material_of(document, seg)
@@ -2773,6 +3044,58 @@ def inspect(draft_dir):
                     "text": str(content.get("text") or "")[:80],
                     "type": text_item.get("type"),
                 })
+                refs = set(seg.get("extra_material_refs") or [])
+                for item in materials.get("effects") or []:
+                    if not isinstance(item, dict) or item.get("id") not in refs:
+                        continue
+                    if item.get("type") not in {"text_shape", "text_effect", "text_glow", "bloom"}:
+                        continue
+                    result["text_effects"].append({
+                        "start": round(start, 3), "duration": round(duration, 3),
+                        "text": str(content.get("text") or "")[:40],
+                        "type": item.get("type"),
+                        "panel_id": item.get("panel_id") or "",
+                        "effect_id": item.get("effect_id"),
+                        "resource_id": item.get("resource_id"),
+                        "path": item.get("path") or "",
+                        "bloom_params": item.get("bloom_params") or {},
+                    })
+            video_refs = set(seg.get("extra_material_refs") or [])
+            for item in materials.get("canvases") or []:
+                if isinstance(item, dict) and item.get("id") in video_refs:
+                    result["video_extras"].append({
+                        "start": round(start, 3), "duration": round(duration, 3),
+                        "type": "background_fill",
+                        "fill_type": item.get("type"),
+                        "blur": item.get("blur"),
+                        "color": item.get("color"),
+                    })
+            for item in materials.get("effects") or []:
+                if (isinstance(item, dict)
+                        and item.get("type") == "mix_mode"
+                        and item.get("id") in video_refs):
+                    result["video_extras"].append({
+                        "start": round(start, 3), "duration": round(duration, 3),
+                        "type": "mix_mode",
+                        "name": item.get("name"),
+                        "effect_id": item.get("effect_id"),
+                        "resource_id": item.get("resource_id"),
+                    })
+            for item in materials.get("effects") or []:
+                if (isinstance(item, dict)
+                        and item.get("type") in {"figure", "makeup_root"}
+                        and item.get("id") in video_refs):
+                    result["video_extras"].append({
+                        "start": round(start, 3), "duration": round(duration, 3),
+                        "type": "beauty" if item.get("type") == "figure" else "makeup_root",
+                        "name": item.get("name"),
+                        "resource_id": item.get("resource_id"),
+                        "category_id": item.get("category_id"),
+                        "intensity_key": item.get("intensity_key"),
+                        "value": item.get("value"),
+                        "adjust_params": item.get("adjust_params") or [],
+                        "face_adjust_params": item.get("face_adjust_params") or [],
+                    })
         result["tracks"].append(entry)
     if result["missing_media"]:
         result["warnings"].append("有素材路径不存在，渲染会失败或黑帧。")
@@ -2861,11 +3184,24 @@ def _write_text(material, text, *, font_size=None, color=None,
     material["type"] = "text"
 
 
+def _ref_values(raw):
+    """``extra_material_refs`` 归一成 id 集合：正常是 list，个别草稿是 dict/标量。"""
+    if isinstance(raw, dict):
+        raw = list(raw.values())
+    if isinstance(raw, (list, tuple, set)):
+        return {str(item) for item in raw
+                if isinstance(item, (str, int)) and str(item)}
+    if isinstance(raw, (str, int, float)) and raw:
+        return {str(raw)}
+    return set()
+
+
 def _referenced_material_ids(document):
     referenced = set()
     for _, segment in _flatten_segments(document):
         referenced.add(segment.get("material_id"))
-        referenced.update(segment.get("extra_material_refs") or [])
+        referenced.add(segment.get("local_material_id"))
+        referenced.update(_ref_values(segment.get("extra_material_refs")))
     return referenced
 
 
@@ -3252,7 +3588,7 @@ def _apply_op(document, op, base=None):
         return "set_transform"
     if kind == "remove":
         material_id = segment.get("material_id")
-        extra_refs = list(segment.get("extra_material_refs") or [])
+        extra_refs = sorted(_ref_values(segment.get("extra_material_refs")))
         for track in document.get("tracks") or []:
             segments = track.get("segments") or []
             for index, item in enumerate(segments):
@@ -3336,7 +3672,7 @@ def patch(draft_dir, ops_path, out_dir, *, in_place=False, version_label=None):
         try:
             _assert_plain_tree(source)
             staging = out.parent / f".tmp-{uid()}"
-            shutil.copytree(source, staging, symlinks=True)
+            media_mod.copy_tree(source, staging)
             staging_info = staging / info_relative
             # 只删除能证明与 draft_info 字节一致的镜像；未知运行时文件原样保留，
             # 避免把用户手工塞进草稿目录的资产当垃圾清掉。
@@ -3410,7 +3746,7 @@ def patch(draft_dir, ops_path, out_dir, *, in_place=False, version_label=None):
             srt_path = Path(raw_srt).expanduser()
             if not srt_path.is_absolute():
                 srt_path = ops_base / srt_path
-            if srt_path.is_file():
+            if media_mod.is_plain_file(srt_path):
                 artifacts.append(srt_path)
         versions_mod.record_patch(
             write_root, write_info, ops_path, label=version_label or "patch",

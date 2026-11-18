@@ -1,7 +1,7 @@
 # 能力边界与验证矩阵
 
 基线：Windows，剪映专业版 **11.8.0.14778**，native bridge 11.8.0 / build 14778。
-核对日期：2026-11-15。以下“已跑通”条目来自参考工程的 11.8 实测记录；本次会话复验了 `probe`、
+核对日期：2026-11-18。以下“已跑通”条目来自参考工程的 11.8 实测记录；本次会话复验了 `probe`、
 草稿构建/结构/补丁/临时根登记、离线测试，并在 14:57 启动剪映后完成一次临时多轨草稿的原生导出。
 2026-11-14 又对“未验证”项做了集成复验：position_y/opacity/volume 关键帧、变速、
 草稿画布尺寸在导出中被尊重、硬字幕烧录均已实测（native draftPath 导出不接受自定义 options，详见下表）；
@@ -9,20 +9,23 @@ volume 关键帧复验时发现并修复了 audio 轨漏写关键帧的 bug。
 2026-11-15 全能力 smoke：文字背景/阴影/粗体/下划线、独立音频轨淡入淡出经真实导出抽帧/波形验证
 （原始抽帧与回执未归档，只有结论与数字）；
 `adjust`、HSL、chroma 的 native 写入在 11.8 真实导出中被忽略；`adjust` 已改为显式拒绝，
-HSL/chroma 降级为 unverified，不再当已支持。
+HSL 降级为 unverified；chroma 结构在 UI 打开即生效、界面导出可出片，但仍不被 native bridge 应用，
+按 conditional 处理，不再当“结构写了就生效”。
 其他版本的结构和桥接能力可能不同；`probe` 输出的 `bridge.capabilities` 是当场事实，不要照抄本文。
 完整的三层能力矩阵（已实现/计划/资源/宿主/账号）见 [capabilities](capabilities.md)；本文件只写
 “已测/未测/不承诺”，两者要一起读。2026-11-15 真机探针的 mask、flip、audio-channel、wheel、sticker
-五项已归档到 [evidence/2026-11-15-real-probes](evidence/2026-11-15-real-probes/README.md)；2026-11-16 的
-render 回归归档在 [evidence/2026-11-16-render-check](evidence/2026-11-16-render-check/README.md)；
-硬字幕重验归档在 [evidence/2026-11-16-burn-check](evidence/2026-11-16-burn-check/README.md)；
+五项已归档在仓库外；2026-11-16 的
+render 回归归档在仓库外；
+硬字幕重验归档在仓库外；
 字幕模板/字体/高亮/文字与视频动画/包装抽帧归档在
-[evidence/2026-11-16-caption-highlight](evidence/2026-11-16-caption-highlight/README.md)；
+证据已移出仓库；
 一键字幕/本地转码回执归档在
-[evidence/2026-11-16-workflow-transcode](evidence/2026-11-16-workflow-transcode/README.md)；
+证据已移出仓库；
 审查后真机 `build → render` 复核归档在
-[evidence/2026-11-16-render-after-review](evidence/2026-11-16-render-after-review/README.md)；
+证据已移出仓库；
 文字背景/阴影、audio fade、裁剪/水平翻转未归档原始文件，下表相关行按“未归档证据”标注，复核时以已归档目录为准。
+模板/ASS/OTIO/媒体分析与维护的离线证据在
+证据已移出仓库。
 
 ## 已在本机跑通
 
@@ -42,7 +45,7 @@ render 回归归档在 [evidence/2026-11-16-render-check](evidence/2026-11-16-re
 | 本地关键词高亮 | 2026-11-16 “AI工具分享 AI时代”按词高亮 AI，真实导出两处 AI 为黄色粗体、其余白色；本地规则，不是 AI 划重点 |
 | 视频动画 | 2026-11-16 免费“翻入”经 `animations` → `material_animations[type=video_animation]`；0.3s 黑、0.8s 翻入中、1.5s 完整画面 |
 | 本地包装 preset | 2026-11-16 `jy.py packaging` 由 60s 视频 + 20 cue SRT + 毛笔行楷 + 白字黑边 + 变色输入生成计划；build/render 2s/30s 抽帧看到标题书法字和字幕模板；这是本地组合，不是云端智能包装 |
-| 一键字幕工程 | 2026-11-16 `jy.py auto-subtitles --srt ...` 生成 2.5s 可编辑草稿，字幕轨、标题、版本链齐全；证据 `evidence/2026-11-16-workflow-transcode/` |
+| 一键字幕工程 | 2026-11-16 `jy.py auto-subtitles --srt ...` 生成 2.5s 可编辑草稿，字幕轨、标题、版本链齐全；证据已移出仓库 |
 | 本地转码 | 2026-11-16 `jy.py transcode --video-bitrate 500k` 用完整用户 ffmpeg 输出 86,879B / 2.0s / 320×180 / H.264；这是后处理，不是剪映原生码率 |
 | 音频淡入淡出 | 2026-11-15 两次真实导出 volumedetect：`in/out=1.0s`；一次 0s -39.0dB / 1.0s -24.1dB / 2.2s -34.0dB，另一次 0s -36.7dB / 1.0s -26.1dB / 1.8s -36.6dB，首尾衰减、中段抬升趋势一致；视频原声淡入淡出未生效。原始回执未归档。 |
 | 缩放关键帧 | 1.0→0.5 逐步缩小，抽帧确认 |
@@ -50,11 +53,11 @@ render 回归归档在 [evidence/2026-11-16-render-check](evidence/2026-11-16-re
 | 音量关键帧 | 2026-11-14 audio 轨 `keyframes.volume`（修复漏写 bug 后），渲染器写入 KFTypeVolume，volumedetect 证实 -27.5/-18.3dB 渐变 |
 | 变速 | `speed: 2.0`，4s 源取 3s 目标出 1.5s，成片 1.509s；2026-11-14 复验 2.02s |
 | 原生导出 | 2026-11-14 临时多轨草稿：968,020B / 2.507s / 640×360 / H.264+AAC，`draft_mutated:false` |
-| 原生导出（多文件回写） | 2026-11-16 真机：320×180/30 临时草稿导出 30,294B / 1.021s / H.264+AAC；`draft_mutated:true`、`draft_files_changed:["draft_content.json"]`，剪映确实在导出时写 `draft_content.json`（证据：[`render.json`](evidence/2026-11-16-render-check/render.json)、[`frame-0.6.png`](evidence/2026-11-16-render-check/frame-0.6.png)） |
+| 原生导出（多文件回写） | 2026-11-16 真机：320×180/30 临时草稿导出 30,294B / 1.021s / H.264+AAC；`draft_mutated:true`、`draft_files_changed:["draft_content.json"]`，剪映确实在导出时写 `draft_content.json`（证据已移出仓库） |
 | 草稿画布尺寸被导出尊重 | 2026-11-14 640×360/30 草稿画布被导出尊重；native draftPath 导出不接受 options，帧率/分辨率走 `canvas_config` |
-| 硬字幕烧录 | 2026-11-14 用 user libass ffmpeg 对真实视频烧录中文 SRT，`drift_ok:true`，抽帧确认“测试字幕”字形正确；2026-11-16 用 `imageio-ffmpeg` 自带 ffmpeg 7.1 重验 30s 中文 SRT，`drift_ok:true`、6/6 cue 完整（证据：[`burn.json`](evidence/2026-11-16-burn-check/burn.json)、[`burned-16s.png`](evidence/2026-11-16-burn-check/burned-16s.png)） |
-| 裁剪/翻转 | 垂直翻转有归档抽帧（[`flip-v.png`](evidence/2026-11-15-real-probes/flip/flip-v.png)）；裁剪与水平翻转同批导出目视确认，未单独归档抽帧 |
-| 形状蒙版 | 2026-11-15 真机 `resource_id=82432977 circle` + `config={center_x:0.5,center_y:0.5,width:0.5,height:0.5,feather:0.1}` 导出抽帧：中央椭圆彩条可见；`config={}` 同机导出全黑（证据：[`mask-config.png`](evidence/2026-11-15-real-probes/mask/mask-config.png)、[`mask-main.png`](evidence/2026-11-15-real-probes/mask/mask-main.png)） |
+| 硬字幕烧录 | 2026-11-14 用 user libass ffmpeg 对真实视频烧录中文 SRT，`drift_ok:true`，抽帧确认“测试字幕”字形正确；2026-11-16 用 `imageio-ffmpeg` 自带 ffmpeg 7.1 重验 30s 中文 SRT，`drift_ok:true`、6/6 cue 完整（证据已移出仓库） |
+| 裁剪/翻转 | 垂直翻转有仓库外归档抽帧；裁剪与水平翻转同批导出目视确认，未单独归档抽帧 |
+| 形状蒙版 | 2026-11-15 真机 `resource_id=82432977 circle` + `config={center_x:0.5,center_y:0.5,width:0.5,height:0.5,feather:0.1}` 导出抽帧：中央椭圆彩条可见；`config={}` 同机导出全黑（证据已移出仓库） |
 | 改已有明文草稿 | `patch` 复制副本，改字+移位+音量后重新导出并抽帧确认 |
 | 首页登记（临时根） | 复制+38 键条目+draft_ids 1→2+备份+回读 verified |
 | 首页登记（真实根） | `register`/`publish --apply` 会改用户索引；真实根必须逐次获得授权，离线测试只操作临时根 |
@@ -67,9 +70,10 @@ render 回归归档在 [evidence/2026-11-16-render-check](evidence/2026-11-16-re
 | 资源自动解析 | 2026-11-16 `resource_ref:"DeepGlow"` 能解析到缓存 `tool_text_glow` 包并成功导出；但 640×360 暗底抽帧只有白字、没有可见光效。`resource_ref:"毛笔行楷"` 自动下载字体并导出书法字 |
 | 免费资源下载 | `resource download` 支持免费非商业资源；本机字幕模板 788 条、文字模板 9 条、视频效果 3 条有可用 URL；会员/商业资源返回 `RESOURCE_GATED`，过期 URL 返回 `RESOURCE_URL_EXPIRED` |
 | 字幕模板（caption_template） | 2026-11-16 免费“白字黑边”下载到缓存；文字材质写 `caption_template_info` + `caption_info`，真实导出 2s 帧显示“这是字幕模板测试”，cue 文本绑定成功；模板字号/间距会覆盖基础样式 |
-| 本地去水词/标点 | 2026-11-16 60s ASR 259→247 token，`--remove-fillers` 删除默认口头禅；`--punctuate` 按停顿加逗号/句号；规则启发式，不冒充剪映 AI |
+| 本地去水词/标点 | 2026-11-16 60s ASR 259→247 token，`--remove-fillers` 删除默认口头禅；`--punctuate` 优先用 `asr-punc.onnx` 模型，缺失时回落规则启发式，回执 `punc.source` 区分 model/heuristic；不冒充剪映 AI |
 | 离线草稿回归 | `build`/`inspect`/`patch`/`version` 链/`publish` dry-run/覆盖备份、资源下载失败分支、桥接 fake server 等离线测试全部通过 |
 | 版本链 | 2026-11-15 真实草稿上 `build` → `patch` → `version diff` → `version restore` 通过；`version-v2.mp4` 真实导出 378,160B / 2.02s / 320×180，回执挂到 `v002` 的 `exports`；2026-11-16 起支持 `Timelines/<id>/draft_info.json` 多时间线草稿的快照与恢复（restore 输出单时间线根布局） |
+| 模板/ASS/OTIO/媒体维护 | 2026-11-18 离线端到端：`template save/apply`、ASS 解析/计划/导出、OTIO 2 轨导出/导入、silence/scene/retake 解析、`relink/replace-media/prune`；新增 7 项回归测试，全套 228 项通过；未做剪映真实导出抽帧 |
 | 失败事务 | `patch` 中途校验失败不留半成品副本；构建失败不替换旧草稿；JSON 写入失败清理临时文件 |
 
 ## 未验证 / 不承诺
@@ -83,19 +87,22 @@ render 回归归档在 [evidence/2026-11-16-render-check](evidence/2026-11-16-re
 | 单片段视频 effect | 2026-11-16 手工 `materials.effects[type=effect]` + extra refs 应用“灼烧出现”，抽帧无变化；独立 effect 轨也不显示 | 需要真实参考草稿或正确 material type；不要当可用 |
 | 文字模板（text_template） | 免费 `text` 面板资源多为文字动画，已用“变色输入”在 `animations` 真实导出；“变色输入”当 `caption_template` 用只显示白字；真正的 `text_template` 槽位未验收 | 文字动画走 `animations`；模板槽位需要真实模板资源和槽位映射 |
 | Canvas 模板 | 免费 canvas 包下载后只有 `config.json` + `id.json`（约 1KB），实际内容在 `origin_file_uri`，需二次下载；本技能无法离线还原模板 | 需要客户端/云端二次下载；不要当可用 |
-| 美颜/美体 | 本机缓存“磨皮/大眼/流畅脸/小头”等包的 `extra.is_business=true`，免费权益不覆盖；原生字段也未接线 | 不用 business 资源；需要免费资源或授权 |
+| 美颜/美体 | `beauty` 已接线 `materials.effects[type=figure]`，只在有美妆项时追加 `makeup-root`，支持 `skin/shape/makeup/body`；2026-11-18 11.8 UI 读回 `磨皮=100` / `美白=100`，界面原生导出与 plain 同草稿对照：磨皮人脸 `avg_abs_rgb=1.215`、边缘能量 `-6.2%`，美白皮肤 `RGB +7.1/+8.8/+9.2`；native bridge `draftPath` 导出仍与 plain 帧 hash 相同，`figure_algorithm` 为空；`shape/makeup` 409 entitlement | 结构可写、UI 可出片；`jy.py render` 不会应用 `figure`，要美颜成片必须在剪映界面导出；不要承诺 bridge 导出已生效 |
 | 调节包（adjust_collection） | 2026-11-16 用 `resource_ref:"新调色小项"` 写 effect 轨并真实导出，2.0s 抽帧与原片几乎一致；参数语义/生效条件未确认 | 不当已支持；需要正确参数或参考帧后再验收 |
 | 原生导出参数契约 | draftPath 桥接只接受固定字段；追加 options/exportOptions/videoExportOptions/outputs 均 409 `film_export_invalid_request`。`format` 支持 mp4/mov/gif/mp3/wav/aac/flac/aiff/ogg；分辨率/帧率来自草稿画布；官方 agent 工具的视频 outputs 也只有 format/fps/resolution | 音频格式先确保草稿有音轨；改 `canvas_config` 控制画面；视频码率不在该入口支持范围 |
 | 滤镜 | 写了 filter 轨 + `materials.effects[type=filter]`；同转场，本机无对应缓存资源，错类型 id 被静默忽略 | 同上；需要本机已缓存资源包 |
-| 画面特效 / 智能抠像 / 绿幕 | 独立 effect 轨、`matting.path`、`materials.chromas` 均已接线；effect/sticker 段已补标准段键；效果包/逐帧蒙版目录必须已缓存，像素未抽帧；绿幕真实导出首测未抠绿 | 可试；未缓存或未生效不要承诺 |
-| 贴纸 | 已接线独立 sticker 轨，段结构按标准视觉段补齐；2026-11-15 真机取 `7675620818189077810` 包构建成功，但 render 返回 409 `film_export_entitlement_denied`，未出片；另取 `7202575978646737469` 包 render 成功，但抽帧未见贴纸（证据：[`render-error.json`](evidence/2026-11-15-real-probes/sticker/render-error.json)、[`sticker-free.png`](evidence/2026-11-15-real-probes/sticker/sticker-free.png)） | 需要先用客户端确认贴纸免费/已授权且确实可见再承诺；未缓存或权益拒绝不要承诺 |
-| 文字模板 / 花字 / 气泡 | `text_templates`、`text_effect`、`text_bubble` 已接线；官方字段要求 `text_effect` 引用 `flower`，`DeepGlow` 实际是 `tool_text_glow`，此前拿它当花字属于资源类型不匹配；本机 `artistEffect` 5 个包全是 InfoSticker，无 flower/bubble 资源，尚未用正确资源验收。文字动画已单独在 `material_animations` 真机验收 | 可试；必须用正确 panel 的资源；未缓存不要承诺 |
+| 画面特效 / 智能抠像 / 绿幕 | 独立 effect 轨、`matting.path`、`materials.chromas` 均已接线；effect/sticker 段已补标准段键；效果包/逐帧蒙版目录必须已缓存，像素未抽帧；绿幕 2026-11-18 构建的草稿在 UI 打开即蓝底红块，抠像面板读回“色度抠图”勾选、关键色绿色、强度 20，界面原生导出角点 `(0,0,254)`、中心 `(253,0,0)`；native bridge 仍不应用，成片走界面导出；技能不内置 GUI 自动化，界面导出是外部步骤 | 可试；未缓存或未生效不要承诺；绿幕要出片必须走剪映界面导出 |
+| 贴纸 | 已接线独立 sticker 轨，段结构按标准视觉段补齐；2026-11-15 真机取 `7675620818189077810` 包构建成功，但 render 返回 409 `film_export_entitlement_denied`，未出片；另取 `7202575978646737469` 包 render 成功，但抽帧未见贴纸（证据已移出仓库） | 需要先用客户端确认贴纸免费/已授权且确实可见再承诺；未缓存或权益拒绝不要承诺 |
+| 文字模板 / 花字 / 气泡 / 发光 | `text_templates`、`text_effect`、`text_bubble`、`text_glow` 已接线；`text_effect` 必须引用真实 `flower`，2026-11-18 包 `7127669365423508767` 已取得真机像素差（`YAVG=4.1713`/`YMAX=209`），且带自定义字色/描边/阴影的 712 帧与默认 712 帧差 `0/0`，确认花字会重置文字样式；718/735 仍 409；优先级 `text_template` > `text_bubble` > `text_effect`；`text_glow` 已按 `capcut-mate` 实证改为 `type=bloom` + `bloom_params`，但本机外发光/轮廓光均 409，尚无像素证据；官方选择协议没有 `text_shape`，气泡在 11.8 走 `text_template`；本机 `bubble` 缓存 0。文字动画已单独在 `material_animations` 真机验收 | 花字可试但必须用正确 panel 的真实包并确认账号可导出；气泡/发光不要承诺；未缓存不要承诺 |
 | 基础调色 / HSL | 官方 XML 字段与范围已核对；native `picture_adjust` 触发路径未确认。plan 里的 `adjust` 会被显式拒绝；2026-11-16 手工写 `materials.effects[type=adjust]` + `adjust_params`，另试 `brightness/contrast` 类型 + extra refs，抽帧均与基线一致；`materials.hsl` 首测也未见像素变化 | 不要承诺；需要调色请用剪映客户端 |
-| 色轮 | 2026-11-15 真机写 `primary_color_wheels(gamma red=0.5)` 导出抽帧与无调色帧一致，11.8 未观察到像素变化（证据：[`wheel.png`](evidence/2026-11-15-real-probes/wheel/wheel.png)） | 不要承诺；需要调色请用剪映客户端 |
-| 声道 | `materials.sound_channel_mappings[].audio_channel_mapping` 已真机验证：左only 源 `0` 左 -11.0dB/右静音，`1` 左右均 -11.0dB，`2` 双声道静音；`is_config_open` 必须为 true（证据 `evidence/2026-11-16-channel-mapping/`） | 0 保持原声道，1 左复制到双声道，2 右复制到双声道 |
-| 音效 / 变声 | 免费“萝莉”VC 资源真机：补齐 `sub_type=0`、`path`、参数索引后，440Hz 源输出 740Hz（9 半音）；证据见 `evidence/2026-11-16-audio-effect/` | 其他资源仍需逐个听感验收；不要按资源名一概承诺 |
+| 色轮 | 2026-11-15 真机写 `primary_color_wheels(gamma red=0.5)` 导出抽帧与无调色帧一致，11.8 未观察到像素变化（证据已移出仓库） | 不要承诺；需要调色请用剪映客户端 |
+| 声道 | `materials.sound_channel_mappings[].audio_channel_mapping` 已真机验证：左only 源 `0` 左 -11.0dB/右静音，`1` 左右均 -11.0dB，`2` 双声道静音；`is_config_open` 必须为 true（证据已移出仓库） | 0 保持原声道；1 左声道复制到双声道；2 右声道复制到双声道（复制的是源右声道；左-only 源右声道本身静音，故实测双声道静音，勿误读为“右声道有声音”） |
+| 音效 / 变声 | 免费“萝莉”VC 资源真机：补齐 `sub_type=0`、`path`、参数索引后，440Hz 源输出 740Hz（9 半音）；证据已移出仓库 | 其他资源仍需逐个听感验收；不要按资源名一概承诺 |
+| 背景填充 | `background_fill` 写 `materials.canvases` + refs，只对第 0 条视觉轨生效；2026-11-18 真机导出纯色填充角落 `(0,0,254)`，渐变图模糊填充角落 `(242,0,9)`/边缘 `(101,0,152)`，确认不是黑底 | 只对最底层视觉轨承诺；非底层会 warning，不要静默当生效 |
+| 混合模式 | `mix_mode` 写 `materials.effects[type=mix_mode]` + refs；2026-11-18 11.8 UI 预览/UI 原生导出为品红，native bridge `draftPath` 导出仍纯红 | 需要混合成片请在剪映界面导出；`render` 回执会 warning，不要承诺 bridge 导出已生效 |
+| EBU R128 响度 | `jy.py loudness` 用 ffmpeg `loudnorm` 按片段测量并写 volume；4 秒正弦测得 `-33.75 LUFS`，`--max-gain-db 6 --apply` 后剪映原生导出实测 `-27.86 LUFS`（计划 `-27.75`，差 0.11 dB） | `--apply` 必须给 `--target` 和 `--out`，只写副本；目标不可达时按 `max_gain_db` 截断并如实回执 |
 | native 逃生舱 | 可写 `segment` / `material` / 已存在 `materials` 桶；禁止改 `id` / `material_id` / `local_material_id` / `extra_material_refs` / `render_index` / `track_render_index`，显式素材 id 不许重复；字段语义仍不校验 | 自带真实结构并回读 + 真实导出验收；不要把“写进去了”当已支持 |
-| 曲线变速 | 已接线 `materials.speeds[].curve_speed`；只写材质，不改 target/source 时长，曲线像素未单独抽帧 | 可试，导出后抽帧确认；不要把材料里的 `speed` 当成时间轴已换算 |
+| 曲线变速 | 已接线 `materials.speeds[].curve_speed`；2026-11-18 真机导出：3 秒曲线段白块 1s `0.203` / 2s `0.547`，线性对照 `0.172` / `0.328`，确认按曲线加速；target/source 时长仍按线性计算 | 可承诺曲线像素；不要把材料里的 `speed` 当成时间轴已自动换算 |
 | 视频倒放 | 2026-11-15 真实导出抽帧：`segment.reverse=true` 被 11.8 忽略，时间码未倒放；技能写入时会给出 warning | 不要承诺倒放；需要倒放用外部 ffmpeg 生成反向素材，或剪映客户端 |
 | 智能抠像 | 已接线 `matting.path`；构建时要求目录已存在，但逐帧蒙版仍需剪映生成；`capability_probe` 的 `requires` 只声明 `python` | 可试；目录不存在直接 `VALIDATION`；不要把“目录存在”当成抠像已生效 |
 | 关键帧 position_x/rotation 通道 | scale/position_y/opacity/volume 已实测；position_x、rotation 结构已写但未单独抽帧确认 | 可试，导出后必须抽帧确认 |
@@ -107,7 +114,7 @@ render 回归归档在 [evidence/2026-11-16-render-check](evidence/2026-11-16-re
 | 官方 `validate-patch` 的 artifact | 结构未知 | 不要用；本技能不依赖官方 patch 校验 |
 | 版本 diff | 比较草稿结构、片段字段与主/附加材质指纹（含动画、字幕模板、高亮、资源路径），不做像素或听感 diff | 改稿后仍要分别 render 两版抽帧/听音频；不要把 `changes` 为空当成画面没变 |
 | 版本体积 | 每版保存全量 `draft_info.json` + plan/ops 副本，历史会随草稿变大 | 需要干净草稿时，明确说明可删 `.jianying-versions`，删后不能 restore |
-| 历史 smoke 回执 | `D:\data\123\jy-fullcap-smoke\full-verify.mp4` 是早期一次性验证产物，其草稿 `exports` 未挂该文件；新 `render` 会正常挂回执 | 不要把旧 smoke 当版本链验收；以 `draft-version-v2` 的 v002 为准 |
+| 历史 smoke 回执 | 早期一次性验证产物（仓库外归档），其草稿 `exports` 未挂该文件；新 `render` 会正常挂回执 | 不要把旧 smoke 当版本链验收；以 `draft-version-v2` 的 v002 为准 |
 | 字体授权 | 未校验 | 只用用户已授权的字体；会员字体可能导致 entitlement 拒绝 |
 
 ## 登记与导出字段口径

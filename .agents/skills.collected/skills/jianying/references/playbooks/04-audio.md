@@ -52,12 +52,21 @@
 }]}
 ```
 
-- 0 立体声 / 1 左 / 2 右；
+- 0 保持原声道 / 1 左声道复制到双声道 / 2 右声道复制到双声道（左-only 源实测双声道静音，因为源右声道本身是静音）；
 - 写 `materials.sound_channel_mappings` 的 `{audio_channel_mapping, is_config_open:true, type:""}`；
-- **2026-11-15 真机未生效**：双声道源（左 440Hz/右 880Hz）加 `channel:1` 导出后，左右声道
-  `volumedetect` 都是 -21.2dB；证据在
-  [`evidence/2026-11-15-real-probes/audio-channel/`](../evidence/2026-11-15-real-probes/audio-channel/)；
-  不要把声道当已支持，需要时用外部 ffmpeg pan 或剪映客户端。
+- **2026-11-16 真机已验收**：左only 源 `channel:0` 左 -11.0dB/右静音、`1` 左右均 -11.0dB、`2` 双声道静音；
+  证据已移出仓库，能力已升为 `implemented`。
+
+## 5.1 EBU R128 响度测量与增益
+
+```bash
+python scripts/jy.py loudness <draft> --target -14 --apply --out <副本目录>
+```
+
+- 用 ffmpeg `loudnorm=I=-14:TP=-1.0:LRA=11` 按片段 `source_timerange` 截取测量，输出 `lufs`、`true_peak_dbtp`、`lra`、当前 `volume` 与 `gain_ops`；
+- `--max-gain-db` 默认 12、`--max-attenuation-db` 默认 24、`--max-true-peak` 可选；目标不可达时按上限截断并如实回执；
+- `--apply` 必须同时给 `--target` 和 `--out`，通过 `patch` 写副本，不改原草稿；
+- 2026-11-18 真机：4 秒 440Hz/-12dB 测试音测得 `-33.75 LUFS`；`--max-gain-db 6 --apply` 后剪映原生导出实测 `-27.86 LUFS`，与计划 `-27.75` 差 0.11 dB，确认音量增益进入成片。
 
 ## 5. 音效/音色
 
@@ -74,6 +83,18 @@
 - 资源 id、权益、听感未验收；没有真实资源时不要伪造。
 
 ## 6. 音频验收
+
+先做确定性分析，再导出验收：
+
+```bash
+python scripts/jy.py detect silence in.mp4 --threshold -30 --min-silence 0.5 --pad 0.1
+python scripts/jy.py detect scenes in.mp4 --threshold 0.3 --min-gap 0.5
+python scripts/jy.py detect retakes --cues cues.json --window 60 --similarity 0.8
+```
+
+- `detect silence` 输出 `silences` 与 `keeps`，同时给秒和微秒；`--limit` 只保留最长 N 段；
+- `detect scenes` 输出切点与场景区间；`detect retakes` 是本地文本 LCS，不冒充语义模型；
+- 这三个命令只分析、不改草稿，结果可再喂给 `patch` 的 `trim`/`shift`。
 
 ```bash
 ffmpeg -hide_banner -ss 0 -t 0.2 -i out.mp4 -af volumedetect -f null -

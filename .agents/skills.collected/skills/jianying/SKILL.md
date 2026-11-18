@@ -1,9 +1,9 @@
 ---
 name: jianying
-description: 在 Windows 上驱动剪映专业版（JianyingPro）完成可复现的剪辑、合成、特效、音频、字幕与交付：生成多轨明文草稿（视频/图片/文字/字幕/BGM/关键帧/变速/音量/裁剪/翻转/倒放/蒙版/曲线变速/色轮/文字动画/文字背景阴影/贴纸/画面特效/音频淡入淡出）、读取与修改已有明文草稿、调用剪映原生引擎导出视频/音频/动图（mp4/mov/gif/mp3/wav/aac/flac/aiff/ogg）、ffprobe 与抽帧验收，以及把草稿登记到剪映首页。草稿自带可递进的版本链（快照、结构 diff、恢复新分支），不是一次性成片。也包含剪映本地 Paraformer ASR、SRT 生成/规范化/校验、SRT 入轨与版本化编辑、硬字幕烧录工具，以及只读能力矩阵/资源预检（区分已实现、未验收、资源缺失、宿主专属、账号受限）。用户提到剪映、JianyingPro、剪映草稿、draft_info.json、剪映导出/渲染、剪映字幕、本地 ASR、识别字幕、SRT 对齐、SRT 入轨、字幕版本、剪映多轨、关键帧、变速、BGM、裁剪、蒙版、曲线变速、文字动画、文字背景、贴纸、画面特效、音频淡入淡出、修改剪映草稿、剪映多版本/版本回退、把草稿放进剪映首页、剪映能力/支持哪些效果时使用。未在非 11.8 版本验证；不适用于剪映模板创作、AI 成片、云端素材下载、会员素材解锁、手机端剪映、CapCut 国际版。
-when_to_use: 剪映, 剪映专业版, JianyingPro, 剪映草稿, draft_info.json, 剪映导出, 剪映渲染, 剪映字幕, 本地 ASR, 识别字幕, SRT, SRT 入轨, 字幕版本, 字幕对齐, 字幕烧录, 剪映多轨, 剪映 BGM, 关键帧, 变速, 裁剪, 蒙版, 曲线变速, 文字动画, 文字背景, 贴纸, 画面特效, 音频淡入淡出, 修改剪映草稿, 剪映版本, 剪映多版本, 版本回退, 版本 diff, 剪映首页登记
-version: 1.2.5
-updated: 2026-11-17
+description: 在 Windows 上驱动剪映专业版（JianyingPro）完成可复现的剪辑、合成、特效、音频、字幕与交付：生成多轨明文草稿（视频/图片/文字/字幕/BGM/关键帧/变速/音量/裁剪/翻转/蒙版/曲线变速/色轮/文字动画/文字背景阴影/贴纸/画面特效/音频淡入淡出/背景填充/混合模式）、读取与修改已有明文草稿、调用剪映原生引擎导出视频/音频/动图（mp4/mov/gif/mp3/wav/aac/flac/aiff/ogg）、EBU R128 响度测量与增益、ffprobe 与抽帧验收，以及把草稿登记到剪映首页。草稿自带可递进的版本链（快照、结构 diff、恢复新分支），不是一次性成片。也包含剪映本地 Paraformer ASR、SRT 生成/规范化/校验、SRT 入轨与版本化编辑、硬字幕烧录工具，以及只读能力矩阵/资源预检（区分已实现、未验收、资源缺失、宿主专属、账号受限）、片段模板保存/盖印、ASS/SSA 字幕导入导出、OpenTimelineIO 时间线交换、静音/镜头切换/重拍检测、素材 relink/replace/prune。用户提到剪映、JianyingPro、剪映草稿、draft_info.json、剪映导出/渲染、剪映字幕、本地 ASR、识别字幕、SRT 对齐、SRT 入轨、字幕版本、剪映多轨、关键帧、变速、BGM、裁剪、蒙版、曲线变速、文字动画、文字背景、贴纸、画面特效、音频淡入淡出、背景填充、混合模式、美颜、响度、LUFS、模板、ASS、OTIO、relink、替换素材、清理素材、修改剪映草稿、剪映多版本/版本回退、把草稿放进剪映首页、剪映能力/支持哪些效果时使用。未在非 11.8 版本验证；不适用于剪映模板创作、AI 成片、云端素材下载、会员素材解锁、手机端剪映、CapCut 国际版。
+when_to_use: 剪映, 剪映专业版, JianyingPro, 剪映草稿, draft_info.json, 剪映导出, 剪映渲染, 剪映字幕, 本地 ASR, 识别字幕, SRT, SRT 入轨, 字幕版本, 字幕对齐, 字幕烧录, ASS, SSA, OTIO, OpenTimelineIO, 剪映多轨, 剪映 BGM, 关键帧, 变速, 裁剪, 蒙版, 曲线变速, 文字动画, 文字背景, 贴纸, 画面特效, 音频淡入淡出, 背景填充, 混合模式, 美颜, 响度, LUFS, 模板, 片段模板, relink, 替换素材, 清理素材, 静音检测, 镜头检测, 重拍检测, 修改剪映草稿, 剪映版本, 剪映多版本, 版本回退, 版本 diff, 剪映首页登记
+version: 1.5.6
+updated: 2026-11-19
 ---
 
 # 剪映剪辑、合成与交付
@@ -13,7 +13,7 @@ updated: 2026-11-17
 外部调用还会看到 `PERMISSION_DENIED`。本技能以 **Windows 剪映 11.8.0.14778** 为基线；
 2026-11-15 已在临时多轨草稿上完成 `build` → `render` → `verify`，并对文字背景/阴影、独立音频轨淡入淡出
 做过真实导出抽帧/波形验收；2026-11-16 又用 320×180 临时草稿复验 `render`，确认剪映会回写
-`draft_content.json`（证据：`references/evidence/2026-11-16-render-check/`）。走两条路：
+`draft_content.json`（证据已移出仓库）。走两条路：
 
 1. **明文草稿**：直接写 `draft_info.json`，剪映可打开、可继续编辑；
 2. **本地 native bridge**：调用剪映自己的导出引擎出 MP4，再用 ffprobe 与抽帧验收。
@@ -29,9 +29,9 @@ updated: 2026-11-17
 | 域 | 解决什么 | 先读 |
 |---|---|---|
 | 剪辑 | 多轨、分割、拼接、变速、倒放、关键帧、画中画、画布、patch | [剪辑 playbook](references/playbooks/01-editing.md) |
-| 合成 | 蒙版、抠像、绿幕、层级、贴纸/文字模板叠加 | [合成 playbook](references/playbooks/02-compositing.md) |
+| 合成 | 蒙版、抠像、绿幕、层级、背景填充、混合模式、贴纸/文字模板叠加（绿幕/美颜/混合模式为 conditional，仅界面导出） | [合成 playbook](references/playbooks/02-compositing.md) |
 | 特效 | 转场、滤镜、画面特效、色轮、曲线变速、调色/HSL | [特效 playbook](references/playbooks/03-effects.md) |
-| 音频 | 音量、音量关键帧、淡入淡出、声道、音效、BGM/原声 | [音频 playbook](references/playbooks/04-audio.md) |
+| 音频 | 音量、音量关键帧、淡入淡出、声道、音效、EBU R128 响度、BGM/原声 | [音频 playbook](references/playbooks/04-audio.md) |
 | 字幕 | 本地 ASR、SRT 生成/规范化/校验、SRT 入轨、版本化编辑、硬字幕 | [字幕 playbook](references/playbooks/05-subtitles.md) |
 | 交付 | probe、inspect、render、verify、抽帧、publish/register | [交付 playbook](references/playbooks/06-delivery.md) |
 
@@ -82,17 +82,23 @@ updated: 2026-11-17
    旧目录整体移到 `<out>` 同级的 `.jianying-backups-<name>-<时间戳>/`，不先删除；非空且无
    `.jianying-skill.json` 的目录一律拒绝。`--publish` 只演练复制登记（dry-run，不复制、不写索引）；
    再加 `--publish-apply` 才真正复制并登记到草稿根；`--publish-apply` 不带 `--publish` 会被拒。
-   资源 spec 可写 `resource_ref`（完整标题/ID/md5），短标题先 `resource resolve` 取 id；未缓存时加 `--fetch-resources` 自动下载免费资源；
+   资源 spec 可写 `resource_ref`（完整标题/ID/md5），短标题先 `resource resolve` 取 id；未缓存时加 `--fetch-resources` 自动下载免费资源，
+   确需 http 源时再加 `--allow-http`（默认只收 https）；
    会员/商业资源仍返回 `RESOURCE_GATED`。
    `build` 同时写 `v001` 版本快照（`<draft>\.jianying-versions\`），`--version-label` 可命名。
-5. **核对结构**：`python scripts/jy.py inspect <draft>`。看 `tracks`、`texts`、`missing_media`、
-   `duration`；不对就改计划重 build，不要手改 JSON 补洞。再 `python scripts/jy.py version list <draft>`
+5. **核对结构**：`python scripts/jy.py inspect <draft>`。看 `tracks`、`texts`、`text_effects`、`missing_media`、
+   `duration`；不对就改计划重 build，不要手改 JSON 补洞。`text_effects` 会列文字片段挂载的
+   `text_effect` / `text_shape` / `text_glow` / `bloom` 真实 `resource_id`、`effect_id` 与包路径，可用于从手工草稿提取真实花字/气泡资源。
+   再 `python scripts/jy.py version list <draft>`
    确认 `v001` 和计划副本存在。
 
 **字幕任务**：先跑
 `python scripts/subtitles/cli.py srt.from-local-asr --audio <音视频> --out <out.srt> --json-out <out.json>`，
-它用剪映已下载的本地 Paraformer 模型，不登录、不联网；可选 `--remove-fillers`/`--punctuate`
-是本地规则，不冒充剪映 AI 去水词/标点；再用
+它用剪映已下载的本地 Paraformer 模型，不登录、不联网；可选 `--remove-fillers`/`--punctuate`/`--itn`，
+其中 `--punctuate` 优先调剪映下发的本地标点模型 `asr-punc.onnx`，模型缺失才回落启发式；
+`--itn` 用剪映下发的 `asr-itn-fst.fst`（需要 `kaldifst`）把中文数字/日期/百分比转成阿拉伯数字，
+FST 或依赖缺失时跳过并写 warning；回执里的 `quality` 是剪映质量打分器分数（含义未标定，只做相对参考）。
+`--remove-fillers` 始终是本地规则；三者都不冒充剪映云端 AI 去水词/标点；再用
 `python scripts/jy.py patch <draft> --ops <add_subtitles.json> --out <副本>`（或 `--in-place`）
 把 SRT 写进可编辑 text 轨。每次 `patch` 自动生成下一版，之后用 `set_text`/`set_style`
 改 cue，`version diff` 看结构与材质变化，`render` 后把成片挂到当前版本。模型/依赖缺失时按
@@ -120,9 +126,9 @@ updated: 2026-11-17
 | 用户要做的事 | 先读 | 入口 |
 |---|---|---|
 | 多轨/画中画/关键帧/变速/倒放/裁剪/拼接 | [01-editing](references/playbooks/01-editing.md) | `jy.py build --plan ... --out ...` / `jy.py patch` |
-| 蒙版/抠像/绿幕/贴纸/文字模板/层级合成 | [02-compositing](references/playbooks/02-compositing.md) | `build` 的 `mask` / `matting` / `chroma` / `sticker` 字段 |
+| 蒙版/抠像/绿幕/贴纸/文字模板/背景填充/混合模式/美颜 | [02-compositing](references/playbooks/02-compositing.md) | `build` 的 `mask` / `matting` / `chroma` / `background_fill` / `mix_mode` / `beauty` 字段；`chroma`/`beauty`/`mix_mode` 只写结构，bridge `render` 不生效，成片走界面导出 |
 | 转场/滤镜/画面特效/色轮/曲线变速/调色 | [03-effects](references/playbooks/03-effects.md) | `build` 的 `transition` / `filters` / `effect` 轨 / `color_wheel` |
-| 音量/淡入淡出/声道/音效/BGM/原声 | [04-audio](references/playbooks/04-audio.md) | `build` 的 audio 轨与 `audio_fade` / `audio_effect` |
+| 音量/淡入淡出/声道/音效/响度/BGM/原声 | [04-audio](references/playbooks/04-audio.md) | `build` 的 audio 轨与 `audio_fade` / `audio_effect`；`jy.py loudness` |
 | SRT/硬字幕/口播字幕轨 | [05-subtitles](references/playbooks/05-subtitles.md) | `subtitles/cli.py srt.build` / `srt.check` / `srt.tidy` / `burn`，或 `build` 的 text 轨 |
 | 导出/验收/抽帧/首页登记/能力查询 | [06-delivery](references/playbooks/06-delivery.md) | `jy.py render/verify/frame/publish` / `capability_probe.py` |
 | 查版本/版本 diff/回到旧版/多版本递进 | [versioning](references/versioning.md) | `jy.py version list/show/diff/snapshot/restore` |
@@ -135,13 +141,20 @@ updated: 2026-11-17
 | 剪辑 | 新建草稿 | `jy.py build --plan ... --out ...`（`--publish` 只演练） |
 | 剪辑 | 看草稿结构 | `jy.py inspect <draft>` |
 | 剪辑 | 改已有明文草稿 | `jy.py patch <draft> --ops ops.json --out <副本>` |
+| 剪辑 | 提取/盖印片段模板 | `jy.py template save <draft> <片段> <名称> --out <模板.json>` / `jy.py template apply <draft> <模板.json> <起点秒> --out <副本>` |
+| 剪辑 | 导入/导出 ASS 字幕 | `jy.py ass import <字幕.ass> --out <plan.json>` / `jy.py ass export <draft> --out <字幕.ass>` |
+| 剪辑 | 导入/导出 OTIO 时间线 | `jy.py otio export <draft> --out <timeline.otio>` / `jy.py otio import <timeline.otio> --out <plan.json>` |
+| 剪辑 | 修素材路径/替换素材/清无引用素材 | `jy.py relink <draft> --dir <素材目录> --out <副本>` / `jy.py replace-media <draft> <片段> <新文件> --out <副本>` / `jy.py prune <draft> --out <副本>` |
 | 交付 | 看版本/版本 diff | `jy.py version list <draft>` / `jy.py version diff <draft> v002` |
 | 交付 | 给当前草稿留一版 | `jy.py version snapshot <draft> --label ...` |
 | 交付 | 回到旧版另开分支 | `jy.py version restore <draft> v001 --out <新目录>` |
-| 合成 | 蒙版/抠像/贴纸/文字模板 | 写进 plan，再 `jy.py build`；字段见 [plan-schema](references/plan-schema.md) |
+| 合成 | 蒙版/抠像/贴纸/文字模板/背景填充/混合模式 | 写进 plan，再 `jy.py build`；`build` 只写草稿结构，`chroma`/`beauty`/`mix_mode` 的成片走界面导出；字段见 [plan-schema](references/plan-schema.md) |
 | 画面/文字 | 视频或文字的入场/出场动画 | 写 `animations`（支持 `resource_ref`），再 `build`；资源需缓存 |
 | 特效 | 转场/滤镜/画面特效/色轮 | 写进 plan，再 `jy.py build`；资源未缓存会降级 |
 | 音频 | 音量/淡入淡出/声道/音效 | 写进 audio 轨，再 `jy.py build` |
+| 音频 | 测响度/按目标 LUFS 增益 | `jy.py loudness <draft> --target -14 --apply --out <副本>` |
+| 分析 | 检测静音/镜头切换/重拍/重复片段 | `jy.py detect silence <媒体>` / `detect scenes <媒体>` / `detect retakes --cues <json>` / `detect duplicates <draft>` |
+| 画面 | 查美颜/美型/美妆可用项 | `jy.py beauty list`；写进 plan 的 `beauty` 字段再 `build`；UI 可读回并界面导出生效，`jy.py render` 的 bridge 不应用 `figure`，成片走剪映界面导出 |
 | 字幕 | 生成/校验 SRT | `subtitles/cli.py srt.build` / `srt.check` / `srt.tidy` |
 | 字幕 | 按音频/逐句定时 | `subtitles/cli.py srt.from-audio` / `srt.from-segments` |
 | 字幕 | 本地识别并写入可编辑字幕轨 | `subtitles/cli.py srt.from-local-asr` + `jy.py patch` 的 `add_subtitles` |
@@ -152,7 +165,7 @@ updated: 2026-11-17
 | 字幕 | 烧硬字幕 | `subtitles/cli.py burn --video ... --srt ... --out ...` |
 | 交付 | 看环境/为什么导不出 | `jy.py probe` |
 | 交付 | 查本机有哪些字体/贴纸/特效/模板、是否已缓存 | `jy.py resource stats` / `resource list` / `resource resolve` |
-| 交付 | 下载免费字体/素材到本机 | `jy.py resource download <id\|标题> --apply`（默认 dry-run） |
+| 交付 | 下载免费字体/素材到本机 | `jy.py resource download <id\|标题> --apply`（默认 dry-run，dry-run 同样受 scheme 限制；地址默认只收 https 公网，重定向逐跳校验，本机/内网 IP 直接拒绝；确有 http 源时显式加 `--allow-http`；混合列表跳过数记在回执 `skipped_insecure_url_count`） |
 | 交付 | 生成本地包装 preset | `jy.py packaging --video ... --subtitle-srt ... --bgm ...`（本地组合，不是云端智能包装） |
 | 交付 | 看能力矩阵/资源预检 | `scripts/capability_probe.py --list`（只读，不启动剪映） |
 | 交付 | 导出成片/音频 | `jy.py render <draft> -o out.mp4`；`--format mov/gif/mp3/wav/aac/flac/aiff/ogg` |
@@ -198,6 +211,9 @@ updated: 2026-11-17
 - **y 正值向上，负值向下**：底部字幕用 `y: -0.7`，标题居中偏上用 `y: 0` ~ `0.2`。
 - 视频 `duration` 超过素材可用长度直接报错；变速时源区间按 `duration*speed` 自动算。
 - 关键帧写在 `segments[].keyframes`，如 `"scale": [[0,1.0],[1.2,1.06],[4,1.0]]`。
+- `background_fill` 只对第 0 条视觉轨生效，参数 `{"type":"blur","blur":0.5}` 或 `{"type":"color","color":"#0000FFFF"}`。
+- `mix_mode` 写 `materials.effects[type=mix_mode]` + refs；11.8 UI 导出可见，native bridge 导出不生效，`render` 会 warning。
+- 响度用 `jy.py loudness`，不写进 plan；`--apply` 需要 `--target` 和 `--out`。
 - 完整字段、贴纸/特效轨、native 逃生舱、patch ops 见 [计划 schema](references/plan-schema.md)。
 
 ## Hard Rules
@@ -209,23 +225,37 @@ updated: 2026-11-17
 - **恢复只写新目录**：`version restore` 生成新 `draft_id` 和新版本链，不覆盖原稿；目标目录已存在时直接拒绝，不“先删再恢复”。
 - **版本 diff 不是像素验收**：`version diff` 比结构、片段字段和主/附加材质指纹（含动画、字幕模板、高亮、资源路径）；画面/转场/滤镜/听感仍要分别 `render` 两版后抽帧或 `volumedetect`，不能把 `changes` 为空当成效果没变。
 - **明文草稿限定**：`DRAFT_ENCRYPTED` 时停止，不要解密、不要 `--in-place`、不要猜结构。
-- **本地普通路径限定**：素材、计划、草稿和输出拒绝 UNC、网络盘、URL 及草稿内的符号链接/junction；第三方路径不能触发 SMB 或越界读取。
+- **本地普通路径限定**：素材、计划、草稿和输出拒绝 UNC、网络盘、URL 及草稿内的符号链接/junction；第三方路径不能触发 SMB 或越界读取。媒体与版本文件用不跟随链接、禁止删除共享的句柄保持到读取结束；目录级并发替换不在承诺内。
 - **首页登记要有完整 meta**：`draft_info.json` 与 `draft_meta_info.json` 的 `draft_id` 必须一致，`tm_duration` 必须为正，缺 meta 不写索引；更新已有条目只改本技能拥有的字段，不覆盖剪映云字段。
 - **文字素材必须是 `type: "text"`**：写成 `subtitle` 会触发 409 `film_export_entitlement_denied`。
 - **画中画要 `flag: 2` + `render_index ≥ 1`**：两者缺一，图片/视频不会出现在成片里。
 - **不碰会员校验**：不改账号、不伪造 token、不改 DLL 哈希、不打补丁绕过 entitlement。缺素材就让用户在剪映里正常获取或去掉。
 - **资源目录只读**：`jy.py resource list/stats/resolve` 只读 `rp.db` 与 `Cache`，不下载、不解锁会员；`cached=true` 只代表本机有包，不代表账号权益或导出一定生效。模板/贴纸/转场/滤镜/花字必须再做真实导出验收。
-- **资源下载会写缓存**：`resource download` 默认 dry-run，`--apply` 才下载到剪映缓存；只下 `extra.is_vip/is_business=false` 且 URL 未过期的包；会员/商业/过期 URL 直接失败。写缓存前尽量退出剪映，避免应用同时清理/改写 Cache。字体与字幕模板已真实验收；文字模板（`text_template`）槽位尚未验收，不能当已支持。
+- **资源下载会写缓存**：`resource download` 默认 dry-run，`--apply` 才下载到剪映缓存；只下 `extra.is_vip/is_business=false` 且 URL 未过期的包；模板类资源还会检查 `depend_resource_list`，依赖里有会员/商务字体/花字时整体 `RESOURCE_GATED`，不会下到一半再 409。会员/商业/过期 URL 直接失败。写缓存前尽量退出剪映，避免应用同时清理/改写 Cache。字体与字幕模板已真实验收；文字模板（`text_template`）槽位尚未验收，不能当已支持。
 - **不泄漏桥接秘密**：`%TEMP%\infinite-canvas-native-bridge.json` 的 token、`/custom-agent/context`
   的 cookie 不写进草稿、日志、Git、回复或交付物。`probe` 只输出白名单字段。
 - **不在剪映运行时写首页索引**：`publish --apply` 前让用户保存并退出剪映；写前备份，写后回读。
   没有用户明确要求，不做 `--apply`。
 - **`adjust` / `freeze` 不静默忽略**：plan 里出现这两个字段直接报 `VALIDATION`；调色只能交付剪映客户端
   结果，`color_wheel` 在 11.8 真机未见像素变化，不要当可用；定格用抽帧工作流。不要把未接线字段当已支持。
-- **不承诺未验证能力**：转场、滤镜、特效、贴纸、花字/气泡、文字模板槽位、曲线变速、HSL、色轮、倒放、色彩匹配、绿幕、
-  多时间线导出都先按 [能力边界](references/limits.md) 说明；视频自定义码率不在 native draftPath 导出入口支持范围，
+- **不承诺未验证能力**：转场、滤镜、特效、贴纸、文字模板槽位、HSL、色轮、倒放、色彩匹配、
+  多时间线导出都先按 [能力边界](references/limits.md) 说明；`text_effect` 需要真实 `flower` 包且账号可导出，
+  2026-11-18 仅 `7127669365423508767` 取得真机像素证据（conditional），`718/735` 均 409 entitlement；
+  花字会重置文字颜色/描边/阴影，且 `text_template` > `text_bubble` > `text_effect`，同时写会忽略低优先级项；
+  `text_shape` 不在 11.8 选择协议里（气泡走 `text_template`）；`text_glow` 已按 `capcut-mate` 实证改成
+  `materials.effects[type=bloom]` + `effect_id`/`resource_id` 分开 + `bloom_params`，但本机外发光/轮廓光
+  仍被 409 拒绝，尚无像素证据，不能当已支持；美颜 `figure` 已能在 11.8 UI 读回并界面导出生效
+  （磨皮人脸 `avg_abs_rgb=1.215`、边缘能量 `-6.2%`；美白皮肤 `RGB +7~9`），但 native bridge `draftPath`
+  不应用 `figure`，`jy.py render` 不能出美颜成片，必须走剪映界面导出；`shape`/`makeup` 仍 409 entitlement；
+  绿幕 `chroma` 的 `materials.chromas` 结构已由 11.8 直接读回：构建的草稿在界面打开即显示蓝底红块，
+  `抠像` 面板读回“色度抠图”勾选、关键色绿色、强度 20；界面原生导出角点 `(0,0,254)`、中心 `(253,0,0)`。
+  native bridge `draftPath` 仍不应用 chroma，`jy.py render` 不能出绿幕成片，保持 conditional；
+  技能不内置 GUI 自动化，界面导出是外部步骤。
+  视频自定义码率不在 native draftPath 导出入口支持范围，
   分辨率/帧率改画布，码率走客户端或 ffmpeg 转码；文字/视频动画、本机关键词高亮、左右声道和“萝莉”变声已真机验收；蒙版已有真机像素证据，
-  但资源包必须已缓存且 `config` 不能为空；状态先查
+  但资源包必须已缓存且 `config` 不能为空；`background_fill` 颜色/模糊已在 11.8 真机确认不是黑底，
+  但只对最底层视觉轨生效；`mix_mode` 在 11.8 界面预览/UI 导出为品红，native bridge `draftPath` 导出不生效，
+  保持 conditional 并在 `render` 回执里 warning；`loudness` 已用剪映原生导出音频复核增益。状态先查
   [能力矩阵](references/capabilities.md) 与 `capability_probe.py`，不把“结构写进去了”当成“效果生效”。
 - **`native` 逃生舱自负后果**：技能不校验字段语义，写错不报错；必须 `inspect` + 真实导出验收，且不得改
   `id` / `material_id` / `local_material_id` / `extra_material_refs` / `render_index` / `track_render_index`。
@@ -254,10 +284,13 @@ updated: 2026-11-17
 | 烧字幕失败 `Unknown filter 'subtitles'` | 剪映自带 ffmpeg 没有 libass；装外部 full 构建并设 `JY_FFMPEG` |
 | SRT 导入剪映后片段重叠 | 标题与字幕在同一轨；标题单独占一轨 |
 | 转场/滤镜/贴纸/花字写了却没效果 | 先 `jy.py resource list --panel <panel> --cached` 看资源是否真的在本机；`cached=false` 就在剪映里正常下载一次；会员资源仍会被 entitlement 拦 |
+| 字幕模板导出成功，但画面是普通白字 | 模板依赖的 flower/字体包没缓存，11.8 会静默回落；先看 `inspect` 的 `text_effects` 与模板 `extra.json` 的 `depend_resource_list`，缓存依赖后重新抽帧 |
+| `resource download` 报依赖 `RESOURCE_GATED` | 模板本身免费，但依赖会员/商务字体或花字；技能会整体拒绝，换一个依赖全免费的模板 |
 | 本地 ASR 报 `model-missing` / `missing-dep` | 先在剪映用一次「识别字幕」下载模型；再 `pip install numpy onnxruntime kaldi-native-fbank`；不要伪造识别结果 |
-| 本地 ASR 生成的字幕没有标点 | 模型只输出文字和 token 时间；不冒充翻译/划重点/去水词，需要标点就另行后处理 |
+| 本地 ASR 生成的字幕没有标点 | 加 `--punctuate`：优先用剪映本地 `asr-punc.onnx`，缺失才回落启发式；回执 `punc.source` 说明用的哪条。仍不冒充翻译/划重点/去水词 |
+| `--itn` 不生效 / 报 `missing-dep: kaldifst` | ITN 要额外 `pip install kaldifst`，并确认模型目录有 `asr-itn-fst.fst`；缺失时命令会跳过并写 `itn-skip` warning，不会静默改字 |
 | 中英混排字幕拆出残词（ex/cel、p/hotoshop） | `srt.tidy` 已词安全拆分：硬切点落在英文词内部时回退到词起点；仍残词说明该英文词比 `--max-chars` 长，调大阈值或接受硬切 |
-| 单字字幕挂 6–9 秒不消失 | ASR 块边界把静音吞进单字时间戳；`srt.tidy` 按 `--max-dur` 截到 1s 显示（只压不抬、优先于 `--min-dur` 保底），文字不动，回执看 `short_artifacts_capped` |
+| 单字字幕挂 6–9 秒不消失 | 根因是 CIF 把静音吞给了前一个 token；切块已改成 VAD 分段（RMS 平滑 + 自适应阈值，段间停顿 ≤0.6s 才合并，块长读 `strategy.json`）。仍出现时 `srt.tidy` 按 `--max-dur` 截到 1s 显示（只压不抬、优先于 `--min-dur` 保底），文字不动，回执看 `short_artifacts_capped` |
 | `resource download` 报 `RESOURCE_GATED` | 会员/商业资源 | 在剪映客户端正常获取；技能不绕过权益 |
 | `resource download` 报 `RESOURCE_URL_EXPIRED` | 资源签名 URL 已过期 | 在剪映里打开一次素材面板刷新资源，或换一个资源 |
 | build 报 `RESOURCE_NOT_CACHED` | `resource_ref` 指向的资源还没下载 | 先 `resource download <ref> --apply`，或给 build 加 `--fetch-resources` |
@@ -319,7 +352,7 @@ python scripts/run_examples.py
 - 音频任务给淡入淡出/声道/音效的听感或 `volumedetect` 证据；
 - SRT 路径、行数、`srt.check` 结果（如做字幕）；
 - `publish` 的 `action / applied / backup / verified`（如已登记）；
-- 未能验证的部分（`adjust`/`freeze`/HSL/绿幕/花字/气泡/加密草稿等）和原因；不要把未验证说成已支持。
+- 未能验证的部分（`adjust`/`freeze`/HSL/色轮/花字（仅 712 conditional，其余 gated）/气泡/加密草稿，以及只走界面导出的美颜/绿幕/混合模式）和原因；界面导出是外部步骤，技能不内置 GUI 自动化。不要把未验证说成已支持。
 
 ## 参考
 
@@ -339,10 +372,12 @@ python scripts/run_examples.py
 | [references/limits.md](references/limits.md) | 已测/未测能力、版本差异、对用户表述边界 |
 | [references/capabilities.md](references/capabilities.md) | 六域能力矩阵、资源预检口径、官方 XMLDraft 索引 |
 | [references/version.json](references/version.json) | 机器可读版本基线，`check_docs.py` 据此校验 |
-| [references/upstream.md](references/upstream.md) | skills.sh 候选、参考仓库取舍、独立 CLI 的可选边界 |
+| [references/upstream.md](references/upstream.md) | skills.sh 候选、GitHub 项目复核（pyJianYingDraft/capcut-cli/jianying-tool 等）、参考仓库取舍 |
 | [references/maintenance.md](references/maintenance.md) | 本地维护、升级流程、版本窗口与不承诺项 |
 | [references/upgrading.md](references/upgrading.md) | 版本升级与迁移 |
 | [references/changelog.md](references/changelog.md) | 技能变更记录 |
+| [references/official-host.md](references/official-host.md) | 官方宿主能力面：hubcli 55 份契约、MotionGraph SDK、调用前置条件 |
+| [references/verification-gaps.md](references/verification-gaps.md) | 12 项未验证/条件能力的现有证据、阻塞点与解锁条件 |
 | [examples/plan_basic.json](examples/plan_basic.json) | 横屏视频+图片角标画中画+字幕+BGM 模板 |
 | [examples/plan_vertical.json](examples/plan_vertical.json) | 竖屏封面视频+标题/字幕双文字轨+BGM 模板 |
 | [examples/ops_example.json](examples/ops_example.json) | patch 补丁示例 |
@@ -353,7 +388,7 @@ python scripts/run_examples.py
 | 文件 | 职责 |
 |---|---|
 | `scripts/jy.py` | 草稿 build/inspect/patch/render/verify/publish/version 统一入口 |
-| `scripts/jylib/` | 草稿构建、路径探测、媒体探测、首页索引、native bridge 客户端、版本链、本机资源目录 |
+| `scripts/jylib/` | 草稿构建、路径探测、媒体探测、首页索引、native bridge 客户端、版本链、本机资源目录、EBU R128 响度 |
 | `scripts/subtitles/cli.py` | 字幕辅助入口：草稿清单、媒体探测、SRT 生成/规范化/校验、硬字幕烧录 |
 | `scripts/requirements.txt` | Python 标准库与外部 ffmpeg 依赖说明 |
 | `scripts/test_skill.py` | 离线自测，不启动剪映 |

@@ -1,0 +1,5 @@
+{
+  "schema": "photocraft.models/1",
+  "note": "模型权重不入库，只登记元数据；当前 models 为空，包内没有 fetch_models.py。将来接入时先写下载器并按 sha256 校验，别把本条当成已有校验链。",
+  "models": []
+}

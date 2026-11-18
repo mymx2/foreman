@@ -1,6 +1,6 @@
 # 命令速查
 
-> 核对版本：命令 id 与参数按 photocraft-cli 0.19.0 实测（`check_docs.py`）；行为描述以 0.18.0 为基线，旧版本实测保留原标注。参数以运行时注册表为准。
+> 核对版本：**参数面**按 photocraft-cli 0.23.1 的注册表导出（全量 1009 条见 [registry/commands-0.23.1.md](registry/commands-0.23.1.md)）；**行为描述**以 0.18.0–0.19.0 的实测为基线，0.20 及以后未逐条复核，凡未实跑的一律标 `unverified`。参数以运行时注册表为准。
 
 ## 怎么查
 
@@ -10,6 +10,7 @@
 - "案例"列是 `examples/` 里的脚本编号；32–41 是新增场景。
 - 0.14 新增/变更：`layer.layerStyle.contours.*`、`layer.xmpMetadata`、`file.print*`、`channel.options`、`document.activate {offset}`、`layer.translate {selection}`、`file.new {profile}`、`file.saveACopy` 的 `jpegFormat`/`tiffCompression`/DDS 选项。汇总见 `history/0.14.md`。
 - 0.19 新增/变更：`layer.smartObjects.exportSvg`/`updateSvg`/`updateVectorSource`、`path.addToSelection`/`subtractFromSelection`、通道路由白名单扩容。汇总见 `upgrading.md`。
+- **0.23.1 现状**：注册表 1009 条，本文未覆盖的条目见 `registry/commands-0.23.1.md`。已在 0.23.1 实机跑过、结论与数值见 `capability-matrix.md` §2 的命令：`filter.blur.lensBlur`（叶片形状/深度参数）、`image.adjustments.levels` 的 `a/b` 分通道、`filter.lensCorrection`、`edit.contentAwareFill{seed}`、`edit.autoAlignLayers`、`image.adjustments.matchColor`、`image.mode.bits32`+`convertToProfile`。**仍未实跑**（按 `unverified` 用）：`curves` 的 `lightness/a/b`、`image.analysis.selectDataPoints`、`filter.other.custom`（25 元 5×5 整数核）。0.19→0.23 的迁移表尚未写，不要按旧表推断新行为。
 
 ## 回执形状
 

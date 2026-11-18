@@ -117,7 +117,7 @@ HTTP 409 通常是 entitlement/dependency；HTTP 500 可重试；502 常用响�
 
 所以视频自定义码率在这个 draftPath 桥接入口不可用，不能靠加字段绕过。分辨率/帧率可以改草稿
 `canvas_config` 后导出；需要指定视频码率时，在剪映客户端导出，或先用本技能导出默认成片再用
-外部 ffmpeg 转码。证据：[option-probe.json](evidence/2026-11-16-render-after-review/option-probe.json)。
+外部 ffmpeg 转码。证据已移出仓库。
 
 ## 官方 CLI：能用与不能用
 

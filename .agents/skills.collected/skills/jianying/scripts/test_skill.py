@@ -35,13 +35,20 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
+from jylib import ass as ass_mod  # noqa: E402
+from jylib import beauty as beauty_mod  # noqa: E402
 from jylib import bridge as bridge_mod  # noqa: E402
 from jylib import draft as draft_mod  # noqa: E402
 from jylib import env as env_mod  # noqa: E402
 from jylib import index as index_mod  # noqa: E402
+from jylib import interchange as interchange_mod  # noqa: E402
+from jylib import loudness as loudness_mod  # noqa: E402
+from jylib import maintenance as maintenance_mod  # noqa: E402
 from jylib import media as media_mod  # noqa: E402
+from jylib import media_tools as media_tools_mod  # noqa: E402
 from jylib import packaging as packaging_mod  # noqa: E402
 from jylib import resources as resources_mod  # noqa: E402
+from jylib import template as template_mod  # noqa: E402
 from jylib import transcode as transcode_mod  # noqa: E402
 from jylib import versions as versions_mod  # noqa: E402
 from jylib import workflow as workflow_mod  # noqa: E402
@@ -132,6 +139,165 @@ class DraftTests(unittest.TestCase):
         self.assertEqual(material["animations"][0]["resource_id"], "123")
         self.assertEqual(segment["extra_material_refs"], [material["id"]])
 
+    def test_background_fill_and_mix_mode_extras(self):
+        segment = {"extra_material_refs": []}
+        doc = {"materials": {}}
+        extras = draft_mod._apply_video_extras(
+            segment, {}, {
+                "background_fill": {"type": "blur", "blur": 0.375},
+                "mix_mode": "滤色",
+            }, [], doc)
+        self.assertEqual([item["kind"] for item in extras],
+                         ["background_fill", "mix_mode"])
+        fill = extras[0]["material"]
+        self.assertEqual(fill["type"], "canvas_blur")
+        self.assertEqual(fill["blur"], 0.375)
+        self.assertEqual(fill["color"], "#00000000")
+        mix = extras[1]["material"]
+        self.assertEqual(mix["type"], "mix_mode")
+        self.assertEqual(mix["name"], "滤色")
+        self.assertEqual(mix["resource_id"], "6758325170760323597")
+        self.assertEqual(mix["effect_id"], "871339")
+        self.assertEqual(len(segment["extra_material_refs"]), 2)
+
+    def test_background_fill_color_and_custom_mix_mode(self):
+        fill = draft_mod._background_fill_material({
+            "type": "color", "color": "#11223344"})
+        self.assertEqual(fill["type"], "canvas_color")
+        self.assertEqual(fill["color"], "#11223344")
+        mix = draft_mod._mix_mode_material({
+            "name": "自定义", "effect_id": "100", "resource_id": "200"})
+        self.assertEqual(mix["name"], "自定义")
+        self.assertEqual(mix["effect_id"], "100")
+        self.assertEqual(mix["resource_id"], "200")
+        with self.assertRaises(SkillError) as caught:
+            draft_mod._mix_mode_material("不存在的模式")
+        self.assertEqual(caught.exception.code, "VALIDATION")
+
+    def test_loudness_json_parse(self):
+        text = ('noise\n{\n "input_i" : "-20.5",\n "input_tp" : "-8.0",\n'
+                ' "input_lra" : "2.0",\n "input_thresh" : "-30.0"\n}\n')
+        payload = loudness_mod._find_loudnorm_json(text)
+        self.assertEqual(payload["input_i"], "-20.5")
+        self.assertIsNone(loudness_mod._find_loudnorm_json("no json"))
+
+    def test_loudness_analyze_and_gain_ops(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_json(root / "draft_info.json", {
+                "id": "draft",
+                "duration": 4_000_000,
+                "tracks": [{
+                    "type": "audio",
+                    "segments": [{
+                        "id": "seg-1",
+                        "material_id": "audio-1",
+                        "target_timerange": {"start": 0, "duration": 4_000_000},
+                        "source_timerange": {"start": 0, "duration": 4_000_000},
+                        "volume": 1.0,
+                    }],
+                }],
+                "materials": {"audios": [{
+                    "id": "audio-1", "path": str(root / "voice.wav"),
+                    "name": "voice.wav",
+                }]},
+            })
+
+            def fake_measure(ffmpeg, path, *, start=0, duration=None, timeout=120):
+                return {"lufs": -20.0, "true_peak_dbtp": -9.0,
+                        "lra": 2.0, "input_threshold": -30.0,
+                        "source": str(path)}
+
+            with mock.patch.object(loudness_mod, "measure", side_effect=fake_measure):
+                report = loudness_mod.analyze(
+                    root, ffmpeg="ffmpeg", target_lufs=-14.0,
+                    max_true_peak=-1.0)
+            self.assertEqual(report["measured_count"], 1)
+            clip = report["clips"][0]
+            self.assertEqual(clip["status"], "gain")
+            self.assertEqual(clip["gain_db"], 6.0)
+            self.assertAlmostEqual(clip["target_volume"], 1.995262, places=6)
+            ops = loudness_mod.gain_ops(report)
+            self.assertEqual(ops, [{
+                "op": "set_volume", "segment": "seg-1", "volume": 1.995262,
+            }])
+
+    def test_loudness_boundary_states_and_clamps(self):
+        def draft_with(volume):
+            tmp = tempfile.TemporaryDirectory()
+            self.addCleanup(tmp.cleanup)
+            root = Path(tmp.name)
+            write_json(root / "draft_info.json", {
+                "id": "draft", "duration": 4_000_000,
+                "tracks": [{"type": "audio", "segments": [{
+                    "id": "seg-1", "material_id": "audio-1",
+                    "target_timerange": {"start": 0, "duration": 4_000_000},
+                    "source_timerange": {"start": 0, "duration": 4_000_000},
+                    "volume": volume,
+                }]}],
+                "materials": {"audios": [{
+                    "id": "audio-1", "path": str(root / "voice.wav"),
+                    "name": "voice.wav",
+                }]},
+            })
+            return root
+
+        def analyze(root, measured, **kwargs):
+            def fake_measure(ffmpeg, path, *, start=0, duration=None, timeout=120):
+                if isinstance(measured, Exception):
+                    raise measured
+                return measured
+
+            with mock.patch.object(loudness_mod, "measure", side_effect=fake_measure):
+                return loudness_mod.analyze(root, ffmpeg="ffmpeg", **kwargs)
+
+        clip = lambda report: report["clips"][0]
+
+        # 静音：lufs=None → silent
+        clip_silent = clip(analyze(draft_with(1.0),
+                                   {"lufs": None, "true_peak_dbtp": None}))
+        self.assertEqual(clip_silent["status"], "silent")
+        self.assertIsNone(clip_silent["gain_db"])
+
+        # 测量失败：SkillError → unmeasured + warning
+        report = analyze(draft_with(1.0), SkillError(
+            "测不了", code="LOUDNESS_MEASURE_FAILED"))
+        self.assertEqual(clip(report)["status"], "unmeasured")
+        self.assertEqual(report["unmeasured_count"], 1)
+        self.assertTrue(report["warnings"])
+
+        # 无 target：measured，不计算增益
+        self.assertEqual(clip(analyze(draft_with(1.0), {
+            "lufs": -20.0, "true_peak_dbtp": -9.0}))["status"], "measured")
+
+        # 增益上限 6 dB
+        clip_gain = clip(analyze(draft_with(1.0), {
+            "lufs": -70.0, "true_peak_dbtp": -9.0},
+            target_lufs=-14.0, max_gain_db=6.0))
+        self.assertAlmostEqual(clip_gain["gain_db"], 6.0)
+        self.assertAlmostEqual(clip_gain["target_volume"], 1.995262, places=6)
+
+        # 衰减上限 24 dB
+        clip_att = clip(analyze(draft_with(1.0), {
+            "lufs": -5.0, "true_peak_dbtp": -1.0},
+            target_lufs=-70.0, max_attenuation_db=24.0))
+        self.assertAlmostEqual(clip_att["gain_db"], -24.0)
+        self.assertAlmostEqual(clip_att["target_volume"], 10 ** (-24 / 20), places=6)
+
+        # true peak 比增益上限更紧时以 peak 为准
+        clip_peak = clip(analyze(draft_with(1.0), {
+            "lufs": -20.0, "true_peak_dbtp": -1.0},
+            target_lufs=-14.0, max_true_peak=-2.0))
+        self.assertAlmostEqual(clip_peak["gain_db"], -1.0)
+
+        # 目标音量超过 10 被钳到 10，并按钳后值重算 gain
+        clip_cut = clip(analyze(draft_with(8.0), {
+            "lufs": -20.0, "true_peak_dbtp": -9.0},
+            target_lufs=-14.0, max_gain_db=6.0))
+        self.assertTrue(clip_cut["clipped"])
+        self.assertEqual(clip_cut["target_volume"], 10.0)
+        self.assertAlmostEqual(clip_cut["gain_db"], 1.9382, places=3)
+
     def build(self, out: Path, *, force=False):
         with mock.patch.object(env_mod, "find_install", return_value=None), \
                 mock.patch.object(env_mod, "find_ffmpeg",
@@ -205,6 +371,48 @@ class DraftTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "VALIDATION")
         self.assertEqual(caught.exception.details.get("field"), "speed")
         self.assertEqual(caught.exception.details.get("speed"), 2.0)
+
+    def test_background_fill_and_mix_mode_build(self):
+        plan = self.root / "background-mix-plan.json"
+        write_json(plan, {
+            "schema": "jianying-plan/v1",
+            "name": "背景与混合模式",
+            "canvas": {"width": 640, "height": 360, "fps": 30},
+            "tracks": [{"type": "image", "segments": [{
+                "path": "bg.png", "start": 0, "duration": 2,
+                "background_fill": {"type": "color", "color": "#11223344"},
+                "mix_mode": "滤色",
+            }]}],
+        })
+        (self.root / "bg.png").write_bytes(b"fixture")
+
+        def fake_probe(_ffprobe, path):
+            return {"path": str(path), "name": Path(path).name, "kind": "image",
+                    "duration": 0.0, "width": 320, "height": 180, "fps": 0.0,
+                    "has_video": True, "has_audio": False, "codec": "png"}
+
+        out = self.root / "background-mix"
+        with mock.patch.object(env_mod, "find_install", return_value=None), \
+                mock.patch.object(env_mod, "find_ffmpeg",
+                                  return_value={"ffmpeg": None, "ffprobe": None}), \
+                mock.patch.object(draft_mod.media_mod, "probe_media", side_effect=fake_probe):
+            result = draft_mod.build(plan, out, make_cover=False)
+        document = json.loads((out / "draft_info.json").read_text("utf-8"))
+        self.assertEqual(len(document["materials"]["canvases"]), 1)
+        self.assertEqual(document["materials"]["canvases"][0]["type"], "canvas_color")
+        self.assertEqual(document["materials"]["canvases"][0]["color"], "#11223344")
+        mix_modes = [item for item in document["materials"]["effects"]
+                     if item.get("type") == "mix_mode"]
+        self.assertEqual(len(mix_modes), 1)
+        self.assertEqual(mix_modes[0]["name"], "滤色")
+        self.assertEqual(mix_modes[0]["type"], "mix_mode")
+        self.assertEqual(result["materials"].get("canvases"), 1)
+        effects = [item for item in document["materials"]["effects"]
+                   if item.get("type") == "mix_mode"]
+        self.assertEqual(len(effects), 1)
+        info = draft_mod.inspect(out)
+        self.assertEqual([item["type"] for item in info["video_extras"]],
+                         ["background_fill", "mix_mode"])
 
     def test_video_extras_wire_mask_curve_color_crop_flip_reverse(self):
         plan = self.root / "extras-plan.json"
@@ -489,6 +697,33 @@ class DraftTests(unittest.TestCase):
         self.assertEqual(len(inspected["texts"]), 1)
         self.assertEqual(inspected["texts"][0]["text"], "模板标题")
 
+    def test_text_template_wins_over_bubble_and_effect(self):
+        plan = self.root / "text-template-priority.json"
+        write_json(plan, {
+            "schema": "jianying-plan/v1",
+            "tracks": [{"type": "text", "segments": [{
+                "text": "模板优先", "start": 0, "duration": 2,
+                "text_template": {
+                    "resource_id": "987654", "name": "划重点",
+                    "path": "C:/cache/template",
+                },
+                "text_effect": {"resource_id": "flower-3",
+                                "effect_id": "flower-e3"},
+                "text_bubble": {"resource_id": "bubble-3",
+                                "effect_id": "bubble-e3"},
+            }]}],
+        })
+        out = self.root / "text-template-priority"
+        with mock.patch.object(env_mod, "find_install", return_value=None), \
+                mock.patch.object(env_mod, "find_ffmpeg",
+                                  return_value={"ffmpeg": None, "ffprobe": None}):
+            draft_mod.build(plan, out, make_cover=False)
+        document = json.loads((out / "draft_info.json").read_text("utf-8"))
+        segment = document["tracks"][0]["segments"][0]
+        self.assertEqual(document["materials"].get("effects") or [], [])
+        self.assertEqual(segment["extra_material_refs"], [
+            document["materials"]["texts"][0]["id"]])
+
     def test_text_animation_rejects_bad_type(self):
         plan = self.root / "bad-animation.json"
         write_json(plan, {
@@ -542,7 +777,7 @@ class DraftTests(unittest.TestCase):
         self.assertIn(16, [material["check_flag"] & 16])
         self.assertIn(32, [material["check_flag"] & 32])
 
-    def test_text_effect_and_bubble_wire_filters(self):
+    def test_text_bubble_wins_over_text_effect(self):
         plan = self.root / "text-flower.json"
         write_json(plan, {
             "schema": "jianying-plan/v1",
@@ -561,15 +796,110 @@ class DraftTests(unittest.TestCase):
             draft_mod.build(plan, out, make_cover=False)
         document = json.loads((out / "draft_info.json").read_text("utf-8"))
         segment = document["tracks"][0]["segments"][0]
-        filters = document["materials"]["filters"]
-        self.assertEqual({item["type"] for item in filters},
-                         {"text_effect", "text_shape"})
-        self.assertEqual(len(segment["extra_material_refs"]), 2)
-        effect = next(item for item in filters if item["type"] == "text_effect")
-        self.assertEqual(effect["effect_id"], "flower-e1")
-        self.assertEqual(effect["source_platform"], 1)
+        effects = document["materials"]["effects"]
+        self.assertEqual({item["type"] for item in effects}, {"text_shape"})
+        self.assertEqual(len(segment["extra_material_refs"]), 1)
+        bubble = next(item for item in effects if item["type"] == "text_shape")
+        self.assertEqual(bubble["effect_id"], "bubble-e1")
+        self.assertEqual(bubble["resource_id"], "bubble-1")
+        self.assertFalse(document["materials"].get("filters"))
         content = json.loads(document["materials"]["texts"][0]["content"])
+        self.assertNotIn("effectStyle", content["styles"][0])
+
+    def test_text_effect_resets_text_style(self):
+        """花字接管外观时，文字颜色/描边/阴影应重置为默认值。"""
+        plan = self.root / "text-flower-reset.json"
+        write_json(plan, {
+            "schema": "jianying-plan/v1",
+            "tracks": [{"type": "text", "segments": [{
+                "text": "重置", "start": 0, "duration": 2,
+                "color": "#FF0000", "stroke_width": 5,
+                "stroke_color": "#00FF00",
+                "shadow": {"color": "#0000FF", "distance": 6},
+                "text_effect": {"resource_id": "flower-2",
+                                "effect_id": "flower-e2"},
+            }]}],
+        })
+        out = self.root / "text-flower-reset"
+        with mock.patch.object(env_mod, "find_install", return_value=None), \
+                mock.patch.object(env_mod, "find_ffmpeg",
+                                  return_value={"ffmpeg": None, "ffprobe": None}):
+            draft_mod.build(plan, out, make_cover=False)
+        document = json.loads((out / "draft_info.json").read_text("utf-8"))
+        content = json.loads(document["materials"]["texts"][0]["content"])
+        style = content["styles"][0]
+        self.assertEqual(style["fill"]["content"]["solid"]["color"],
+                         [1.0, 1.0, 1.0])
+        self.assertEqual(style["strokes"], [])
+        self.assertNotIn("shadows", style)
+        self.assertEqual(style["effectStyle"]["id"], "flower-e2")
+
+    def test_inspect_lists_text_effects(self):
+        plan = self.root / "text-effects-inspect.json"
+        write_json(plan, {
+            "schema": "jianying-plan/v1",
+            "tracks": [{"type": "text", "segments": [{
+                "text": "气泡花字", "start": 0, "duration": 2,
+                "text_effect": {"resource_id": "flower-9",
+                                "effect_id": "flower-e9",
+                                "path": "C:/cache/flower"},
+                "text_bubble": {"resource_id": "bubble-9",
+                                "effect_id": "bubble-e9",
+                                "path": "C:/cache/bubble"},
+            }]}],
+        })
+        out = self.root / "text-effects-inspect"
+        with mock.patch.object(env_mod, "find_install", return_value=None), \
+                mock.patch.object(env_mod, "find_ffmpeg",
+                                  return_value={"ffmpeg": None, "ffprobe": None}):
+            draft_mod.build(plan, out, make_cover=False)
+        info = draft_mod.inspect(out)
+        self.assertEqual({item["type"] for item in info["text_effects"]},
+                         {"text_shape"})
+        effect = next(item for item in info["text_effects"]
+                      if item["type"] == "text_shape")
+        self.assertEqual(effect["resource_id"], "bubble-9")
+        self.assertEqual(effect["effect_id"], "bubble-e9")
+        self.assertEqual(effect["text"], "气泡花字")
+
+    def test_text_effect_and_glow_stack(self):
+        """花字与发光是两种独立材质：effectStyle + bloom，可同时存在。"""
+        plan = self.root / "text-effect-glow.json"
+        write_json(plan, {
+            "schema": "jianying-plan/v1",
+            "tracks": [{"type": "text", "segments": [{
+                "text": "叠加", "start": 0, "duration": 2,
+                "text_effect": {"resource_id": "flower-1",
+                                "effect_id": "flower-e1"},
+                "text_glow": {"resource_id": "7202576698775179837",
+                              "effect_id": "9762443",
+                              "bloom_params": {"color": "#FFFFFF", "dir_x": 0.5,
+                                               "dir_y": 0.5, "range": 0.2,
+                                               "strength": 0.3}},
+            }]}],
+        })
+        out = self.root / "text-effect-glow"
+        with mock.patch.object(env_mod, "find_install", return_value=None), \
+                mock.patch.object(env_mod, "find_ffmpeg",
+                                  return_value={"ffmpeg": None, "ffprobe": None}):
+            draft_mod.build(plan, out, make_cover=False)
+        document = json.loads((out / "draft_info.json").read_text("utf-8"))
+        effects = document["materials"]["effects"]
+        self.assertEqual({item["type"] for item in effects},
+                         {"text_effect", "bloom"})
+        glow = next(item for item in effects if item["type"] == "bloom")
+        self.assertEqual(glow["panel_id"], "text_glow")
+        self.assertEqual(glow["value"], 0.0)
+        self.assertEqual(glow["effect_id"], "9762443")
+        self.assertEqual(glow["resource_id"], "7202576698775179837")
+        self.assertEqual(glow["bloom_params"]["range"], 0.2)
+        self.assertEqual(glow["bloom_params"]["strength"], 0.3)
+        text_material = document["materials"]["texts"][0]
+        self.assertEqual(text_material["check_flag"] & 64, 64)
+        content = json.loads(text_material["content"])
         self.assertEqual(content["styles"][0]["effectStyle"]["id"], "flower-e1")
+        info = draft_mod.inspect(out)
+        self.assertIn("bloom", {item["type"] for item in info["text_effects"]})
 
     def test_hsl_and_chroma_wire_materials_and_refs(self):
         plan = self.root / "hsl-chroma.json"
@@ -1576,6 +1906,268 @@ class SafetyTests(unittest.TestCase):
                 self.assertIsNone(env_mod.find_bridge_descriptor())
 
 
+    def test_is_plain_file_rejects_symlink(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "real.bin"
+            target.write_bytes(b"x")
+            self.assertTrue(media_mod.is_plain_file(target))
+            self.assertFalse(media_mod.is_plain_file(root / "missing.bin"))
+            link = root / "link.bin"
+            try:
+                os.symlink(str(target), str(link))
+            except (OSError, NotImplementedError):
+                self.skipTest("本机不允许创建符号链接")
+            self.assertFalse(media_mod.is_plain_file(link))
+            self.assertFalse(draft_mod._plain_file(link))
+
+    def test_is_plain_file_rejects_reparse_attribute(self):
+        """目标自身是重解析点就拒绝；祖先目录走真实 lstat，避免空心断言。"""
+        from types import SimpleNamespace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            real = Path(tmp) / "real.bin"
+            real.write_bytes(b"x")
+            fake = SimpleNamespace(st_mode=real.lstat().st_mode,
+                                   st_reparse_tag=0,
+                                   st_file_attributes=media_mod._REPARSE_POINT)
+            original = Path.lstat
+
+            def lstat(self):
+                if self == real:
+                    return fake
+                return original(self)
+
+            with mock.patch.object(Path, "lstat", lstat):
+                self.assertFalse(media_mod.is_plain_file(real))
+
+    def test_is_link_stat_allows_cloud_placeholder_tag(self):
+        """重解析属性位不够：只有 junction/符号链接标签才拒绝。"""
+        from types import SimpleNamespace
+
+        placeholder = SimpleNamespace(
+            st_mode=0o100644, st_reparse_tag=0x9000001A,
+            st_file_attributes=media_mod._REPARSE_POINT)
+        self.assertFalse(media_mod._is_link_stat(placeholder))
+        junction = SimpleNamespace(
+            st_mode=0o040755, st_reparse_tag=media_mod._REPARSE_MOUNT,
+            st_file_attributes=0)
+        self.assertTrue(media_mod._is_link_stat(junction))
+
+    def test_open_plain_holds_file_and_rejects_links(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            real = root / "real.bin"
+            real.write_bytes(b"abc")
+            with media_mod.open_plain(real) as fh:
+                self.assertEqual(fh.read(), b"abc")
+            self.assertEqual(media_mod.read_plain_bytes(real), b"abc")
+            if os.name == "nt":
+                with media_mod.hold_plain_file(real):
+                    with self.assertRaises(OSError):
+                        os.remove(real)
+                self.assertTrue(real.exists())
+
+    def test_is_plain_file_rejects_link_ancestor(self):
+        """祖先目录是 junction 时，子文件也不能算普通文件。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            real = root / "real"
+            real.mkdir()
+            (real / "clip.bin").write_bytes(b"x")
+            link = root / "junction"
+            done = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(real)],
+                                  capture_output=True, text=True)
+            if done.returncode != 0:
+                self.skipTest(f"本机不能建 junction：{done.stderr.strip()[:120]}")
+            self.assertTrue(media_mod.is_plain_file(real / "clip.bin"))
+            self.assertFalse(media_mod.is_plain_file(link / "clip.bin"))
+            self.assertFalse(media_mod.is_plain_dir(link))
+            with self.assertRaises(OSError):
+                with media_mod.open_plain(link):
+                    pass
+            entry = versions_mod._input_entry(root, str(link / "clip.bin"))
+            self.assertFalse(entry["exists"])
+            # 体积统计也不能跟着 junction 去读目标
+            document = {"materials": {"videos": [
+                {"path": str(link / "clip.bin")},
+                {"path": str(real / "clip.bin")},
+            ]}}
+            self.assertEqual(draft_mod._materials_bytes(document, root), 1)
+            self.assertEqual(index_mod._materials_bytes(document), 1)
+            # 递归遍历也不能进入 junction
+            self.assertEqual([p.name for p in media_mod.iter_plain_files(root)],
+                             ["clip.bin"])
+
+    def test_relink_prefix_strip_and_sibling_guard(self):
+        if os.name != "nt":
+            self.skipTest("前缀分隔符规则按 Windows 路径定义")
+        self.assertEqual(maintenance_mod._strip_prefix(
+            r"C:\media\clip.mp4", r"C:\media"), r"\clip.mp4")
+        self.assertIsNone(maintenance_mod._strip_prefix(
+            r"C:\media2\clip.mp4", r"C:\media"))
+        self.assertIsNone(maintenance_mod._strip_prefix(
+            r"C:\media\clip.mp4", r"D:\media"))
+        self.assertEqual(maintenance_mod._strip_prefix(
+            r"c:\MEDIA\clip.mp4", r"C:\media"), r"\clip.mp4")
+        self.assertIsNone(maintenance_mod._strip_prefix(
+            r"C:\media\..\Windows\win.ini", r"C:\media"))
+        self.assertEqual(maintenance_mod._strip_prefix(
+            r"C:\media\clip.mp4", "C:\\media\\"), "clip.mp4")
+        self.assertEqual(maintenance_mod._join_prefix(
+            "C:\\new\\", "\\clip.mp4"), "C:\\new\\clip.mp4")
+
+    def test_prune_tolerates_extra_material_refs_dict(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = root / "prune-dict"
+            write_json(draft / "draft_info.json", {
+                "id": "d", "duration": 2_000_000,
+                "materials": {
+                    "videos": [{"id": "V1", "path": "v.mp4", "duration": 2_000_000},
+                               {"id": "ORPHAN", "path": "o.mp4"}],
+                    "effects": [{"id": "FX2", "type": "mix_mode"}],
+                },
+                "tracks": [{"type": "video", "segments": [{
+                    "id": "s1", "material_id": "V1",
+                    "extra_material_refs": {"slot": "FX2"},
+                    "target_timerange": {"start": 0, "duration": 2_000_000},
+                }]}],
+            })
+            self.assertTrue(jy_mod._draft_material_present(
+                draft / "draft_info.json", "effects", {"mix_mode"}))
+            result = maintenance_mod.prune(draft, out_dir=root / "prune-dict-out")
+            self.assertEqual(result["removed_count"], 1)
+            self.assertEqual(result["removed"][0]["id"], "ORPHAN")
+            document = json.loads(
+                (Path(result["out"]) / "draft_info.json").read_text("utf-8"))
+            self.assertEqual([item["id"]
+                              for item in document["materials"]["effects"]], ["FX2"])
+
+    def test_materials_bytes_counts_images_and_stickers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name, data in (("v.mp4", b"1"), ("i.png", b"22"), ("s.png", b"333")):
+                (root / name).write_bytes(data)
+            document = {"materials": {
+                "videos": [{"path": str(root / "v.mp4")}],
+                "images": [{"path": str(root / "i.png")}],
+                "stickers": [{"path": str(root / "s.png")}],
+            }}
+            self.assertEqual(draft_mod._materials_bytes(document, root), 6)
+            self.assertEqual(index_mod._materials_bytes(document), 6)
+
+    def test_remove_op_normalizes_dict_refs(self):
+        document = {
+            "materials": {
+                "videos": [{"id": "V1"}],
+                "images": [{"id": "I1"}],
+                "effects": [{"id": "FX2", "type": "mix_mode"},
+                            {"id": "FX3", "type": "mix_mode"}],
+            },
+            "tracks": [{"type": "video", "segments": [
+                {"id": "s1", "material_id": "V1",
+                 "extra_material_refs": {"slot": "FX2"}},
+                {"id": "s2", "material_id": "I1",
+                 "extra_material_refs": ["FX3"]},
+            ]}],
+        }
+        self.assertEqual(draft_mod._apply_op(
+            document, {"op": "remove", "segment": "s1"}), "remove")
+        self.assertEqual([s["id"] for s in document["tracks"][0]["segments"]],
+                         ["s2"])
+        self.assertEqual([m["id"] for m in document["materials"]["videos"]], [])
+        self.assertEqual([m["id"] for m in document["materials"]["effects"]],
+                         ["FX3"])
+
+    def test_ref_values_keeps_numeric_ids(self):
+        self.assertEqual(draft_mod._ref_values([123, "A", None, ""]),
+                         {"123", "A"})
+        self.assertEqual(draft_mod._ref_values({"a": "FX1", "b": 7}),
+                         {"FX1", "7"})
+
+    def test_inspect_reports_missing_image_material(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = root / "inspect-images"
+            write_json(draft / "draft_info.json", {
+                "id": "d", "duration": 2_000_000,
+                "canvas_config": {"width": 640, "height": 360},
+                "materials": {"images": [{"id": "I1", "path": str(
+                    root / "missing" / "cover.png")}]},
+                "tracks": [{"type": "video", "segments": [{
+                    "id": "s1", "material_id": "I1",
+                    "target_timerange": {"start": 0, "duration": 2_000_000},
+                }]}],
+            })
+            report = draft_mod.inspect(draft)
+            self.assertTrue(any("cover.png" in path
+                                for path in report["missing_media"]))
+
+    def test_inspect_accepts_sticker_package_dir(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package = root / "cache" / "sticker" / "pkg"
+            package.mkdir(parents=True)
+            draft = root / "inspect-sticker"
+            write_json(draft / "draft_info.json", {
+                "id": "d", "duration": 1_000_000,
+                "canvas_config": {"width": 640, "height": 360},
+                "materials": {"stickers": [{"id": "S1", "path": str(package)}]},
+                "tracks": [{"type": "video", "segments": [{
+                    "id": "s1", "material_id": "S1",
+                    "target_timerange": {"start": 0, "duration": 1_000_000},
+                }]}],
+            })
+            report = draft_mod.inspect(draft)
+            self.assertEqual(report["missing_media"], [])
+
+
+class ManifestPathTests(unittest.TestCase):
+    def test_manifest_paths_reject_escape(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "draft"
+            root.mkdir()
+            with self.assertRaises(SkillError) as caught:
+                versions_mod._doc_at(root, {"snapshot": "../outside.json"})
+            self.assertEqual(caught.exception.code, "VERSION_CORRUPTED")
+            with self.assertRaises(SkillError):
+                versions_mod._doc_at(
+                    root, {"snapshot": str(Path(tmp) / "abs.json")})
+
+
+class AllowHttpCliTests(unittest.TestCase):
+    def test_parser_exposes_allow_http(self):
+        parser = jy_mod.build_parser()
+        build = parser.parse_args(
+            ["build", "--plan", "p.json", "--out", "o",
+             "--fetch-resources", "--allow-http"])
+        self.assertTrue(build.allow_http)
+        auto = parser.parse_args(
+            ["auto-subtitles", "--video", "v.mp4", "--out", "o",
+             "--fetch-resources", "--allow-http"])
+        self.assertTrue(auto.allow_http)
+
+    def test_commands_forward_allow_http(self):
+        parser = jy_mod.build_parser()
+        build_args = parser.parse_args(
+            ["build", "--plan", "p.json", "--out", "o",
+             "--fetch-resources", "--allow-http"])
+        with mock.patch.object(jy_mod, "emit", return_value=None), \
+                mock.patch.object(jy_mod.draft_mod, "build",
+                                  return_value={"draft_dir": "o"}) as build:
+            jy_mod.cmd_build(build_args)
+        self.assertTrue(build.call_args.kwargs["allow_http"])
+        auto_args = parser.parse_args(
+            ["auto-subtitles", "--video", "v.mp4", "--out", "o",
+             "--fetch-resources", "--allow-http"])
+        with mock.patch.object(jy_mod, "emit", return_value=None), \
+                mock.patch.object(jy_mod.workflow_mod, "build_subtitle_draft",
+                                  return_value={"warnings": []}) as auto:
+            jy_mod.cmd_auto_subtitles(auto_args)
+        self.assertTrue(auto.call_args.kwargs["allow_http"])
+
+
 class CliTests(unittest.TestCase):
     def test_bad_args_still_returns_json(self):
         proc = subprocess.run(
@@ -1857,6 +2449,63 @@ class SubtitleTests(unittest.TestCase):
             tokens, spans, {"那个", "就是说"})
         self.assertEqual(out_tokens, ["我们", "开始"])
         self.assertEqual(len(out_spans), 2)
+
+    def test_local_asr_punc_seps_follow_break_class_and_gap(self):
+        from subtitles import local_asr
+        spans = [(0.0, 0.5), (0.5, 1.0), (2.0, 2.4)]
+        self.assertEqual(local_asr.build_seps([1, 2, 2], spans), ["", "。", "。"])
+        spans = [(0.0, 0.5), (0.5, 1.0), (1.2, 1.6)]
+        self.assertEqual(local_asr.build_seps([1, 2, 1], spans), ["", "，", ""])
+
+    def test_local_asr_punc_fallback_is_not_silent(self):
+        from subtitles import local_asr
+
+        class ShortPunc:
+            @staticmethod
+            def classes(_tokens):
+                return [1]
+
+        seps, source, breaks, detail = local_asr._make_seps(
+            ["你", "好"], [(0, 1), (1, 2)], ShortPunc(), True)
+        self.assertEqual((source, breaks, seps), ("heuristic", 0, ["", ""]))
+        self.assertIn("class-count", detail)
+
+        seps, source, breaks, detail = local_asr._make_seps(
+            ["你"], [(0, 1)], None, False)
+        self.assertEqual((source, breaks, detail, seps), ("off", 0, "", [""]))
+
+    def test_local_asr_chunks_split_on_long_silence(self):
+        try:
+            import numpy as np
+        except ImportError:
+            self.skipTest("numpy 不可用")
+        from subtitles import local_asr
+        sr = local_asr.SAMPLE_RATE
+        tone_t = np.arange(int(sr * 1.5)) / sr
+        tone = 0.3 * np.sin(2 * np.pi * 440 * tone_t)
+        noise = 0.0002 * np.random.default_rng(0).standard_normal(int(sr * 3.0))
+        audio = np.concatenate([tone, noise, tone]).astype(np.float32)
+        chunks = local_asr.split_chunks(np, audio, min_sec=2.0, max_sec=30.0)
+        self.assertEqual(len(chunks), 2, f"长静音必须切开，实际 {chunks}")
+        self.assertAlmostEqual(chunks[0][1] / sr, 1.5, delta=0.3)
+        self.assertAlmostEqual(chunks[1][0] / sr, 4.5, delta=0.3)
+
+    def test_local_asr_render_itn_tags(self):
+        from subtitles import local_asr
+        tagged = ('char { value: "产" } measure { value: "50%" } '
+                  'date { year: "2026年" month: "11月" day: "18日" } '
+                  'time { hour: "3" minute: "30" } char { value: "。" }')
+        self.assertEqual(local_asr.render_tags(tagged), "产50%2026年11月18日3:30。")
+
+    def test_local_asr_quality_summary_is_descriptive_only(self):
+        from subtitles import local_asr
+        self.assertEqual(local_asr.quality_summary([]),
+                         {"source": "absent", "chunks": [], "min": None, "mean": None})
+        summary = local_asr.quality_summary([0.9, 0.7])
+        self.assertEqual(summary["source"], "model")
+        self.assertEqual(summary["chunks"], [0.9, 0.7])
+        self.assertEqual(summary["min"], 0.7)
+        self.assertEqual(summary["mean"], 0.8)
 
     def test_local_asr_explicit_model_dir_does_not_fall_back(self):
         from subtitles import local_asr
@@ -2386,6 +3035,85 @@ class RegressionTests(unittest.TestCase):
             self.assertTrue(payload["data"]["draft_mutated"])
             self.assertEqual(payload["data"]["draft_files_changed"],
                              ["draft_meta_info.json"])
+            self.assertFalse(any(
+                "beauty/figure" in item or "chroma" in item or "mix_mode" in item
+                for item in payload["data"]["warnings"]))
+
+    def test_render_scan_tolerates_null_and_accepts_material_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bad = root / "bad.json"
+            write_json(bad, {"materials": None, "tracks": None})
+            self.assertFalse(jy_mod._draft_material_present(bad, "effects"))
+            self.assertFalse(jy_mod._draft_beauty_present(bad))
+            self.assertFalse(jy_mod._draft_chroma_present(bad))
+
+            good = root / "good.json"
+            write_json(good, {
+                "materials": {"effects": [{"id": "fig1", "type": "figure"}]},
+                "tracks": [{"segments": [{"material_id": "fig1"}]}],
+            })
+            self.assertTrue(jy_mod._draft_beauty_present(good))
+
+            scalar = root / "scalar.json"
+            write_json(scalar, {
+                "materials": {"effects": [{"id": "fig1", "type": "figure"}]},
+                "tracks": [{"segments": [{"extra_material_refs": "fig1"}]}],
+            })
+            self.assertTrue(jy_mod._draft_beauty_present(scalar))
+
+    def test_render_reports_beauty_chroma_conditional_warnings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            draft = root / "draft"
+            draft.mkdir()
+            write_json(draft / "draft_info.json", {
+                "id": "d2", "name": "conditional", "duration": 1_000_000,
+                "canvas_config": {"width": 320, "height": 180},
+                "fps": 30,
+                "tracks": [{"type": "video", "segments": [{
+                    "id": "s1",
+                    "extra_material_refs": ["fig1", "chr1", "mix1"],
+                }]}],
+                "materials": {
+                    "effects": [
+                        {"id": "fig1", "type": "figure"},
+                        {"id": "mix1", "type": "mix_mode"},
+                    ],
+                    "chromas": [{"id": "chr1", "type": "chroma"}],
+                },
+            })
+            write_json(draft / "draft_meta_info.json", {"draft_id": "d2"})
+            out = root / "out.mp4"
+
+            class FakeBridge:
+                def safe_health(self):
+                    return {"version": "11.8.0", "pid": 1}
+
+                def export(self, draft_dir, out_path, **_kwargs):
+                    Path(out_path).write_bytes(b"mp4")
+                    return {"path": str(out_path), "bytes": 3}
+
+            args = argparse.Namespace(draft=str(draft), out=str(out),
+                                      force=False, format="mp4", timeout=10)
+            buffer = io.StringIO()
+            with mock.patch.object(jy_mod.Bridge, "discover",
+                                   return_value=FakeBridge()), \
+                    mock.patch.object(env_mod, "find_install", return_value=None), \
+                    mock.patch.object(env_mod, "find_ffmpeg",
+                                      return_value={"ffmpeg": None,
+                                                    "ffprobe": None}), \
+                    contextlib.redirect_stdout(buffer):
+                code = jy_mod.cmd_render(args)
+            self.assertEqual(code, 0)
+            payload = json.loads(buffer.getvalue())
+            warnings = payload["data"]["warnings"]
+            self.assertTrue(any("mix_mode" in item for item in warnings))
+            self.assertTrue(any("beauty/figure" in item for item in warnings))
+            self.assertTrue(any("chroma" in item for item in warnings))
+            self.assertTrue(all("native bridge" in item for item in warnings
+                                if "mix_mode" in item or "beauty/figure" in item
+                                or "chroma" in item))
 
     def test_render_rejects_multi_timeline_before_bridge(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -2944,17 +3672,19 @@ class ResourceCatalogTests(unittest.TestCase):
         connection = sqlite3.connect(db)
         connection.execute(
             "create table effect (id text, title text, name text, panel_name text, "
-            "effect_type integer, is_vip integer, md5 text, extra text, "
+            "effect_type integer, is_vip integer, is_business integer, md5 text, extra text, "
             "category_id text, category_name text, item_urls text, sdk_extra text)")
         connection.executemany(
-            "insert into effect values (?,?,?,?,?,?,?,?,?,?,?,?)",
+            "insert into effect values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
             [
-                ("111", "免费花字", "剪映小助手", "flower2", 1, 0, "hash-free",
+                ("111", "免费花字", "剪映小助手", "flower2", 1, 0, 0, "hash-free",
                  '{"is_vip":false}', "", "",
                  '["https://example.invalid/pkg.zip?x-expires=9999999999"]', "{}"),
-                ("222", "会员花字", "剪映小助手", "flower2", 1, 0, "hash-vip",
+                ("222", "会员花字", "剪映小助手", "flower2", 1, 0, 0, "hash-vip",
                  '{"is_vip":true}', "", "", "[]", "{}"),
-                ("333", "未缓存贴纸", "剪映小助手", "sticker", 18, 0, "hash-missing",
+                ("333", "未缓存贴纸", "剪映小助手", "sticker", 18, 0, 0, "hash-missing",
+                 "{}", "", "", "[]", "{}"),
+                ("444", "商务气泡", "剪映小助手", "bubble", 49, 0, 1, "hash-business",
                  "{}", "", "", "[]", "{}"),
             ])
         connection.commit()
@@ -2992,7 +3722,7 @@ class ResourceCatalogTests(unittest.TestCase):
             self.assertEqual(resolved["item"]["title"], "免费花字")
             self.assertTrue(resolved["item"]["cached"])
             stats = resources_mod.stats(db_path=db, cache_root=cache)
-            self.assertEqual(stats["total"], 3)
+            self.assertEqual(stats["total"], 4)
             self.assertEqual(stats["cached"], 1)
             self.assertEqual(stats["free"], 2)
             with self.assertRaises(SkillError) as caught:
@@ -3012,6 +3742,37 @@ class ResourceCatalogTests(unittest.TestCase):
             self.assertEqual(dry["url_count"], 1)
             self.assertIn("artistEffect", dry["target"])
             self.assertFalse(Path(dry["target"]).exists())
+
+    def test_business_flag_comes_from_db_even_without_extra(self):
+        """商务标记不能只信 extra；旧记录 extra 为空时也要拦住下载。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            db, cache = self._fixture(Path(tmp))
+            resolved = resources_mod.resolve("444", db_path=db, cache_root=cache)
+            self.assertTrue(resolved["item"]["business"])
+            with self.assertRaises(SkillError) as caught:
+                resources_mod.download_resource(
+                    "444", db_path=db, cache_root=cache, apply=False)
+            self.assertEqual(caught.exception.code, "RESOURCE_GATED")
+            stats = resources_mod.stats(db_path=db, cache_root=cache)
+            self.assertEqual(stats["free"], 2)
+
+    def test_download_rejects_gated_dependency(self):
+        """模板主资源免费、依赖字体/花字收费时不能整体下载。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            db, cache = self._fixture(Path(tmp))
+            connection = sqlite3.connect(db)
+            connection.execute(
+                "update effect set sdk_extra = ? where id = '111'",
+                ('{"depend_resource_list":[{"type":"fonts","resource_id":"222"}]}',))
+            connection.commit()
+            connection.close()
+            with self.assertRaises(SkillError) as caught:
+                resources_mod.download_resource(
+                    "111", db_path=db, cache_root=cache, apply=False, force=True)
+            self.assertEqual(caught.exception.code, "RESOURCE_GATED")
+            self.assertEqual(caught.exception.details["dependencies"][0]["resource_id"],
+                             "222")
+            self.assertTrue(caught.exception.details["dependencies"][0]["vip"])
 
     def test_install_archive_extracts_and_rejects_traversal(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -3095,11 +3856,11 @@ class ResourceCatalogTests(unittest.TestCase):
             connection = sqlite3.connect(db)
             connection.execute(
                 "create table effect (id text, title text, name text, panel_name text, "
-                "effect_type integer, is_vip integer, md5 text, extra text, "
+                "effect_type integer, is_vip integer, is_business integer, md5 text, extra text, "
                 "category_id text, category_name text, item_urls text, sdk_extra text)")
             connection.execute(
-                "insert into effect values (?,?,?,?,?,?,?,?,?,?,?,?)",
-                ("999", "无 md5", "x", "shuziren2408", 1, 0, "",
+                "insert into effect values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                ("999", "无 md5", "x", "shuziren2408", 1, 0, 0, "",
                  '{"is_vip":false}', "", "",
                  '["https://example.invalid/pkg.zip?x-expires=9999999999"]', "{}"))
             connection.commit()
@@ -3130,7 +3891,7 @@ class ResourceCatalogTests(unittest.TestCase):
             connection.commit()
             connection.close()
             with mock.patch.object(
-                    resources_mod.urllib.request, "urlopen",
+                    resources_mod, "_open_url",
                     side_effect=urllib.error.HTTPError(
                         "https://example.invalid/pkg.zip", 403, "denied", {}, None)):
                 with self.assertRaises(SkillError) as caught:
@@ -3139,7 +3900,7 @@ class ResourceCatalogTests(unittest.TestCase):
             self.assertEqual(caught.exception.code, "RESOURCE_DOWNLOAD_FAILED")
 
             with mock.patch.object(
-                    resources_mod.urllib.request, "urlopen",
+                    resources_mod, "_open_url",
                     return_value=contextlib.closing(io.BytesIO(b"not-a-zip"))):
                 with self.assertRaises(SkillError) as caught:
                     resources_mod.download_resource(
@@ -3723,7 +4484,7 @@ class AuditFixTests(unittest.TestCase):
 
     def test_known_keys_cover_actual_reads(self):
         for key, value in (("line_max_width", 0.5), ("green_screen", {}),
-                           ("caption_duration_info", {})):
+                           ("caption_duration_info", {}), ("beautify", {"smooth": 1})):
             self.assertIsNone(
                 draft_mod._warn_unknown_segment_keys({key: value}),
                 f"{key} 应被视为已接线字段")
@@ -3756,7 +4517,7 @@ class AuditFixTests(unittest.TestCase):
                 bundle.writestr("config.json", "{}")
             payload = buffer.getvalue()
             with mock.patch.object(
-                    resources_mod.urllib.request, "urlopen",
+                    resources_mod, "_open_url",
                     return_value=contextlib.closing(io.BytesIO(payload))):
                 result = resources_mod.download_resource(
                     "111", db_path=db, cache_root=cache, apply=True, force=True)
@@ -3768,6 +4529,96 @@ class AuditFixTests(unittest.TestCase):
                 "111", db_path=db, cache_root=cache)
             self.assertTrue(again["already_cached"])
             self.assertEqual(again["db_md5"], "hash-free")
+
+    def test_download_rejects_http_unless_allowed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            db, cache = ResourceCatalogTests._fixture(None, root)
+            connection = sqlite3.connect(db)
+            connection.execute("update effect set item_urls=? where id='111'",
+                               ('["http://example.invalid/pkg.zip"]',))
+            connection.commit()
+            connection.close()
+            with self.assertRaises(SkillError) as caught:
+                resources_mod.download_resource(
+                    "111", db_path=db, cache_root=cache, apply=True, force=True)
+            self.assertEqual(caught.exception.code, "UNSAFE_URL")
+            self.assertEqual(caught.exception.details["hosts"], ["example.invalid"])
+
+            self.assertEqual(resources_mod._parse_urls(
+                '["http://a/x","https://b/y"]'), ["https://b/y"])
+            self.assertEqual(resources_mod._parse_urls(
+                '["http://a/x","https://b/y"]', allow_http=True),
+                ["http://a/x", "https://b/y"])
+
+            buffer = io.BytesIO()
+            with zipfile.ZipFile(buffer, "w") as bundle:
+                bundle.writestr("config.json", "{}")
+            payload = buffer.getvalue()
+            with mock.patch.object(
+                    resources_mod, "_open_url",
+                    return_value=contextlib.closing(io.BytesIO(payload))):
+                result = resources_mod.download_resource(
+                    "111", db_path=db, cache_root=cache, apply=True, force=True,
+                    allow_http=True)
+            self.assertTrue(result["applied"])
+            self.assertTrue(Path(result["cache_path"]).is_dir())
+
+            class Redirected(io.BytesIO):
+                def geturl(self):
+                    return "http://example.invalid/pkg.zip"
+
+            # 302 跳到 http：读 body 前就拒绝
+            connection = sqlite3.connect(db)
+            connection.execute("update effect set item_urls=? where id='111'",
+                               ('["https://example.invalid/pkg.zip"]',))
+            connection.commit()
+            connection.close()
+            with mock.patch.object(
+                    resources_mod, "_open_url",
+                    return_value=contextlib.closing(Redirected(payload))):
+                with self.assertRaises(SkillError) as caught:
+                    resources_mod.download_resource(
+                        "111", db_path=db, cache_root=cache, apply=True, force=True)
+            self.assertEqual(caught.exception.code, "UNSAFE_URL")
+            self.assertIn("http://example.invalid", caught.exception.details["url"])
+
+            # 混合 https+http：http 地址不能静默消失
+            connection = sqlite3.connect(db)
+            connection.execute("update effect set item_urls=? where id='111'",
+                               ('["http://example.invalid/pkg.zip",'
+                                '"https://example.invalid/pkg.zip"]',))
+            connection.commit()
+            connection.close()
+            with mock.patch.object(
+                    resources_mod, "_open_url",
+                    return_value=contextlib.closing(io.BytesIO(payload))):
+                mixed = resources_mod.download_resource(
+                    "111", db_path=db, cache_root=cache, apply=True, force=True)
+            self.assertEqual(mixed["skipped_insecure_url_count"], 1)
+
+    def test_download_rejects_private_targets(self):
+        self.assertTrue(resources_mod._is_private_target("https://127.0.0.1/x"))
+        self.assertTrue(resources_mod._is_private_target("https://10.1.2.3/x"))
+        self.assertTrue(resources_mod._is_private_target("https://[::1]/x"))
+        self.assertFalse(resources_mod._is_private_target("https://example.invalid/x"))
+        handler = resources_mod._GuardedRedirect(allow_http=False, item_id="111")
+        for target in ("http://example.invalid/x", "https://127.0.0.1/x"):
+            with self.assertRaises(SkillError) as caught:
+                handler.redirect_request(None, None, 302, "Found", {}, target)
+            self.assertEqual(caught.exception.code, "UNSAFE_URL")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            db, cache = ResourceCatalogTests._fixture(None, root)
+            connection = sqlite3.connect(db)
+            connection.execute("update effect set item_urls=? where id='111'",
+                               ('["https://127.0.0.1/pkg.zip"]',))
+            connection.commit()
+            connection.close()
+            with self.assertRaises(SkillError) as caught:
+                resources_mod.download_resource(
+                    "111", db_path=db, cache_root=cache, apply=True, force=True)
+            self.assertEqual(caught.exception.code, "UNSAFE_URL")
 
     def test_install_archive_caps_actual_bytes(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -3933,7 +4784,7 @@ class AuditFixTests(unittest.TestCase):
             db, cache = ResourceCatalogTests._fixture(None, root)
             with mock.patch.object(resources_mod, "_MAX_DOWNLOAD_BYTES", 10), \
                     mock.patch.object(
-                        resources_mod.urllib.request, "urlopen",
+                        resources_mod, "_open_url",
                         return_value=contextlib.closing(
                             io.BytesIO(b"x" * 100))):
                 with self.assertRaises(SkillError) as caught:
@@ -4201,6 +5052,435 @@ class UpgradeCheckTests(unittest.TestCase):
         payload = json.loads(out.getvalue())
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["data"]["status"], "attention")
+
+
+class InterchangeTests(unittest.TestCase):
+    """模板、ASS、OTIO、媒体分析与维护命令的离线契约。"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _probe(self, kind="video"):
+        if kind == "audio":
+            return {"path": "audio.m4a", "name": "audio.m4a", "kind": "audio",
+                    "duration": 4.0, "width": 0, "height": 0, "fps": 0.0,
+                    "has_video": False, "has_audio": True, "codec": "aac"}
+        if kind == "image":
+            return {"path": "image.png", "name": "image.png", "kind": "image",
+                    "duration": 0.0, "width": 320, "height": 180, "fps": 0.0,
+                    "has_video": True, "has_audio": False, "codec": "png"}
+        return {"path": "video.mp4", "name": "video.mp4", "kind": "video",
+                "duration": 6.0, "width": 640, "height": 360, "fps": 30.0,
+                "has_video": True, "has_audio": True, "codec": "h264"}
+
+    def _build_with_probe(self, plan_path, out, *, side_effect=None, return_value=None):
+        patches = [
+            mock.patch.object(env_mod, "find_install", return_value=None),
+            mock.patch.object(env_mod, "find_ffmpeg",
+                              return_value={"ffmpeg": None, "ffprobe": None}),
+        ]
+        if side_effect is not None:
+            patches.append(mock.patch.object(draft_mod.media_mod, "probe_media",
+                                             side_effect=side_effect))
+        elif return_value is not None:
+            patches.append(mock.patch.object(draft_mod.media_mod, "probe_media",
+                                             return_value=return_value))
+        for item in patches:
+            item.start()
+        try:
+            return draft_mod.build(plan_path, out, make_cover=False)
+        finally:
+            for item in patches:
+                item.stop()
+
+    def _text_draft(self, name="text", text="第一句"):
+        plan = self.root / f"{name}.json"
+        write_json(plan, {
+            "schema": "jianying-plan/v1", "name": name,
+            "canvas": {"width": 640, "height": 360, "fps": 30},
+            "tracks": [{"type": "text", "segments": [{
+                "text": text, "start": 0.2, "duration": 2.0,
+                "font_size": 8, "y": -0.72, "color": "#FF0000",
+                "stroke_color": "#00FF00", "stroke_width": 2,
+            }]}],
+        })
+        out = self.root / name
+        return self._build_with_probe(plan, out), out
+
+    def test_beauty_material_build_and_integration(self):
+        figures = beauty_mod.build({
+            "skin": {"smooth": 100, "whitening": 50},
+            "shape": {"small_face": 60},
+            "makeup": {"look": "淡人妆", "intensity": 80},
+        }, video_material_id="video-1", placeholder_id="PLACE")
+        self.assertEqual(len(figures), 5)
+        names = [item["name"] for item in figures]
+        self.assertEqual(names, ["磨皮", "美白", "小脸", "淡人妆", "makeup-root"])
+        smooth, whitening, shape, makeup, root = figures
+        self.assertEqual(smooth["value"], 1.0)
+        self.assertTrue(smooth["algorithm_artifact_path"].endswith("/video-1"))
+        self.assertEqual(whitening["value"], 0.5)
+        self.assertEqual(whitening["algorithm_artifact_path"], "")
+        self.assertEqual(shape["adjust_params"][0]["name"], "0")
+        self.assertEqual(shape["adjust_params"][0]["value"], 0.6)
+        self.assertEqual(makeup["face_adjust_params"][0]["adjust_params"][0]["name"],
+                         "face_adjust_whole")
+        self.assertEqual(root["type"], "makeup_root")
+
+        plan = self.root / "beauty-plan.json"
+        write_json(plan, {
+            "schema": "jianying-plan/v1", "name": "美颜",
+            "canvas": {"width": 640, "height": 360, "fps": 30},
+            "tracks": [{"type": "video", "segments": [{
+                "path": "video.mp4", "start": 0, "duration": 2.0,
+                "beauty": {"skin": {"smooth": 100}},
+            }]}],
+        })
+        out = self.root / "beauty"
+        result = self._build_with_probe(plan, out, return_value=self._probe("video"))
+        document = json.loads((out / "draft_info.json").read_text("utf-8"))
+        figures = [item for item in document["materials"]["effects"]
+                   if item.get("type") == "figure"]
+        self.assertEqual(len(figures), 1)
+        self.assertFalse(any(item.get("type") == "makeup_root" for item in figures))
+        self.assertEqual(figures[0]["resource_id"], "6976822940608238093")
+        segment = document["tracks"][0]["segments"][0]
+        self.assertIn(figures[0]["id"], segment["extra_material_refs"])
+        info = draft_mod.inspect(out)
+        self.assertIn("beauty", [item["type"] for item in info["video_extras"]])
+        self.assertTrue(any("beauty" in str(item) for item in result["warnings"]))
+        self.assertTrue(any("native bridge" in str(item) and "界面导出" in str(item)
+                            for item in result["warnings"]))
+
+    def test_beauty_all_zero_does_not_claim_written(self):
+        plan = self.root / "beauty-zero-plan.json"
+        write_json(plan, {
+            "schema": "jianying-plan/v1", "name": "美颜零值",
+            "canvas": {"width": 640, "height": 360, "fps": 30},
+            "tracks": [{"type": "video", "segments": [{
+                "path": "video.mp4", "start": 0, "duration": 2.0,
+                "beauty": {"skin": {"smooth": 0}},
+            }]}],
+        })
+        out = self.root / "beauty-zero"
+        result = self._build_with_probe(plan, out, return_value=self._probe("video"))
+        document = json.loads((out / "draft_info.json").read_text("utf-8"))
+        self.assertFalse(any(item.get("type") == "figure"
+                             for item in document["materials"]["effects"]))
+        self.assertFalse(any("已写入 materials.effects[type=figure]" in str(item)
+                             for item in result["warnings"]))
+        self.assertTrue(any("未写入 figure" in str(item) for item in result["warnings"]))
+
+    def test_template_save_and_apply_remaps_ids(self):
+        built, source = self._text_draft("template-source")
+        document = json.loads((source / "draft_info.json").read_text("utf-8"))
+        segment_id = document["tracks"][0]["segments"][0]["id"]
+        template_path = self.root / "template.json"
+        saved = template_mod.save(source, segment_id, "标题模板", template_path)
+        self.assertEqual(saved["type"], "text")
+        payload = json.loads(template_path.read_text("utf-8"))
+        self.assertEqual(payload["format"], template_mod.FORMAT)
+        self.assertEqual(payload["version"], 1)
+
+        target, target_dir = self._text_draft("template-target", "第二句")
+        applied = template_mod.apply(target_dir, template_path, 2.2,
+                                     text="模板盖印", x=0.1, y=-0.2,
+                                     out_dir=self.root / "template-applied")
+        result = json.loads((Path(applied["draft_dir"]) / "draft_info.json").read_text("utf-8"))
+        texts = result["tracks"][0]["segments"]
+        self.assertEqual(len(texts), 2)
+        latest = texts[-1]
+        self.assertNotEqual(latest["id"], payload["segment"]["id"])
+        self.assertEqual(latest["target_timerange"]["start"], 2_200_000)
+        material = next(item for item in result["materials"]["texts"]
+                        if item["id"] == latest["material_id"])
+        content = json.loads(material["content"])
+        self.assertEqual(content["text"], "模板盖印")
+        self.assertAlmostEqual(latest["clip"]["transform"]["x"], 0.1)
+
+    def test_ass_round_trip_keeps_ranges_and_color(self):
+        ass_path = self.root / "subs.ass"
+        ass_path.write_text("\n".join([
+            "[Script Info]", "ScriptType: v4.00+", "PlayResX: 640", "PlayResY: 360",
+            "", "[V4+ Styles]",
+            "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+            "Style: Default,Microsoft YaHei,48,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1",
+            "", "[Events]",
+            "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+            "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\\c&H0000FF&}红色{\\r}普通",
+        ]), "utf-8")
+        parsed = ass_mod.parse_ass(ass_path)
+        self.assertEqual(len(parsed["events"]), 1)
+        plan = ass_mod.to_plan(parsed)
+        segment = plan["tracks"][0]["segments"][0]
+        self.assertEqual(segment["text"], "红色普通")
+        self.assertEqual(segment["range_styles"][0]["color"], "#FF0000")
+        self.assertEqual(segment["range_styles"][0]["start"], 0)
+        self.assertEqual(segment["range_styles"][0]["end"], 2)
+
+        _, draft_dir = self._text_draft("ass-export", "红色普通")
+        exported = ass_mod.export_draft(draft_dir, self.root / "roundtrip.ass")
+        text = Path(exported["out"]).read_text("utf-8-sig")
+        self.assertIn("红色普通", text)
+        self.assertIn("[Events]", text)
+
+    def test_otio_export_import_skips_text_and_builds(self):
+        plan = self.root / "otio-plan.json"
+        write_json(plan, {
+            "schema": "jianying-plan/v1", "name": "OTIO",
+            "canvas": {"width": 640, "height": 360, "fps": 30},
+            "tracks": [
+                {"type": "video", "segments": [{
+                    "path": "video.mp4", "start": 0, "duration": 2.0}]},
+                {"type": "audio", "segments": [{
+                    "path": "audio.m4a", "start": 0, "duration": 2.0}]},
+                {"type": "text", "segments": [{
+                    "text": "不会导出", "start": 0, "duration": 1.0}]},
+            ],
+        })
+
+        def probe(_ffprobe, path):
+            return self._probe("audio" if str(path).endswith(".m4a") else "video")
+
+        out = self.root / "otio-draft"
+        self._build_with_probe(plan, out, side_effect=probe)
+        otio = self.root / "timeline.otio"
+        exported = interchange_mod.export_otio(out, otio)
+        self.assertEqual(exported["tracks"], 2)
+        self.assertEqual(exported["skipped"][0]["type"], "text")
+        payload = json.loads(otio.read_text("utf-8"))
+        self.assertEqual(payload["OTIO_SCHEMA"], "Timeline.1")
+
+        imported = interchange_mod.import_otio(otio, canvas={"width": 1080, "height": 1920, "fps": 30})
+        self.assertEqual(len(imported["tracks"]), 2)
+        imported_plan = self.root / "imported.json"
+        write_json(imported_plan, {
+            "schema": "jianying-plan/v1", "name": imported["name"],
+            "canvas": imported["canvas"], "tracks": imported["tracks"],
+        })
+        result = self._build_with_probe(imported_plan, self.root / "otio-imported",
+                                        side_effect=probe)
+        self.assertEqual(result["tracks"]["video"], 1)
+        self.assertEqual(result["tracks"]["audio"], 1)
+
+    def test_media_tools_parse_and_detect_retakes(self):
+        silences = media_tools_mod.parse_silences(
+            "[silencedetect @ 0x1] silence_start: 1.20\n"
+            "[silencedetect @ 0x1] silence_end: 2.50 | silence_duration: 1.3\n")
+        self.assertEqual(silences, [{"start": 1.2, "end": 2.5}])
+        scenes = media_tools_mod.parse_scenes(
+            "[showinfo @ 0x1] pts_time:0.00\n"
+            "[showinfo @ 0x1] pts_time:1.50\n"
+            "[showinfo @ 0x1] pts_time:1.70\n", min_gap=0.5)
+        self.assertEqual(scenes, [0.0, 1.5])
+        report = media_tools_mod.detect_retakes([
+            {"text": "今天 我们 来 聊一聊 人工智能", "start": 0, "end": 2},
+            {"text": "今天 我们 来 聊一聊 人工智能", "start": 30, "end": 32},
+        ], threshold=0.8)
+        self.assertEqual(report["cues"], 2)
+        self.assertGreaterEqual(report["retakes"][0]["similarity"], 0.8)
+        self.assertEqual(report["cuts"][0]["start"], 0.0)
+
+    def test_duplicate_segments_uses_material_and_source_range(self):
+        document = {
+            "tracks": [{"segments": [
+                {"id": "a", "material_id": "m", "source_timerange": {"start": 0, "duration": 1_000_000},
+                 "target_timerange": {"start": 0, "duration": 1_000_000}},
+                {"id": "b", "material_id": "m", "source_timerange": {"start": 0, "duration": 1_000_000},
+                 "target_timerange": {"start": 1_000_000, "duration": 1_000_000}},
+                {"id": "c", "material_id": "n", "source_timerange": {"start": 0, "duration": 1_000_000},
+                 "target_timerange": {"start": 2_000_000, "duration": 1_000_000}},
+            ]}],
+            "materials": {},
+        }
+        draft_dir = self.root / "dup"
+        write_json(draft_dir / "draft_info.json", document)
+        report = media_tools_mod.duplicate_segments(draft_dir)
+        self.assertEqual(len(report["duplicates"]), 1)
+        self.assertEqual(report["duplicates"][0]["duplicate"]["segment"], "b")
+
+    def test_relink_replace_and_prune(self):
+        media_dir = self.root / "media"
+        media_dir.mkdir()
+        (media_dir / "old.mp4").write_bytes(b"new")
+        plan = self.root / "maintenance-plan.json"
+        write_json(plan, {
+            "schema": "jianying-plan/v1", "name": "维护",
+            "canvas": {"width": 640, "height": 360, "fps": 30},
+            "tracks": [{"type": "video", "segments": [{
+                "path": str(self.root / "missing" / "old.mp4"), "start": 0, "duration": 2.0}]}],
+        })
+        out = self.root / "maintenance"
+        fake_probe = {"path": str(self.root / "missing" / "old.mp4"), "name": "old.mp4",
+                      "kind": "video", "duration": 5.0, "width": 640, "height": 360,
+                      "fps": 30.0, "has_video": True, "has_audio": False, "codec": "h264"}
+        with mock.patch.object(env_mod, "find_install", return_value=None), \
+                mock.patch.object(env_mod, "find_ffmpeg",
+                                  return_value={"ffmpeg": None, "ffprobe": None}), \
+                mock.patch.object(draft_mod.media_mod, "probe_media",
+                                  return_value=fake_probe):
+            draft_mod.build(plan, out, make_cover=False)
+        relinked = maintenance_mod.relink(out, directory=media_dir,
+                                          out_dir=self.root / "relinked")
+        self.assertEqual(len(relinked["changes"]), 1)
+        self.assertEqual(relinked["missing"], [])
+        document = json.loads((Path(relinked["out"]) / "draft_info.json").read_text("utf-8"))
+        self.assertIn("old.mp4", document["materials"]["videos"][0]["path"])
+
+        probe = {"path": str(media_dir / "old.mp4"), "name": "old.mp4",
+                 "kind": "video", "duration": 2.0, "width": 640, "height": 360,
+                 "fps": 30.0, "has_video": True, "has_audio": False, "codec": "h264"}
+        with mock.patch.object(maintenance_mod.media_mod, "probe_media",
+                               return_value=probe):
+            replaced = maintenance_mod.replace_media(
+                Path(relinked["out"]), 0, media_dir / "old.mp4", ffprobe="ffprobe",
+                out_dir=self.root / "replaced", retime=True)
+        self.assertEqual(replaced["new_duration"], 2.0)
+        self.assertEqual(replaced["speed"], 1.0)
+
+        orphan_doc = json.loads((Path(relinked["out"]) / "draft_info.json").read_text("utf-8"))
+        orphan_doc["materials"]["videos"].append({"id": "orphan", "path": "x.mp4", "duration": 1})
+        write_json(Path(relinked["out"]) / "draft_info.json", orphan_doc)
+        pruned = maintenance_mod.prune(Path(relinked["out"]),
+                                       out_dir=self.root / "pruned")
+        self.assertEqual(pruned["removed_count"], 1)
+        self.assertEqual(pruned["removed"][0]["id"], "orphan")
+
+    def test_copy_tree_skips_empty_placeholder_dirs(self):
+        source = self.root / "copy-source"
+        source.mkdir()
+        (source / "draft_info.json").write_text("{}", "utf-8")
+        empty = source / "##_draftpath_placeholder_X_##" / "video" / "figure_algorithm" / "Y"
+        empty.mkdir(parents=True)
+        target = self.root / "copy-target"
+        media_mod.copy_tree(source, target)
+        self.assertTrue((target / "draft_info.json").is_file())
+        self.assertFalse((target / "##_draftpath_placeholder_X_##").exists())
+
+    def test_ass_override_tags_report_unsupported_instead_of_swallowing(self):
+        r"""\bord/\blur/\be/\iclip 不能被 startswith("b"/"i") 吞成加粗/斜体。"""
+        ass_path = self.root / "tags.ass"
+        ass_path.write_text("\n".join([
+            "[Script Info]", "ScriptType: v4.00+", "PlayResX: 640", "PlayResY: 360",
+            "", "[V4+ Styles]",
+            "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+            "Style: Default,Microsoft YaHei,48,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1",
+            "", "[Events]",
+            "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+            "Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,,{\\bord3\\blur2\\be1}边框",
+            "Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0,0,0,,{\\iclip(0,0,100,100)\\b1}裁切",
+            "Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,,{\\i1}斜体{\\r}{\\u1}下划{\\s1\\k20}杂",
+        ]), "utf-8")
+        parsed = ass_mod.parse_ass(ass_path)
+        self.assertEqual(len(parsed["events"]), 3)
+        self.assertEqual(parsed["unsupported_tags"],
+                         ["\\be1", "\\blur2", "\\bord3", "\\iclip", "\\k20", "\\s1"])
+        # 边框/裁切标签不再被误判成加粗：第一条事件的样式区间保持常规。
+        self.assertFalse(parsed["events"][0]["ranges"][0]["bold"])
+        self.assertFalse(parsed["events"][0]["ranges"][0]["italic"])
+        # 真正的 \b1 仍然生效。
+        self.assertTrue(parsed["events"][1]["ranges"][0]["bold"])
+        # \i / \u / \r 不能被 \b 分支截走：斜体、下划线各归各位。
+        third = parsed["events"][2]["ranges"]
+        self.assertTrue(third[0]["italic"])
+        self.assertFalse(third[0]["bold"])
+        self.assertTrue(third[1]["underline"])
+        self.assertFalse(third[1]["bold"])
+
+    def test_detect_silence_interval_math(self):
+        spans = [{"start": 0.5, "end": 2.0}, {"start": 3.0, "end": None}]
+        closed = media_tools_mod._close_spans(spans, 4.0)
+        self.assertEqual(closed, [{"start": 0.5, "end": 2.0},
+                                  {"start": 3.0, "end": 4.0}])
+        self.assertEqual(media_tools_mod._close_spans(
+            [{"start": 5.0, "end": None}], 4.0), [])
+        padded = media_tools_mod._pad_spans(closed, 0.1)
+        self.assertEqual(padded, [{"start": 0.6, "end": 1.9},
+                                  {"start": 3.1, "end": 3.9}])
+        self.assertEqual(media_tools_mod._pad_spans(
+            [{"start": 0.5, "end": 0.6}], 0.1), [])
+        self.assertEqual(media_tools_mod._pad_spans(closed, 0), closed)
+        self.assertEqual(media_tools_mod._keep_spans(closed, 4.0),
+                         [{"start": 0.0, "end": 0.5}, {"start": 2.0, "end": 3.0}])
+        self.assertEqual(media_tools_mod._segments([{"start": 1.25, "end": None}])[0],
+                         {"start": 1.25, "end": None,
+                          "start_us": 1_250_000, "end_us": None})
+
+    def test_prune_keeps_effect_material_referenced_by_local_material_id(self):
+        draft = self.root / "prune-local"
+        write_json(draft / "draft_info.json", {
+            "id": "d", "duration": 2_000_000,
+            "materials": {
+                "videos": [
+                    {"id": "V1", "path": "v.mp4", "duration": 2_000_000},
+                    {"id": "ORPHAN", "path": "o.mp4", "duration": 1_000_000},
+                ],
+                "effects": [{"id": "FX1", "type": "mix_mode", "name": "混合"}],
+            },
+            "tracks": [{"type": "video", "segments": [{
+                "id": "s1", "material_id": "V1", "local_material_id": "FX1",
+                "target_timerange": {"start": 0, "duration": 2_000_000},
+            }]}],
+        })
+        # render 扫描器与 prune 必须同口径。
+        self.assertTrue(jy_mod._draft_material_present(
+            draft / "draft_info.json", "effects", {"mix_mode"}))
+        self.assertIn("FX1", draft_mod._referenced_material_ids(
+            json.loads((draft / "draft_info.json").read_text("utf-8"))))
+        result = maintenance_mod.prune(draft, out_dir=self.root / "prune-local-out")
+        self.assertEqual(result["removed_count"], 1)
+        self.assertEqual(result["removed"][0]["id"], "ORPHAN")
+        document = json.loads(
+            (Path(result["out"]) / "draft_info.json").read_text("utf-8"))
+        self.assertEqual([item["id"] for item in document["materials"]["effects"]],
+                         ["FX1"])
+
+    def test_relink_from_prefix_branch_and_target_missing(self):
+        old_dir = self.root / "old-media"
+        new_dir = self.root / "new-media"
+        new_dir.mkdir()
+        (new_dir / "clip.mp4").write_bytes(b"x")
+        draft = self.root / "prefix-draft"
+        write_json(draft / "draft_info.json", {
+            "id": "d", "duration": 2_000_000,
+            "materials": {"videos": [
+                {"id": "V1", "path": str(old_dir / "clip.mp4"), "duration": 2_000_000},
+                {"id": "V2", "path": str(old_dir / "gone.mp4"), "duration": 1_000_000},
+            ]},
+            "tracks": [{"type": "video", "segments": [{
+                "id": "s1", "material_id": "V1",
+                "target_timerange": {"start": 0, "duration": 2_000_000},
+                "source_timerange": {"start": 0, "duration": 2_000_000},
+            }, {
+                "id": "s2", "material_id": "V2",
+                "target_timerange": {"start": 2_000_000, "duration": 1_000_000},
+                "source_timerange": {"start": 0, "duration": 1_000_000},
+            }]}],
+        })
+        result = maintenance_mod.relink(
+            draft, from_prefix=str(old_dir) + "\\", to_prefix=str(new_dir) + "\\",
+            out_dir=self.root / "prefix-out")
+        self.assertEqual(len(result["changes"]), 1)
+        self.assertEqual(Path(result["changes"][0]["new"]),
+                         (new_dir / "clip.mp4").resolve())
+        self.assertEqual([item["reason"] for item in result["missing"]],
+                         ["target_missing"])
+        document = json.loads(
+            (Path(result["out"]) / "draft_info.json").read_text("utf-8"))
+        self.assertEqual(Path(document["materials"]["videos"][0]["path"]),
+                         (new_dir / "clip.mp4").resolve())
+
+        # --to 拼出 UNC 时必须在 local_path 阶段就拒绝，不能先 lstat 触发 SMB
+        unsafe = maintenance_mod.relink(
+            draft, from_prefix=str(old_dir) + "\\",
+            to_prefix=r"\\10.0.0.5\share\\", out_dir=self.root / "prefix-unc")
+        self.assertEqual(unsafe["changes"], [])
+        self.assertEqual({item["reason"] for item in unsafe["missing"]}, {"unsafe"})
+        self.assertNotIn("out", unsafe)
 
 
 if __name__ == "__main__":

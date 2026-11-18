@@ -54,8 +54,8 @@ missing_resource / host_only / account_gated / manual，见脚本 legend）；
 
 1. 升级前留基线：`python scripts/upgrade_check.py --save <baseline.json>`；
    只读、不访问外网（会查本机回环 bridge health），能力探测约 5–8 秒，`--save` 才写文件。
-   基线建议放仓库外本地路径，或 `references/evidence/upgrade-baselines/<日期>.json` 归档；
-   不要写进 `scripts/`。
+   基线放仓库外本地路径，例如 `<仓库同级>/rbz-one-evidence/jianying/upgrade-baselines/<日期>.json`；
+   不要写进技能包或 `scripts/`。
 2. 升级后对比：`python scripts/upgrade_check.py --baseline <baseline.json>`；
    `exit_code=10` 表示窗口外/未对齐/能力漂移/探测失败，按输出 checklist 处理。
    在真机复验并更新 `version.json` 之前，10 属预期，不要为了消红提前改窗口。
@@ -79,14 +79,14 @@ missing_resource / host_only / account_gated / manual，见脚本 legend）；
 
 ## 打包与分发
 
-分发时排除以下内容，技能包只带文本与小尺寸证据：
+分发时排除以下内容，技能包不带证据文件：
 
-- `references/evidence/**/*.mp4`：成片媒体已移到仓库 `.agents/skills.collected/_evidence/jianying/`；
+- `evidence/`、`_evidence/`：原始证据统一归档在仓库外，不随包分发；
 - `__pycache__/`、`.pytest_cache/`：本机缓存；
 - 本机绝对路径：plan 里的 `path` 是 2026-11-15 本机路径，分发前改成相对路径或写明需替换。
 
-保留在包内的：`references/evidence/**/plan-*.json`、`*.completion.json`、`*.png` 与
-`render-error.json`——这些是能复核对账的最小证据。
+包内只保留文本结论（`limits.md`、`verification-gaps.md` 与 changelog 的数字），
+不保留 plan、截图、成片或复算脚本。
 
 ## 不承诺
 

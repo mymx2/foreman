@@ -52,6 +52,9 @@ CLI 永远输出一个 JSON：先看 `ok`。`jy.py` 失败看 `error.code`、`er
 | `OUTPUT_WRITE_FAILED` | 写草稿/索引/标记文件或创建目录失败（权限、路径、磁盘） | 看 `details`（草稿写失败给 `path`/`reason`，索引写失败给 `index`）；换可写目录，确认路径所在盘存在 |
 | `COPY_FAILED` | 复制草稿目录到草稿根失败 | 检查源草稿完整、目标所在盘可写；失败时临时目录已自动清理，不留半成品 |
 | `PROBE_FAILED` | ffprobe 找不到、超时，或输出不是合法 JSON | 确认 ffprobe 路径、素材没坏、进程没超时 |
+| `LOUDNESS_TIMEOUT` | ffmpeg `loudnorm` 测量超时 | 缩短片段或加 `--timeout`；确认素材可正常解码 |
+| `LOUDNESS_MEASURE_FAILED` | ffmpeg 返回了但解析不出 loudnorm JSON | 换 ffmpeg 构建；确认音频有有效采样；不要伪造测量值 |
+| `DRAFT_ENCRYPTED` | 响度测量读到的草稿不是明文 JSON | 回剪映重存为明文，或重新用本技能生成草稿 |
 | `INDEX_VERIFY_FAILED` | 索引写完回读不到登记条目 | 从 `.jianying-backups` 恢复备份；不要并发写索引 |
 | `BAD_ARGS` | CLI 参数缺项、类型或范围不合法 | 运行 `--help`；不要把非法值当成成功尝试 |
 | `INTERRUPTED` | 用户中断 | 检查未完成的输出或备份，再重试 |
@@ -61,6 +64,8 @@ CLI 永远输出一个 JSON：先看 `ok`。`jy.py` 失败看 `error.code`、`er
 | `JSON_INVALID` | 计划/补丁 JSON 语法错 | 看 `details.line/column`；PowerShell 里别内联长 JSON |
 | `MEDIA_NOT_FOUND` | 素材路径不存在 | 改计划里的 `path`；相对路径以计划文件目录为基准 |
 | `MEDIA_UNREADABLE` | ffprobe 读不了素材 | 确认文件没坏、格式受支持（mp4/mov/png/jpg/mp3/wav/m4a/aac） |
+| `MEDIA_TIMEOUT` | 静音/镜头检测的 ffmpeg 超时 | 缩短素材或加 `--timeout`；确认 ffmpeg 没有卡在解码 |
+| `MEDIA_FAILED` | 静音/镜头检测的 ffmpeg 返回非零 | 看 `details.stderr`；确认媒体有音视频流，换可用 ffmpeg |
 | `FFPROBE_MISSING` / `FFMPEG_MISSING` | 找不到 ffprobe/ffmpeg | 用剪映安装目录自带的 `ffprobe.exe`/`ffmpeg.exe`；`probe` 会给出路径 |
 | `FRAME_FAILED` | 抽帧失败 | 时间点要在成片时长内；换 `--at` |
 | `INSTALL_NOT_FOUND` | 找不到剪映安装目录 | 确认装了剪映专业版；默认在 `%LOCALAPPDATA%\JianyingPro\Apps` |
@@ -80,6 +85,7 @@ CLI 永远输出一个 JSON：先看 `ok`。`jy.py` 失败看 `error.code`、`er
 | `RESOURCE_GATED` | 会员/商业资源 | 在剪映客户端正常获取；技能不绕过权益 |
 | `RESOURCE_NOT_CACHED` | `resource_ref` 指向的资源还没下载 | 先 `resource download <ref> --apply`，或 build 加 `--fetch-resources` |
 | `RESOURCE_URL_MISSING` / `RESOURCE_URL_EXPIRED` | 资源没有下载地址，或签名 URL 过期 | 在剪映里打开一次素材面板刷新资源；或换一个资源 |
+| `UNSAFE_URL` | 下载地址不是 https（含 302 跳转到 http），默认拒绝 | 换 https 源；确认是本机可信来源时才加 `--allow-http`，别为单个镜像全局放宽 |
 | `RESOURCE_DOWNLOAD_FAILED` | HTTP 403/网络失败 | 看 `details.status`；刷新资源、换网络或换资源，不要重复轰炸 |
 | `PACKAGE_INVALID` | 资源包不是 zip、含越界/非法条目名、下载/条目/解压体积超限、缺 `config.json`，或解压实际写入超过上限 | 不要手改包；换资源或重新下载 |
 

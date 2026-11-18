@@ -30,6 +30,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from .errors import SkillError
+from . import media as media_mod
 
 VERSION_DIR = ".jianying-versions"
 MANIFEST_NAME = "versions.json"
@@ -268,14 +269,14 @@ def _atomic_write_text(path, text):
 
 def _read_manifest(root, required=False):
     path = _manifest_path(root)
-    if not path.is_file():
+    if not media_mod.is_plain_file(path):
         if required:
             raise SkillError("草稿没有版本历史", code="VERSION_NOT_FOUND",
                              details={"path": str(path)},
                              fix="先运行 `jy.py version snapshot <draft> --label init` 建立基线。")
         return None
     try:
-        data = json.loads(path.read_text("utf-8"))
+        data = json.loads(media_mod.read_plain_bytes(path).decode("utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise SkillError("版本历史损坏，拒绝继续", code="VERSION_CORRUPTED",
                          details={"path": str(path), "reason": str(exc)}) from exc
@@ -435,20 +436,20 @@ def _input_entry(root, raw):
     path = Path(text).expanduser()
     if not path.is_absolute():
         path = root / path
-    try:
-        path = path.resolve()
-    except OSError:
-        pass
     entry = {"path": str(path)}
     try:
-        if path.is_file():
+        # 不跟随链接：快照要算输入文件的 sha256，junction 指向 UNC 时
+        # resolve()/read_bytes() 会先发起 SMB/NTLM 探测。
+        if media_mod.is_plain_file(path):
+            path = path.resolve()
             stat = path.stat()
-            entry.update({"exists": True, "kind": "file",
+            entry.update({"path": str(path), "exists": True, "kind": "file",
                           "size": stat.st_size, "mtime_ns": stat.st_mtime_ns})
             if stat.st_size <= 20 * 1024 * 1024:
                 entry["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
-        elif path.is_dir():
-            entry.update({"exists": True, "kind": "dir"})
+        elif media_mod.is_plain_dir(path):
+            path = path.resolve()
+            entry.update({"path": str(path), "exists": True, "kind": "dir"})
         else:
             entry["exists"] = False
     except OSError as exc:
@@ -731,13 +732,38 @@ def _find(manifest, version_id):
                      details={"version": version_id})
 
 
+def _manifest_relpath(root, rel):
+    """版本清单里的相对路径：拒绝绝对路径、盘符、UNC 与 ``..`` 越界。"""
+    text = str(rel or "").strip()
+    candidate = Path(text)
+    if (not text or candidate.is_absolute() or candidate.drive
+            or text.startswith(("\\\\", "//"))):
+        raise SkillError("版本清单路径非法", code="VERSION_CORRUPTED",
+                         details={"path": text})
+    if ".." in candidate.parts:
+        raise SkillError("版本清单路径越界", code="VERSION_CORRUPTED",
+                         details={"path": text})
+    full = root / candidate
+    try:
+        resolved = full.resolve(strict=False)
+        root_resolved = root.resolve()
+    except OSError as exc:
+        raise SkillError("版本清单路径不可解析", code="VERSION_CORRUPTED",
+                         details={"path": text, "reason": str(exc)}) from exc
+    if not resolved.is_relative_to(root_resolved):
+        raise SkillError("版本清单路径越界", code="VERSION_CORRUPTED",
+                         details={"path": text})
+    return full
+
+
 def show_version(draft_dir, version_id):
     root, _ = _root_info(draft_dir)
     manifest = _read_manifest(root, required=True)
     item = dict(_find(manifest, version_id))
     item["history_path"] = str(_manifest_path(root))
-    item["snapshot_path"] = str(root / item["snapshot"])
-    if not Path(item["snapshot_path"]).is_file():
+    snapshot = _manifest_relpath(root, item["snapshot"])
+    item["snapshot_path"] = str(snapshot)
+    if not media_mod.is_plain_file(snapshot):
         raise SkillError("版本快照文件缺失", code="VERSION_CORRUPTED",
                          details={"version": version_id,
                                   "path": item["snapshot_path"]})
@@ -745,12 +771,12 @@ def show_version(draft_dir, version_id):
 
 
 def _doc_at(root, item):
-    path = root / item["snapshot"]
-    if not path.is_file():
+    path = _manifest_relpath(root, item["snapshot"])
+    if not media_mod.is_plain_file(path):
         raise SkillError("版本快照文件缺失", code="VERSION_CORRUPTED",
                          details={"version": item.get("id"), "path": str(path)})
     try:
-        raw = path.read_bytes()
+        raw = media_mod.read_plain_bytes(path)
         text = raw.decode("utf-8-sig")
     except OSError as exc:
         raise SkillError("版本快照读取失败", code="VERSION_CORRUPTED",
@@ -924,12 +950,13 @@ def restore_version(draft_dir, version_id, out_dir, *, name=None):
             # 兼容旧清单：尝试与 snapshot 同目录的 draft_meta_info.json。
             meta_rel = str(item.get("snapshot") or "").replace(
                 "draft_info.json", "draft_meta_info.json")
-        source_meta = root / meta_rel
+        source_meta = _manifest_relpath(root, meta_rel)
         meta = None
-        if source_meta.is_file():
+        if media_mod.is_plain_file(source_meta):
             try:
-                meta = json.loads(source_meta.read_text("utf-8-sig"))
-            except (UnicodeDecodeError, json.JSONDecodeError):
+                meta = json.loads(
+                    media_mod.read_plain_bytes(source_meta).decode("utf-8-sig"))
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError):
                 meta = None
         if meta is not None:
             meta.update({

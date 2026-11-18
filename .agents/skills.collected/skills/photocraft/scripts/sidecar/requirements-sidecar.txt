@@ -1,0 +1,8 @@
+# 侧车依赖（进程外，只在 L2 用）。与 scripts/requirements.txt 分开装：
+#   pip install -r scripts/sidecar/requirements-sidecar.txt
+# 注意：这些包不进 PhotoCraft 进程，装不上也不影响 L0 路线——matte.py 会如实降级。
+pymatting>=1.1.12
+opencv-python-headless>=4.9
+onnxruntime>=1.17.0
+# 实测环境：Python 3.13.18 / numpy 2.5.5 / onnxruntime 1.32.0（Windows）
+# pymatting 依赖 scipy+numba，装不上时 matte.py 退回 photocraft 引擎并写 degraded:true

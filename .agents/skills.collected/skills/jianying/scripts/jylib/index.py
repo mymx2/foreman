@@ -20,7 +20,7 @@ from pathlib import Path
 from .errors import SkillError
 from .draft import (MARKER, load_json, resolve_draft_info, uid,
                     _backup_stamp, _write_json, _assert_plain_tree, _is_link)
-from .media import local_path
+from .media import local_path, copy_tree, is_plain_dir, is_plain_file
 
 INDEX_NAME = "root_meta_info.json"
 BACKUP_DIR = ".jianying-backups"# 38 keys observed in the live index of 剪映 11.6/11.8 (以 ENTRY_TEMPLATE 为准).
@@ -79,7 +79,7 @@ def _root_index(explicit=None):
     from .env import find_draft_root
 
     if explicit:
-        root = local_path(explicit, field="草稿根目录").resolve()
+        root = local_path(explicit, field="草稿根目录")
     else:
         root = find_draft_root()
     if not root:
@@ -88,7 +88,14 @@ def _root_index(explicit=None):
             code="DRAFT_ROOT_NOT_FOUND",
             fix="用 --draft-root 指定包含 root_meta_info.json 的目录。",
         )
-    root = local_path(root, field="草稿根目录").resolve()
+    root = local_path(root, field="草稿根目录")
+    if not is_plain_dir(root):
+        raise SkillError(
+            "草稿根目录不存在或是链接/重解析点",
+            code="UNSAFE_PATH", details={"path": str(root)},
+            fix="用本地普通目录作为剪映草稿根；链接目录一律不跟随。",
+        )
+    root = root.resolve()
     index = root / INDEX_NAME
     if _is_link(index):
         raise SkillError(
@@ -123,7 +130,7 @@ def _entry(draft_dir, index_path, root, name=None):
         ) from exc
     folder = resolved["draft_dir"]
     meta_path = folder / "draft_meta_info.json"
-    if not meta_path.is_file() or _is_link(meta_path):
+    if _is_link(meta_path) or not meta_path.is_file():
         raise SkillError(
             "草稿缺少可读的 draft_meta_info.json，不能登记到首页",
             code="DRAFT_META_MISSING",
@@ -206,11 +213,11 @@ def _micros(value, fallback_ns):
 
 def _materials_bytes(document):
     total = 0
-    for bucket in ("videos", "audios"):
+    for bucket in ("videos", "images", "audios", "stickers"):
         for item in (document.get("materials") or {}).get(bucket) or []:
             try:
                 path = local_path(item.get("path") or "", field="素材路径")
-                if path.is_file():
+                if is_plain_file(path):
                     total += path.stat().st_size
             except (OSError, SkillError):
                 continue
@@ -523,7 +530,7 @@ def publish(draft_dir, *, apply=False, draft_root=None, name=None):
     info_relative = resolved["info_path"].relative_to(source)
     try:
         _assert_plain_tree(source)
-        shutil.copytree(source, tmp, symlinks=True)
+        copy_tree(source, tmp)
         new_id = uid()
         document["id"] = new_id
         document["name"] = target.name

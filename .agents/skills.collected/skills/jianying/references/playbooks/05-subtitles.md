@@ -12,6 +12,7 @@
 |---|---|
 | 视频/音频，没有文案 | `srt.from-local-asr`；模型缺失时回退剪映「识别字幕」导出 SRT |
 | 已有 SRT | `srt.tidy` / `srt.check`，再 `add_subtitles` 入轨 |
+| 已有 ASS/SSA | `jy.py ass import` 转 build 计划；或 `jy.py ass export` 从草稿导出 |
 | 文案 + 每句时长/总时长 | `srt.build` 或 text 轨 |
 | 文案 + 音频 | `srt.from-audio` |
 | 文案 + 逐句音频目录 | `srt.from-segments --by-line` |
@@ -34,13 +35,29 @@ python scripts/subtitles/cli.py srt.from-local-asr \
 ```
 
 - `--remove-fillers` 删除默认的“嗯/呃/额/啊/哦/那个/就是说”，可用 `--fillers a,b,c` 覆盖；
-- `--punctuate` 按 cue 间停顿加逗号/句号，属于启发式，不冒充剪映 AI 标点；
-- 模型发现：默认查剪映用户数据；可用 `JY_LOCAL_ASR_DIR` 指向其他模型目录；
+- `--punctuate` 优先用剪映下发的 `asr-punc.onnx` 断句：模型给断句点，断句点后静音
+  ≥0.6 秒写句号、否则写逗号；模型缺失或加载失败才回落到按停顿的启发式，并在
+  `evidence.warnings` 记 `punc-fallback`，回执 `punc.source` 说明这次用的是 `model` 还是 `heuristic`；
+- `--itn` 用剪映下发的 `asr-itn-fst.fst`（标准 OpenFST，539 KB）做数字规范化：
+  需要额外装 `kaldifst`，`二零二六年十一月十八日 → 2026年11月18日`、
+  `百分之五十 → 50%`、`下午三点半 → 下午3:30`；拿不准的表达（`早上八点`、`第十个`）
+  原样保留；FST 或依赖缺失时跳过并写 `itn-skip` warning，回执 `itn.source` 标注；
+- 回执 `quality` 来自剪映的 `asr-model-classifier.onnx`（`enc[512] → [B,1]`）：
+  按块给分，**分数含义剪映没有标定**，只做块间相对比较（本机实测正常语句块 0.80–0.86，
+  短块会掉到 0.04–0.23）；不要拿它做拦截阈值；
+- 模型发现：默认查剪映用户数据；可用 `JY_LOCAL_ASR_DIR` 指向其他模型目录，
+  `JY_LOCAL_ASR_PUNC_DIR` 单独指向标点模型目录；标点模型和 ASR 模型同目录时自动启用；
 - 不登录、不联网、不调用剪映助手，也不消耗云端识别额度；模型来自剪映自己的本地缓存；
-- 长音频按静音切块（8–28 秒），逐块识别后把 token 时间加回全局时间轴；
+- 切块先按静音分段（VAD 式）：帧 RMS 做 150ms 平滑、阈值取 `p20*1.5`，
+  段间停顿 ≤0.6 秒才合并，单块不超过 `strategy.json` 的 `max_slice_duration`（本机 30 秒）；
+  这样块内不会夹着长静音，CIF 也就不会把静音吞给前一个字（此前实测「到」一个字挂 4 秒、
+  单字挂 6–9 秒，只能靠 `srt.tidy` 截到 1 秒遮住）；`chunk_policy.source` 是
+  `strategy.json` 才代表官方参数；
 - 输出 SRT 和逐 token JSON（`jianying-local-asr/v1`）；默认 16 字/5 秒一条；
+- 回执 `model` 带模型类型/版本/各文件字节数，剪映换了模型能看出来，别把它当性能指标；
 - 36 分钟、7761 token 的本机实测约 220 秒，145 个块；
-- 识别结果是中文/英文 Paraformer，**不带标点**；不包含翻译、划重点、去水词；
+- 识别结果是中文/英文 Paraformer；标点来自剪映本地标点模型（不是云端 AI），
+  不包含翻译、划重点、去水词；
 - 模型或依赖缺失时明确失败，不自动下载、不伪造结果。
 
 验收：ASR 回执自带的行宽/时长 warnings 先过 `srt.tidy` 规范化，再跑 `srt.check` 要求全绿，
@@ -48,6 +65,18 @@ python scripts/subtitles/cli.py srt.from-local-asr \
 `set_text` 改，不要在 SRT 上反复覆盖重生成。
 
 ## 3. SRT 入轨与版本化
+
+### ASS/SSA 交换
+
+```bash
+python scripts/jy.py ass import subs.ass --out ass-plan.json
+python scripts/jy.py ass export <draft> --out subs.ass
+```
+
+- 支持事件时间、基础样式和常用内联标签：`\c`/`\1c`、`\fs`、`\b`/`\i`/`\u`、`\r`；
+  其他标签不静默改写，回执会在 `unsupported_tags` 里列出；
+- `ass import` 生成单 text 轨的 `jianying-plan/v1`，区间样式写 `range_styles`；`ass export` 读文字轨写 ASS；
+- 离线往返已验证，未做 libass 烧录比对；需要硬字幕仍走 `burn`。
 
 ```json
 [
@@ -166,7 +195,7 @@ python scripts/subtitles/cli.py srt.check --in out.srt
   超宽行拆出来的单字/双字段同样适用截短。
 - 多字 cue 超 `--max-dur` 不在 tidy 处理范围：check 仍会报，调 ASR `--gap` 重识别或手工拆。
 - 拆分时间是字数比例，不是 token 级精确：cue 内语速不均时拆点可偏 1s 以上（实测最大 1.246s，
-  见 [evidence/2026-11-17-tidy-mixed](../evidence/2026-11-17-tidy-mixed/README.md)）。
+  见仓库外证据归档）。
   要 token 级对齐用 `srt.from-local-asr --json-out` 的逐 token 时间自行映射。
 
 `srt.check` 看 `ok`、`lines`、`issues`：

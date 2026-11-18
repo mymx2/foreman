@@ -100,6 +100,23 @@ python scripts/jy.py patch <draft> --ops ops.json --out <副本>
 
 默认写副本；`--in-place` 才改原稿，且先备份。输出不能落在源草稿内部。
 
+### 5.1 模板、时间线交换与素材维护
+
+```bash
+python scripts/jy.py template save <draft> <片段id或下标> "标题" --out title.json
+python scripts/jy.py template apply <draft> title.json 2.2 --text "新文案" --out <副本>
+python scripts/jy.py otio export <draft> --out timeline.otio
+python scripts/jy.py otio import timeline.otio --out plan.json
+python scripts/jy.py relink <draft> --dir <素材目录> --out <副本>
+python scripts/jy.py replace-media <draft> <片段> <新文件> --retime --out <副本>
+python scripts/jy.py prune <draft> --out <副本>
+```
+
+- `template` 保存片段、主素材和全部 extra 材质，应用时重映射所有 id；文字模板可用 `--text` 改文案；
+- `otio` 导出只含视频/图片/音频轨，文字/贴纸/特效轨在 `skipped` 里列明；导入生成 build 计划；
+- `relink` 默认只补缺失文件；`replace-media --retime` 按新素材时长重算 speed；`prune` 只删无引用材质；
+- 这些命令默认写副本，`--in-place` 才回写并备份。
+
 ## 6. 验收
 
 1. `inspect`：`missing_media=[]`、`duration` 与计划一致、visual 轨数量正确；

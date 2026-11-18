@@ -46,6 +46,21 @@ CAPABILITIES = [
     {"id": "draft.patch", "label": "修改明文草稿", "category": "草稿",
      "channel": "file", "status": "implemented", "requires": ["python"],
      "note": "默认写副本；--in-place 需授权并备份。"},
+    {"id": "timeline.template", "label": "片段模板保存/盖印", "category": "草稿",
+     "channel": "file", "status": "implemented", "requires": ["python"],
+     "note": "从真实草稿提取任意片段、主素材和 extra 材质，应用时重映射全部 id；离线草稿往返已验证，未做像素抽帧。"},
+    {"id": "timeline.otio", "label": "OpenTimelineIO 时间线交换", "category": "草稿",
+     "channel": "file", "status": "implemented", "requires": ["python"],
+     "note": "导出 Timeline/Stack/Track/Clip/Gap；文字/贴纸/特效轨在回执里列 skipped；导入支持 Timeline/Stack/Track/数组。"},
+    {"id": "media.relink", "label": "草稿素材重新链接", "category": "草稿",
+     "channel": "file", "status": "implemented", "requires": ["python"],
+     "note": "支持 --from/--to 前缀映射或 --dir 同名搜索；歧义保留原路径并报告；默认写副本。"},
+    {"id": "media.replace", "label": "片段素材替换/重定时", "category": "草稿",
+     "channel": "file", "status": "implemented", "requires": ["ffprobe"],
+     "note": "按 ffprobe 更新素材时长/宽高/音频标记；--retime 按新时长重算 speed；默认写副本。"},
+    {"id": "media.prune", "label": "清理无引用素材", "category": "草稿",
+     "channel": "file", "status": "implemented", "requires": ["python"],
+     "note": "删除没有片段引用、也没有被其他已引用材质间接引用的素材；默认写副本。"},
     {"id": "version.history", "label": "草稿版本链（快照/差异/恢复）", "category": "草稿",
      "channel": "file", "status": "implemented", "requires": ["python"],
      "note": "build/patch 自动写 v001 起的历史；restore 只写新目录；diff 比结构+材质指纹，不做像素 diff。"},
@@ -82,6 +97,9 @@ CAPABILITIES = [
     {"id": "audio.volume", "label": "音量与音量关键帧", "category": "音频",
      "channel": "file", "status": "implemented", "requires": ["python"],
      "note": "0..10；volume 关键帧已实测。"},
+    {"id": "audio.loudness", "label": "EBU R128 响度测量/增益", "category": "音频",
+     "channel": "file", "status": "implemented", "requires": ["ffmpeg"],
+     "note": "loudnorm 测量每个音频/带音频视频片段，按目标 LUFS 计算并写 volume；2026-11-18 4 秒正弦测得 -33.75 LUFS，--max-gain-db 6 --apply 后剪映原生导出实测 -27.86 LUFS（计划 -27.75，差 0.11 dB）。"},
     {"id": "canvas.layout", "label": "画布/多轨层级/画中画", "category": "画面",
      "channel": "file", "status": "implemented", "requires": ["python"],
      "note": "画中画要 flag=2 且 render_index>=1。"},
@@ -116,6 +134,12 @@ CAPABILITIES = [
     {"id": "subtitle.postprocess", "label": "本地去水词/标点（启发式）", "category": "字幕",
      "channel": "file", "status": "implemented", "requires": ["python"],
      "note": "规则匹配删除口头禅、按停顿加标点；不冒充剪映 AI 去水词/标点。"},
+    {"id": "subtitle.itn", "label": "数字/日期/单位规范化（ITN）", "category": "字幕",
+     "channel": "file", "status": "implemented", "requires": ["python"],
+     "note": "用剪映下发的 asr-itn-fst.fst（标准 OpenFST）做数字规范；需 kaldifst，缺失时跳过并写 itn-skip。"},
+    {"id": "subtitle.ass", "label": "ASS/SSA 字幕导入导出", "category": "字幕",
+     "channel": "file", "status": "implemented", "requires": ["python"],
+     "note": "解析事件时间、基础样式与常用内联标签（颜色/字号/粗斜下划线/重置），其他标签写入 unsupported_tags；导出读文字轨写 ASS；离线往返已验证，未做 libass 烧录比对。"},
     {"id": "subtitle.burn", "label": "硬字幕烧录", "category": "字幕",
      "channel": "file", "status": "implemented", "requires": ["ffmpeg_libass"],
      "note": "需要带 libass 的外部 ffmpeg；剪映自带 ffmpeg 不支持 subtitles 滤镜。"},
@@ -123,10 +147,10 @@ CAPABILITIES = [
     # 协议有、技能还没接线：A 类
     {"id": "adjust.basic", "label": "基础调色（亮度/对比度/饱和度/色温/锐化/暗角/褪色/颗粒）", "category": "调色",
      "channel": "file", "status": "planned", "requires": ["python"],
-     "note": "官方 XML 语义已核对，但 native picture_adjust 写入口未确认；plan 里的 adjust 会被显式拒绝，不能静默忽略。"},
+     "note": "官方 XML 语义已核对，但 native picture_adjust 写入口未确认；plan 里的 adjust 会被显式拒绝；2026-11-18 按 jianying-tool 写 common_keyframes KFTypeBrightness 仍无像素变化。"},
     {"id": "adjust.hsl", "label": "HSL 分颜色调节", "category": "调色",
      "channel": "file", "status": "unverified", "requires": ["python"],
-     "note": "已按官方 11.8 hsl 白名单写入 materials.hsl；真实导出首测未观察到像素变化，禁止当已支持。"},
+     "note": "已按官方 11.8 hsl 白名单写入 materials.hsl；2026-11-18 真机导出：纯红帧在 enable_hsl=true、red hue=-100 下仍是 (252,0,0)，像素未变，禁止当已支持。"},
     {"id": "color.wheels", "label": "色轮/色彩匹配", "category": "调色",
      "channel": "resource", "status": "unverified", "requires": ["cache_effect"],
      "note": "已接线 primary_color_wheels + 可选 hsl；2026-11-15 真机 gamma red=0.5 导出抽帧与无调色帧一致，11.8 未观察到像素变化。"},
@@ -139,15 +163,24 @@ CAPABILITIES = [
     {"id": "audio.channel", "label": "左/右声道选择", "category": "音频",
      "channel": "file", "status": "implemented", "requires": ["python"],
      "note": "写 materials.sound_channel_mappings[].audio_channel_mapping + is_config_open；2026-11-16 左only 源：0 左 -11.0dB/右静音，1 左右均 -11.0dB，2 双声道静音。"},
+    {"id": "analysis.silence", "label": "静音段检测", "category": "分析",
+     "channel": "file", "status": "implemented", "requires": ["ffmpeg"],
+     "note": "ffmpeg silencedetect，输出静音段与保留段，同时给秒和微秒；2026-11-18 3 秒音/静音/音素材检出 1.0999–1.9001s（--pad 0.1）；只分析不改草稿。"},
+    {"id": "analysis.scenes", "label": "镜头切换检测", "category": "分析",
+     "channel": "file", "status": "implemented", "requires": ["ffmpeg"],
+     "note": "ffmpeg select(scene)+showinfo，按阈值和最小间隔输出切点与场景区间；2026-11-18 红蓝硬切 4 秒素材切点精确 2.0s；只分析不改草稿。"},
+    {"id": "analysis.retakes", "label": "重复/重拍片段检测", "category": "分析",
+     "channel": "file", "status": "implemented", "requires": ["python"],
+     "note": "按 cue 文本做本地 LCS 相似度，返回重复对与建议删除区间；是本地规则，不冒充语义模型。"},
     {"id": "speed.curve", "label": "曲线变速", "category": "画面",
-     "channel": "file", "status": "unverified", "requires": ["python"],
-     "note": "已接线 materials.speeds[].curve_speed；只写材质，不改 target/source 时长；像素未抽帧。"},
+     "channel": "file", "status": "implemented", "requires": ["python"],
+     "note": "已接线 materials.speeds[].curve_speed；2026-11-18 真机 11.8 导出抽帧：3s 段曲线 1→3，白块位置 1s 0.203、2s 0.547，线性对照 0.172/0.328，确认按曲线加速；target/source 时长仍按线性计算，长段要自行核时长。"},
     {"id": "crop.flip", "label": "裁剪与翻转", "category": "画面",
      "channel": "file", "status": "implemented", "requires": ["python"],
      "note": "已接线 crop 四角多边形 + clip.flip；2026-11-15 真实导出抽帧确认裁剪、水平翻转与垂直翻转均生效。"},
     {"id": "visual.reverse", "label": "视频倒放", "category": "画面",
      "channel": "file", "status": "unverified", "requires": ["python"],
-     "note": "已接线 segment.reverse；2026-11-15 真实导出抽帧被 11.8 忽略，倒放未生效。"},
+     "note": "已接线 segment.reverse；2026-11-15 抽帧被 11.8 忽略；2026-11-18 二次实验补 reverse_path 指向 ffmpeg 反向片仍无效（对照帧 0.172/0.328 与正常一致），不要承诺倒放。"},
     {"id": "visual.freeze", "label": "定格", "category": "画面",
      "channel": "file", "status": "planned", "requires": ["python"],
      "note": "只做工作流：抽帧图片 + 前后视频段，不冒充原生 freeze；plan 里的 freeze 会被显式拒绝。"},
@@ -171,8 +204,17 @@ CAPABILITIES = [
      "channel": "resource", "status": "conditional", "requires": ["python"],
      "note": "已接线视频材质 matting.path；构建时校验目录必须已存在，且必须由剪映生成逐帧蒙版。"},
     {"id": "visual.chroma", "label": "绿幕抠像（chroma）", "category": "智能",
-     "channel": "file", "status": "unverified", "requires": ["python"],
-     "note": "已接线 materials.chromas + refs；真实导出首测未抠绿，可能需额外触发字段；不要承诺已生效。"},
+     "channel": "file", "status": "conditional", "requires": ["python"],
+     "note": "已接线 materials.chromas + refs；2026-11-18 构建的草稿在 11.8 UI 打开即蓝底红块，抠像面板读回“色度抠图”勾选、关键色绿色、强度 20，界面原生导出角点 (0,0,254)/中心 (253,0,0)；native bridge draftPath 仍不应用，成片走界面导出。"},
+    {"id": "visual.background_fill", "label": "视频/图片背景填充", "category": "画面",
+     "channel": "file", "status": "implemented", "requires": ["python"],
+     "note": "background_fill 支持 blur/color，写 materials.canvases + refs，只对最底层视觉轨生效；2026-11-18 纯色填充角落 (0,0,254)，渐变图模糊填充角落 (242,0,9)/边缘 (101,0,152)，确认不是黑底。"},
+    {"id": "visual.mix_mode", "label": "视频混合模式", "category": "画面",
+     "channel": "file", "status": "conditional", "requires": ["python"],
+     "note": "写 materials.effects[type=mix_mode] + extra_material_refs；2026-11-18 11.8 UI 预览/UI 原生导出为品红，但 native bridge draftPath 导出仍纯红；render 会写 warning，需要混合成片时走剪映界面导出。"},
+    {"id": "visual.beauty", "label": "人像美颜/美型/美妆/美体", "category": "画面",
+     "channel": "file", "status": "conditional", "requires": ["python"],
+     "note": "写 materials.effects[type=figure]，有美妆项时追加 makeup-root，支持 skin/shape/makeup/body；2026-11-18 11.8 UI 读回磨皮=100/美白=100，界面原生导出与 plain 同草稿对照：磨皮人脸 avg_abs_rgb=1.215、边缘能量 -6.2%，美白皮肤 RGB +7~9；native bridge draftPath 仍与 plain 帧 hash 相同，figure_algorithm 为空；shape/makeup 409 entitlement。结构可用，成片必须走剪映界面导出。"},
     {"id": "text.animation", "label": "文字动画", "category": "文字",
      "channel": "resource", "status": "conditional", "requires": ["cache_effect"],
      "note": "2026-11-16 免费“变色输入”经 material_animations 真实导出；动画资源需缓存。"},
@@ -180,14 +222,14 @@ CAPABILITIES = [
      "channel": "resource", "status": "conditional", "requires": ["cache_effect"],
      "note": "2026-11-16 免费“翻入”经 material_animations[type=video_animation] 真实导出；资源需缓存。"},
     {"id": "text.effect", "label": "花字/文字特效", "category": "文字",
-     "channel": "resource", "status": "unverified", "requires": ["cache_artistEffect"],
-     "note": "已接线 filters[type=text_effect] + effectStyle；官方要求 ref 为 flower，DeepGlow 是 tool_text_glow，资源类型不匹配；需真实 flower 资源再做像素验收。"},
+     "channel": "resource", "status": "conditional", "requires": ["cache_artistEffect"],
+     "note": "materials.effects[type=text_effect] + styles[0].effectStyle；花字会重置文字颜色/描边/阴影；text_template/text_bubble 存在时花字被忽略。2026-11-18 真实 flower 包 7127669365423508767 真机导出，与无花字对照帧差 YAVG=4.1713/YMAX=209；带自定义字色/描边/阴影的 712 帧与默认 712 帧差 0/0；718/735 均 409 entitlement。只对已缓存且账号可导出的 flower 资源承诺。"},
     {"id": "text.bubble", "label": "文字气泡", "category": "文字",
      "channel": "resource", "status": "unverified", "requires": ["cache_artistEffect"],
-     "note": "已接线 filters[type=text_shape]；需要真实气泡资源，尚未渲染验收。"},
+     "note": "materials.effects[type=text_shape]；capcut-mate 实证 effect_id 与 resource_id 分开（716434 / 6821385652727190024），两者都要给；气泡只加装饰底板。官方 11.8 选择协议没有 text_shape，气泡走 text_template；本机 bubble 缓存 0，未渲染验收。"},
     {"id": "text.template", "label": "文字模板", "category": "文字",
      "channel": "resource", "status": "conditional", "requires": ["cache_artistEffect"],
-     "note": "已接线 text_templates；模板包与槽位资源需缓存，像素未验收。"},
+     "note": "已接线 text_templates；模板包与槽位资源需缓存。2026-11-18 免费字幕模板依赖 flower 时，缺花字包会回落成普通文字，不能把“导出成功”当成模板视觉已生效。"},
     {"id": "sticker", "label": "贴纸", "category": "画面",
      "channel": "resource", "status": "conditional", "requires": ["cache_effect"],
      "note": "已接线独立 sticker 轨；2026-11-15 两个包：7675620818189077810 render 409 entitlement，7202575978646737469 render ok 但抽帧无贴纸。"},
@@ -196,6 +238,15 @@ CAPABILITIES = [
     {"id": "official.xml.draft", "label": "官方 XMLDraft 编排协议", "category": "官方",
      "channel": "official", "status": "host_only", "requires": ["official_skills"],
      "note": "DraftEditing 是宿主写入口；外部只读协议，不能提交 Selection。"},
+    {"id": "official.hubcli.canvas", "label": "官方 canvas 命令面（hubcli 契约）", "category": "官方",
+     "channel": "official", "status": "host_only", "requires": ["official_skills"],
+     "note": "55 份 contracts/*.json 描述宿主 RPC；需要 CUSTOM_AGENT_BUN_EXECUTABLE + IPC，外部不可调用。"},
+    {"id": "official.hubcli.media", "label": "官方媒体命令（转写/审片）", "category": "官方",
+     "channel": "official", "status": "host_only", "requires": ["official_skills"],
+     "note": "media.transcribe 走宿主 ASR（毫秒段落/词级），与本地 subtitle.asr.local 并存。"},
+    {"id": "official.motiongraph", "label": "动态图形 MotionGraph SDK", "category": "官方",
+     "channel": "official", "status": "host_only", "requires": ["official_skills"],
+     "note": "CEF renderer + sdk/resources；无独立 CLI 入口，离开宿主无法渲染。"},
     {"id": "ai.subtitle", "label": "智能字幕识别", "category": "AI",
      "channel": "account", "status": "account_gated", "requires": [],
      "note": "剪映客户端的云端识别/翻译/划重点仍受账号限制；本地识别已由 subtitle.asr.local 覆盖。"},
@@ -231,6 +282,7 @@ REQUIREMENT_LABELS = {
 
 MODEL_FILES = ("asr-model-encoder.onnx", "asr-model-decoder.onnx",
                "asr-model-token.txt")
+PUNC_FILES = ("asr-punc.onnx", "asr-punc-token.txt")
 
 
 def _asr_root():
@@ -246,7 +298,7 @@ def _asr_root():
 def _asr_info():
     root = _asr_root()
     info = {"root": str(root) if root else None, "available": False,
-            "model_dir": None}
+            "model_dir": None, "punc": False, "strategy": False, "files": []}
     if not root or not root.is_dir():
         return info
     try:
@@ -256,6 +308,19 @@ def _asr_info():
             if all((directory / name).is_file() for name in MODEL_FILES):
                 info["available"] = True
                 info["model_dir"] = str(directory)
+                info["strategy"] = (directory / "strategy.json").is_file()
+                explicit = os.environ.get("JY_LOCAL_ASR_PUNC_DIR", "").strip()
+                bases = ([Path(explicit).expanduser()] if explicit else []) + [directory]
+                info["punc"] = any(
+                    all((base / name).is_file() for name in PUNC_FILES)
+                    for base in bases
+                )
+                info["files"] = [
+                    {"name": name,
+                     "bytes": (directory / name).stat().st_size
+                     if (directory / name).is_file() else None}
+                    for name in MODEL_FILES
+                ]
                 break
     except OSError:
         pass
