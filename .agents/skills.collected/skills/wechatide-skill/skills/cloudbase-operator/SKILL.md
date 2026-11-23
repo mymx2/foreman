@@ -30,7 +30,7 @@ description: >-
 - 云函数：`cloud_fn_list` → `cloud_fn_info` / 部署
 - 云数据库：`cloud_db_read_struct` → `cloud_db_read_doc` / 写结构 / 写文档
 - 云存储：`cloud_query_storage` 的 `list` / `info` → `cloud_manage_storage`
-- 消息推送：`cloud_query_msg_push` → `cloud_manage_msg_push`（详见 [references/message-push-customer-service.md](references/message-push-customer-service.md)）
+- 消息推送：`cloud_query_msg_push` → `cloud_manage_msg_push`
 
 ## 意图 → 工具
 
@@ -57,7 +57,7 @@ wechatide -c <clientName> cloud_query_msg_push --appid <appid> --env <envId> --a
 wechatide -c <clientName> cloud_manage_msg_push --appid <appid> --env <envId> --function-name <fnName> --action subscribe
 ```
 
-复杂 JSON 参数用 `--*-file`。更新文档优先 `$set`/`$inc`/`$unset`。完整参数见 `--help`。消息推送/客服自动回复详见 [references/message-push-customer-service.md](references/message-push-customer-service.md)。
+复杂 JSON 参数用 `--*-file`。更新文档优先 `$set`/`$inc`/`$unset`。完整参数见 `--help`。
 
 ## 边界
 

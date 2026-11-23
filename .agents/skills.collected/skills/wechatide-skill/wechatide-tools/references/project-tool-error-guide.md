@@ -46,7 +46,7 @@ wechatide -c <clientName> auto_preview --project <project>
    - **明确新建项目，或用户已同意在该目录初始化项目**：按 [创建流程](create-project-guide.md) 准备配置和对应项目类型的文件，不能只补一份配置就声称项目可运行。
    - 仍无法确定项目位置、用途，或是否需要新建业务文件：说明缺失内容，询问用户后再写入。
 3. 配置存在时，区分读取失败与 JSON 非法：权限 / I/O 错误应原样报告；确定是 JSON 问题时再修复注释、尾逗号、截断等，保留已有字段，勿用最小配置覆盖。
-4. 字段语义见 `skills/project-config/SKILL.md`。路径或配置问题解决后，重试原工具；若路径有变则更新 `--project`。若得到 `APPID_ERROR`，再走下方流程。
+4. 字段语义见 `project-config` 子技能。路径或配置问题解决后，重试原工具；若路径有变则更新 `--project`。若得到 `APPID_ERROR`，再走下方流程。
 
 ## 收到 `APPID_ERROR` 后
 
@@ -74,7 +74,7 @@ wechatide -c <clientName> auto_preview --project <project>
 }
 ```
 
-小游戏将 `compileType` 设为 `game`。字段细节见 `skills/project-config/SKILL.md`。
+小游戏将 `compileType` 设为 `game`。字段细节见 `project-config` 子技能。
 
 ## 注意
 

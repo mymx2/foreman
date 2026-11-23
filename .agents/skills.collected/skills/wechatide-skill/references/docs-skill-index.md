@@ -36,7 +36,7 @@
 
 ## 调用顺序
 
-1. 问的是 `project.config.json` 字段含义或写入规则：先读 [project-config-fields.md](project-config-fields.md) 和 [project-config](../skills/project-config/SKILL.md)。本包已有的字段按该表回答。表里没有的字段，再 `read_doc` 对应板块的 `projectconfig.md`，并说明这是官方文档补充。
+1. 问的是 `project.config.json` 字段含义或写入规则：先读 [project-config-fields.md](project-config-fields.md) 和 `project-config` 子技能。本包已有的字段按该表回答。表里没有的字段，再 `read_doc` 对应板块的 `projectconfig.md`，并说明这是官方文档补充。
 2. 其他问题能对上「高频入口」时，先 `read_doc` 那一条 path。
 3. 对不上、或读完仍答不了：`search_docs`，带上节的 `sector`，`query` 用用户原话，`limit` 取 8 左右。
 4. 对最相关的一条 `read_doc`。`chunk.hasMore` 为 true 时，只用返回的 `headings[].offset` 或 `chunk.nextOffset` 续读相关章节，不要把更新日志整篇读完。
@@ -63,7 +63,7 @@
 
 分主题裁决，不要用一条规则覆盖全部：
 
-- `project.config.json` 的字段含义与写入规则以 [project-config-fields.md](project-config-fields.md) 和 [project-config](../skills/project-config/SKILL.md) 为准，与这两处声明的优先级一致。本包已写明的字段，不要改用官方 `projectconfig.md` 里的不同说法。本包未覆盖的字段，再用官方文档补充，并注明是文档补充。
+- `project.config.json` 的字段含义与写入规则以 [project-config-fields.md](project-config-fields.md) 和 `project-config` 子技能为准，与这两处声明的优先级一致。本包已写明的字段，不要改用官方 `projectconfig.md` 里的不同说法。本包未覆盖的字段，再用官方文档补充，并注明是文档补充。
 - 工具名、参数、令牌规则以本包为准：根 `SKILL.md`、[tool-index](tool-index.md)、[运行前检查](environment-readiness.md)，或 `wechatide <toolName> -h`。公开文档（含 Skills 页）若仍写旧工具名或旧目录，执行时跟本包，并说明文档页落后于当前导出的 skill。
 - 菜单路径、版本线差异，以及上面两类以外的工具用法，以刚读到的官方文档为准。本包没有写的不要编造。
 
@@ -71,4 +71,4 @@
 
 - 不要编造文档和本包都没出现的参数、菜单路径、错误码。
 - 不要调用文档 MCP 以外的写接口，也不要改开放文档。
-- 不要用本文去执行 `wechatide`。改本地 `project.config.json` 走 `skills/project-config/SKILL.md`。只问字段含义时同样以 [project-config-fields.md](project-config-fields.md) 为准。
+- 不要用本文去执行 `wechatide`。改本地 `project.config.json` 走 `project-config` 子技能。只问字段含义时同样以 [project-config-fields.md](project-config-fields.md) 为准。

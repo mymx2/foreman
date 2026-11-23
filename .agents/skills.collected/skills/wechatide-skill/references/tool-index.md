@@ -60,5 +60,5 @@
 
 ## 已废弃（勿调用，且不出现在 `wechatide -h` 默认目录）
 
-- `project_setting_get`：【已废弃】请改用 skills/project-config：直接读取 project.config.json / project.private.config.json。调用仅返回废弃提示。
-- `project_setting_update`：【已废弃】请改用 skills/project-config：直接修改 project.config.json / project.private.config.json。调用仅返回废弃提示，不会写入。
+- `project_setting_get`：【已废弃】请改用 project-config 子技能：直接读取 project.config.json / project.private.config.json。调用仅返回废弃提示。
+- `project_setting_update`：【已废弃】请改用 project-config 子技能：直接修改 project.config.json / project.private.config.json。调用仅返回废弃提示，不会写入。

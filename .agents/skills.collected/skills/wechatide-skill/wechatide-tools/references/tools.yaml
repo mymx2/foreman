@@ -444,7 +444,7 @@
     {
       "id": "project_setting_get",
       "name": "读取项目设置",
-      "summary": "【已废弃】请改用 skills/project-config：直接读取 project.config.json / project.private.config.json。调用仅返回废弃提示。",
+      "summary": "【已废弃】请改用 project-config 子技能：直接读取 project.config.json / project.private.config.json。调用仅返回废弃提示。",
       "group": "project-action",
       "source": {
         "type": "wechatide"
@@ -465,7 +465,7 @@
     {
       "id": "project_setting_update",
       "name": "更新项目设置",
-      "summary": "【已废弃】请改用 skills/project-config：直接修改 project.config.json / project.private.config.json。调用仅返回废弃提示，不会写入。",
+      "summary": "【已废弃】请改用 project-config 子技能：直接修改 project.config.json / project.private.config.json。调用仅返回废弃提示，不会写入。",
       "group": "project-action",
       "source": {
         "type": "wechatide"

@@ -54,7 +54,7 @@ related-skills:
 
 下列任一成立时，**先**完成安装诊断，再调任何业务 `wechatide` 工具：本 skill **首次安装 / 首次导入到 agent**；用户说「安装 skill / 配置 wechatide-skill」；任意时刻 `wechatide` 调用不了。
 
-命令、返回分支与软链处理 → [运行前检查 · Skill 安装时检查](references/environment-readiness.md#skill-安装时检查)；下载/更新流程 → `skills/installer/SKILL.md`。
+命令、返回分支与软链处理 → [运行前检查 · Skill 安装时检查](references/environment-readiness.md#skill-安装时检查)；下载/更新流程 → `installer` 子技能。
 
 ## 运行前门禁（必须）
 
@@ -106,17 +106,17 @@ wechatide -c <clientName> <toolName> [flags...] [--token <cliAccessToken>]
 
 | 用户意图 | Scene |
 |----------|--------|
-| 下载、安装或更新微信开发者工具；本 skill 首次安装/导入后的安装诊断；`wechatide` 调用不了经诊断需安装/更新；`agent_ahead` 后遇到明确版本兼容 blocker；macOS DMG 需补 `wechatide` 软链 | `skills/installer/SKILL.md` |
+| 下载、安装或更新微信开发者工具；本 skill 首次安装/导入后的安装诊断；`wechatide` 调用不了经诊断需安装/更新；`agent_ahead` 后遇到明确版本兼容 blocker；macOS DMG 需补 `wechatide` 软链 | `installer` 子技能 |
 | 从零创建小程序/小游戏项目（目录 + 配置 + 导入列表；**非**独立 scene） | `wechatide-tools/references/create-project-guide.md` |
-| 打开/关闭项目窗口、登录、AppID、运行时上下文 | `skills/initializer/SKILL.md` |
-| 项目列表查询 / 导入 / 从列表删除、代码片段分享 / 导入（不开窗口） | `skills/project-manager/SKILL.md` |
-| 改 `project.config.json`（修改基础库版本、域名校验、热重载、编译开关等，不调 MCP） | `skills/project-config/SKILL.md` |
-| 编译页面、单文件编译、构建 npm、刷新模拟器 | `skills/compiler/SKILL.md` |
-| 模拟器工具栏：查询/切换机型、暗黑模式、弹出模拟器 | `skills/simulator/SKILL.md` |
-| 预览、二维码、上传体验版（预览优先 `auto_preview`；可不打开窗口） | `skills/previewer/SKILL.md` |
-| 点击、输入、滚动、页面断言、自动化脚本 | `skills/automator/SKILL.md` |
-| console / network / 截图取证 / 状态诊断 | `skills/debugger/SKILL.md` |
-| 云环境、云函数、云数据库、云存储、消息推送 | `skills/cloudbase-operator/SKILL.md` |
+| 打开/关闭项目窗口、登录、AppID、运行时上下文 | `initializer` 子技能 |
+| 项目列表查询 / 导入 / 从列表删除、代码片段分享 / 导入（不开窗口） | `project-manager` 子技能 |
+| 改 `project.config.json`（修改基础库版本、域名校验、热重载、编译开关等，不调 MCP） | `project-config` 子技能 |
+| 编译页面、单文件编译、构建 npm、刷新模拟器 | `compiler` 子技能 |
+| 模拟器工具栏：查询/切换机型、暗黑模式、弹出模拟器 | `simulator` 子技能 |
+| 预览、二维码、上传体验版（预览优先 `auto_preview`；可不打开窗口） | `previewer` 子技能 |
+| 点击、输入、滚动、页面断言、自动化脚本 | `automator` 子技能 |
+| console / network / 截图取证 / 状态诊断 | `debugger` 子技能 |
+| 云环境、云函数、云数据库、云存储、消息推送 | `cloudbase-operator` 子技能 |
 | 问开发者工具官方文档：CLI/HTTP、设置项、Nightly 与稳定版差异、Skills 安装说明（只解释，不执行）。`project.config.json` 字段含义以包内字段表为准 | 包内索引：[docs-skill-index](references/docs-skill-index.md) |
 | 小程序地图组件 / 腾讯位置服务 API | 外部 skill：`tencentmap-miniprogram-skill`（前端）/ `tencentmap-webservice-skill`（后端）——本包不处理，需触发主动下载；详见 [map-skill-index](references/map-skill-index.md) |
 
