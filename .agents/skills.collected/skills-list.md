@@ -389,11 +389,14 @@ vpx skills add redis/agent-skills --skill redis-core --agent openclaw -p -y
 ```bash
 # dgreenheck/webgpu-claude-skill — WebGPU 3D
 vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent openclaw -p -y
+
+# 本仓自带的本地技能（源在 .agents/skills.collected/skills/）
+vpx skills add ./skills/wps-data-pipeline --agent openclaw -p -y
 ```
 
 > `tencentos-expert` 为手动收集，无 skills.sh 安装命令。
 > `shadowbot-cli` 为个人创建（基于官方 shadowbot.shell-cli，需影刀 6.3+ 客户端），无 skills.sh 安装命令。
-> `kdocs-skill`（金山文档）通过 git clone 安装到 `skills.disabled/`。
+> `kdocs-skill`、`wps-skills` 不安装：前者的取数通道依赖 OAuth/Token，企业账号走不通；后者在 Windows 上是 PowerShell 调 COM，与本仓 `wps-data-pipeline` 重复。两者的可用部分已并入该技能。
 > [飞书文档技能](https://www.skills.sh/larksuite/cli) 尚未收集。
 > 其余未作说明部分均来自个人创建或收集
 
@@ -402,6 +405,7 @@ vpx skills add dgreenheck/webgpu-claude-skill --skill webgpu-threejs-tsl --agent
 | 技能 | 来源 | 一句话 |
 |------|------|--------|
 | `webgpu-threejs-tsl` | dgreenheck/webgpu-claude-skill | Three.js WebGPU + TSL 着色器 |
+| `wps-data-pipeline` | 本地实现 | 金山文档云表格取数 → 本机 WPS 处理：云端只读下载 + 条件导出/快照指纹；本机 COM 批量读写、透视、保真导 PDF |
 | `office-pro` | 本地维护 | Office 专业工具链：pdfkit 50+ 命令 PDF 处理 + 公文/财务/排版规范 + DOCX/XLSX/PDF 质检脚本 + PPTX 程序化校验流程 |
 | `tencentos-expert` | 手动收集 | TencentOS 服务器运维诊断 |
 | `sql-parser-cst` | 个人创建 | 解析 SQL 生成 CST 语法树，提取表结构与 SQL 元信息 |

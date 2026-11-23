@@ -52,7 +52,7 @@
     {
       "id": "open_project_window",
       "name": "打开项目窗口",
-      "summary": "打开包含模拟器的项目窗口。如果之前窗口已存在，则不打开新窗口，直接返回已打开的窗口 ID",
+      "summary": "打开包含模拟器的项目窗口。已存在则不新开且 windowMode 不切换；lite 不传 alwaysOnTop 时沿用上次置顶。",
       "group": "ide",
       "source": {
         "type": "wechatide"
@@ -74,6 +74,11 @@
             "fullMode"
           ],
           "description": "窗口模式：默认 liteMode（仅模拟器）；fullMode 包含编辑器、模拟器和调试器"
+        },
+        "alwaysOnTop": {
+          "type": "boolean",
+          "required": false,
+          "description": "是否置顶。仅 liteMode 生效：不传时沿用上次置顶（没有记录则默认置顶），传 false 关闭并记住。fullMode 忽略该参数。已打开的 lite 窗口不传则保持当前置顶，显式传入才会更新"
         }
       },
       "execution": {
@@ -276,8 +281,8 @@
     },
     {
       "id": "auto_preview",
-      "name": "推送手机预览",
-      "summary": "把预览直接推送到开发者微信，无需生成二维码文件。",
+      "name": "推送预览",
+      "summary": "把预览直接推送到开发者微信（手机或电脑），无需生成二维码文件。",
       "group": "project-action",
       "source": {
         "type": "wechatide"
@@ -304,6 +309,12 @@
           "type": "string",
           "required": false,
           "description": "指定的预览进入的场景值，如 1001"
+        },
+        "auto-preview-type": {
+          "type": "string",
+          "required": false,
+          "enum": ["mobile", "pc"],
+          "description": "推送平台：mobile（手机微信）或 pc（电脑微信）；不传则使用 IDE 当前设置"
         }
       },
       "execution": {
@@ -417,6 +428,12 @@
           "type": "string",
           "description": "上传的代码版本的描述信息。",
           "required": false
+        },
+        "file-size": {
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "为 true 时，成功结果的 info 增加 package_file_size，包含各分包内每个文件的 name 与 size（字节）。默认 false，不传时 info 不含该字段。"
         }
       },
       "execution": {
@@ -584,7 +601,7 @@
     {
       "id": "simulator_set_darkmode",
       "name": "设置模拟器暗黑模式",
-      "summary": "设置模拟器暗黑模式。dark 为暗黑，light 为浅色，会立刻作用到当前模拟器。",
+      "summary": "设置模拟器暗黑模式。dark 为暗黑，light 为浅色，会立刻作用到当前模拟器。小游戏不支持，直接返回「小游戏不支持模拟器暗黑模式」。",
       "group": "project-action",
       "source": {
         "type": "wechatide"

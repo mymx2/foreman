@@ -23,9 +23,9 @@ description: >-
 | 可用 AppID 列表 | `get_user_appids`（可选 `--type miniprogram\|minigame`） |
 | 当前页/系统信息 | `automation_runtime_info`（**主归属本 scene**） |
 
-项目设置读写 → `project-config` 子技能（勿调已废弃的 `project_setting_*`）。
+项目设置读写 → `skills/project-config/SKILL.md`（勿调已废弃的 `project_setting_*`）。
 
-构建 npm → `compiler` 子技能 的 `build_npm`。
+构建 npm → `skills/compiler/SKILL.md` 的 `build_npm`。
 
 带 `--project` 的配置/appid 错误 → [project-tool-error-guide.md](../../wechatide-tools/references/project-tool-error-guide.md)。
 
@@ -36,10 +36,10 @@ description: >-
 ### open_project_window
 
 ```bash
-wechatide -c <clientName> open_project_window --project <project> [--window-mode liteMode|fullMode]
+wechatide -c <clientName> open_project_window --project <project> [--window-mode liteMode|fullMode] [--always-on-top true|false]
 ```
 
-默认 `liteMode` 仅打开模拟器；需要编辑器和调试器时显式使用 `fullMode`。
+默认 `liteMode` 仅打开模拟器。需要编辑器和调试器时显式使用 `fullMode`。`fullMode` 没有置顶能力，`--always-on-top` 会被忽略。lite 窗口不传 `--always-on-top` 时沿用上次置顶（没有记录则默认置顶）；传 `false` 关闭并记住，下次不传仍不置顶。窗口已经打开时 `windowMode` 不会切换；已打开的 lite 窗口不传该参数则保持当前置顶，显式传入才会更新。
 
 ## 使用边界
 
