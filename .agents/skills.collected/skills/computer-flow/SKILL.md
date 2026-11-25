@@ -196,7 +196,7 @@ python flow_run.py plan.yaml --app "<窗口标题>" --set record_id=... --observ
     | Qt 5.7–5.14 | 一般 | 需先设 `QT_ACCESSIBILITY=1`，`objectName` 常需手工补 |
     | Win32 / MFC | 一般 | 有控件 ID，常需按文本匹配 |
     | 自绘（`paintEvent` / `QGraphicsView` / `QOpenGLWidget` / 游戏引擎） | 无 | 内部完全不暴露，只能走 OCR/图像/坐标 |
-  - **参考实现目前只覆盖 Windows**：`scripts/` 下的截图、浮层枚举、DPI 处理均为 Win32 实现；macOS/Linux 需按上面的对应 API 自行实现同等能力，不能直接复用这些脚本
+  - **参考实现目前只覆盖 Windows**：`scripts/` 下的截图、浮层枚举、DPI 处理均为 Win32 实现；macOS/Linux 需按上面的对应 API 自行实现同等能力，不能直接复用这些脚本。例外是 `web_probe.py`——它走 CDP，跨平台可用，但要求目标进程开放调试端口
 - 桌面 GUI 遇到系统对话框（文件选择框、打印框）→ Windows 用 pywinauto `Desktop(backend="uia").windows()` 找独立窗口；mac 用 AppleScript `tell application "System Events"`；Linux 用 `xdotool search --name` 找窗口后 `key`/`type`
 - 目标应用未启动 → 不要假设它已经在跑。plan 首步写 `launch`，按名称令牌查找安装位置（App Paths 注册表 → Uninstall 注册表 → 开始菜单 → 常见安装目录），启动后轮询等待主窗口出现。查找顺序按"可执行文件优先"排序：同目录下的 `updater`/`uninstall`/`elevate`/`scheme` 一类辅助程序必须排在主程序之后，否则会启动错的东西。启动是真实副作用，`flow_run.py` 要求显式 `--allow-launch` 才执行；`launch` 步骤返回的窗口句柄会替换后续步骤的目标窗口，所以 plan 里不用写死句柄
 - Excel 应用本身（执行 VBA、刷新图表/透视表、导出 PDF、写数据后要公式重算）→ `xlwings`，不用 openpyxl；大批量写入时先关自动重算，写完手动 `calculate()`，再恢复。xlwings 不支持 WPS——没装 Office 但装了 WPS（Windows）时改用 `win32com.client.Dispatch` 直接驱动（先试 `KET.Application`，失败回退 `ET.Application`，再失败查注册表；注意 WPS 12.1.0.22529/22525 两个版本 COM 接口整体失效，需回退 WPS 版本）。WPS 个人版无 VBA 支持，透视表/宏/公式重算做不了，退回 openpyxl 操作文件并声明放弃这些能力。mac/Linux 上 WPS 无稳定自动化接口，退回 openpyxl
@@ -240,6 +240,8 @@ python flow_run.py plan.yaml --app "<窗口标题>" --set record_id=... --observ
 - 浮层输入：点击浮层内的控件前必须先把**该浮层窗口**激活（`ShowWindow(SW_RESTORE)` + `SetForegroundWindow`），否则点击会落到下方主窗口。浮层窗口若有独立 DPI（如 192），其 PrintWindow 图像尺寸通常等于客户区物理像素，坐标可按窗口原点直接换算；换算后仍须验证鼠标实际落点
 - 浮层跨进程：**按 `GW_OWNER` 链枚举时必须遍历全系统窗口，不能先按宿主进程 ID 过滤**。下载组件、云盘、打印服务常由独立进程托管系统对话框，按 PID 过滤会静默漏掉「另存为」「打开」这类窗口——表现为"点了下载什么也没发生"，实际上对话框已经弹在别处。动作后要拿「动作前浮层句柄集合」做差集，等新窗口出现再继续
 - 动作后必须检查新窗口：click 之后不要只重新观察主窗口。先记录动作前的浮层句柄集合，动作后 `wait_for_overlay` 等新增窗口；检测到新窗口就把它记进日志并作为下一步的操作目标，检测不到才认为"没有弹窗"。跳过这一步会在主窗口上继续操作，把同一个对话框再触发一次，留下孤儿窗口
+- **Web/Electron 页面内浮层不是窗口**：下拉、右键菜单、气泡、命令面板由页面自己渲染成 DOM，不会进入 `GW_OWNER` 枚举，主窗口截图里也读不到，UIA 对页面内浮层经常完全不暴露。若应用开放调试端口（Electron 常见 `--remote-debugging-port=9333`），用 CDP 读 `getBoundingClientRect()` 与 `innerWidth/innerHeight` 判定：**元素存在但 rect 越出视口 = 已弹出但被布局推到屏幕外**，不是"没弹"；rect 宽高为 0 则是隐藏或未完成布局，同样不能判"没弹"。没有调试端口时，做动作前后的整屏差量确认它是否渲染在别处，不要直接判失败。`scripts/web_probe.py` 是这一层的参考原语（纯 stdlib，无第三方依赖），但它只认 ARIA 菜单（`[role="menu"]`/`[role="menuitem"]`），锚点按「宽高 ≤2px 的 button」启发式识别；结构不同的下拉、气泡、命令面板要换选择器或按同样思路改写，不能直接复用
+- **`position: fixed` 会被带 `transform` 的祖先劫持**：`transform: matrix(1,0,0,1,0,0)` 这种恒等矩阵也算（常见于入场动画残留），它让 fixed 后代的包含块变成该祖先，视口坐标被重复叠加。页面内浮层"坐标对、就是不显示"时，沿锚点祖先链查 `transform` / `filter` / `contain` / `will-change` / `perspective`，再把可疑属性临时置 `none` 复测一次、随后还原，用 A/B 确认因果，不要停在猜测
 - 人工接管：交互式运行前明确提示用户暂时不要操作鼠标键盘；暂停、超时或窗口状态异常后，所有旧观察作废，重新观察再继续。桌面输入共享全局鼠标和焦点，不能假定脚本独占这些资源
 - 执行互斥：任何共享桌面输入的脚本必须持有跨进程独占锁（`O_EXCL` 锁文件 + 过期回收），第二个会话直接失败而不是抢焦点。锁在退出时释放，崩溃后按超时回收；回收和释放都必须基于自己创建时读到的锁内容，避免误删他人重建的锁
 - 用户中断：必须提供不依赖当前动作完成的独立中断通道。推荐后台线程监听 ESC 的 `GetAsyncKeyState`，按下即设置中止标志；中止标志按会话（如目标窗口句柄）分文件，两个并行自动化会话不得共用同一标志文件；每个动作前后检查该标志，命中就以专用退出码结束，不要吞掉中断当作普通失败
@@ -337,6 +339,9 @@ python flow_run.py plan.yaml --app "<窗口标题>" --set record_id=... --observ
 | 每次运行前 | 新建干净标签/表单 | 上次填写的数据、焦点位置、弹窗等残留状态会让脚本行为不确定 |
 | 动作后页面看似没变 | 先查浮层：按同进程 + `GW_OWNER` 枚举独立顶层窗口（抽屉/滑出面板/气泡），再判断是否真的无变化 | 浮层不在主窗口截图里，只比较主窗口摘要会得出错误的 `no_state_change` |
 | 浮层内控件点不动 | 激活浮层窗口（`ShowWindow(SW_RESTORE)` + `SetForegroundWindow`）后再点击，并回读光标落点 | 未激活的浮层被主窗口遮挡，点击会穿透到下层 |
+| 动作后菜单/浮层看不见 | 先判"没创建"还是"在视口外"：有调试端口时读 DOM rect 与视口尺寸；无端口时做动作前后整屏差量，再按 `GW_OWNER` 枚举 | 页面内浮层不产生新窗口，截图里看不到时最容易被误判为"没弹" |
+| 页面内浮层位置漂移、跑到屏幕外 | 查锚点祖先链上的 `transform`/`filter`/`contain`/`will-change`；恒等 `matrix(1,0,0,1,0,0)` 也算；临时置 `none` 复测后还原 | fixed 后代的包含块被祖先接管，视口坐标被重复叠加 |
+| 右键/双击疑似没送达 | 换一个已知会弹系统菜单的目标（记事本、桌面）做一次同样操作对照 | 区分"应用没响应"与"自动化层把右键投成了左键" |
 | 批量发邮件/webhook | 按服务商限额定间隔，个人 SMTP 注意日限额 | 避免触发频率限制 |
 | HTTP 请求 | 必设 timeout，默认 10s | requests 默认无限等待，脚本挂死 |
 | 结果落盘 | 追加写而非一次性写 | 中断后已处理行不丢 |
